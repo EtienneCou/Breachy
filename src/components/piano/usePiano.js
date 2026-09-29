@@ -4,24 +4,6 @@ import {
 } from './notes.js'
 import { pianoSynth } from './synth.js'
 
-// Détecte AZERTY / QWERTY quand le navigateur le permet (Chrome, Edge).
-function useDetectedLayout(fallback) {
-  const [layout, setLayout] = useState(fallback)
-  useEffect(() => {
-    let cancelled = false
-    navigator.keyboard?.getLayoutMap?.()
-      .then((map) => {
-        if (cancelled) return
-        const a = map.get('KeyA')
-        if (a === 'q') setLayout('azerty')
-        else if (a === 'a') setLayout('qwerty')
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
-  return [layout, setLayout]
-}
-
 /**
  * Gère le jeu au clavier d'ordinateur, le son et l'état des touches enfoncées.
  *
@@ -42,15 +24,12 @@ export function usePiano({
   allowOctaveShift = true,
   sound = true,
   enabled = true,
-  layout: forcedLayout,
   onNoteOn,
   onNoteOff,
 } = {}) {
   const [octave, setOctaveState] = useState(initialOctave)
   const [activeNotes, setActiveNotes] = useState(() => new Set())
   const [sustain, setSustain] = useState(false)
-  const [detectedLayout, setLayout] = useDetectedLayout('azerty')
-  const layout = forcedLayout ?? detectedLayout
 
   // Clé stable pour ne recalculer le clavier que si les notes changent vraiment.
   const notesKey = notes ? [...new Set(notes)].sort((a, b) => a - b).join(',') : null
@@ -170,9 +149,9 @@ export function usePiano({
   // note midi -> caractère imprimé sur la touche du clavier d'ordinateur
   const labels = useMemo(() => {
     const map = {}
-    for (const [code, midi] of Object.entries(keymap.bindings)) map[midi] = KEY_LABELS[layout][code]
+    for (const [code, midi] of Object.entries(keymap.bindings)) map[midi] = KEY_LABELS[code]
     return map
-  }, [keymap, layout])
+  }, [keymap])
 
   // Pour le jeu à la souris / au doigt depuis <Piano>
   const pressNote = useCallback((midi) => noteOn(midi, 'pointer'), [noteOn])
@@ -183,13 +162,13 @@ export function usePiano({
     octave,
     setOctave,
     canShiftOctave,
+    canGoLower: octave > MIN_OCTAVE,
+    canGoHigher: octave < MAX_OCTAVE,
     range: { from: keymap.from, to: keymap.to },
     missingNotes: keymap.missing,
     sustain,
-    layout,
-    setLayout,
     labels,
-    octaveKeys: { down: KEY_LABELS[layout][OCTAVE_DOWN], up: KEY_LABELS[layout][OCTAVE_UP] },
+    octaveKeys: { down: KEY_LABELS[OCTAVE_DOWN], up: KEY_LABELS[OCTAVE_UP] },
     pressNote,
     releaseNote,
   }

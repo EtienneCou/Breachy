@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const songs = [
   {
@@ -100,7 +101,8 @@ const filters = [
   "Mes favoris",
 ];
 
-export default function SongsPage() {
+export default function HomePage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
@@ -728,7 +730,7 @@ export default function SongsPage() {
                     <button
                       type="button"
                       className="play-btn"
-                      onClick={() => console.log("Jouer :", song.title)}
+                      onClick={() => navigate("/pianoPage")}
                     >
                       <span className="play-triangle" aria-hidden="true" />
                       Jouer
