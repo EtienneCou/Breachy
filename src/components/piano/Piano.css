@@ -1,0 +1,182 @@
+/* Tokens partagés par le clavier et la piste de notes. Surchargeables depuis un parent. */
+.piano,
+.piano-lanes {
+  --piano-ebony: #110e0c;
+  --piano-ivory: #f2ecdd;
+  --piano-ivory-shade: #d9d0ba;
+  --piano-sharp: #17130f;
+  --piano-gold: #c8a35a;
+  --piano-felt: #7d1e26;
+  --piano-hit: #5fbf7f;
+  --piano-miss: #d9534f;
+  --piano-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --piano-height: clamp(150px, 26vw, 250px);
+}
+
+/* ---------- Clavier ---------- */
+.piano {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Bande de feutre rouge = ligne de frappe des notes qui tombent */
+.piano__hitline {
+  position: relative;
+  height: 8px;
+  background: linear-gradient(180deg, #9a2a33, var(--piano-felt));
+}
+.piano__fret {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: background-color 0.06s, box-shadow 0.06s;
+}
+.piano__fret.is-black { z-index: 1; }
+.piano__fret.is-target { background: color-mix(in srgb, var(--piano-gold) 55%, transparent); }
+.piano__fret.is-active { background: var(--piano-gold); box-shadow: 0 0 14px 2px var(--piano-gold); }
+.piano__fret.is-hit { background: var(--piano-hit); box-shadow: 0 0 14px 2px var(--piano-hit); }
+.piano__fret.is-miss { background: var(--piano-miss); }
+
+.piano__keys {
+  position: relative;
+  height: var(--piano-height);
+  touch-action: none;
+}
+
+.piano__key {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: box-shadow 0.05s, background 0.05s;
+}
+
+.piano__key.is-white {
+  height: 100%;
+  padding-bottom: 12px;
+  background: linear-gradient(180deg, #e4dcc8 0%, var(--piano-ivory) 12%, var(--piano-ivory) 88%, var(--piano-ivory-shade) 100%);
+  border-right: 1px solid #b9ae95;
+  border-radius: 0 0 5px 5px;
+  box-shadow: inset 0 -6px 0 var(--piano-ivory-shade);
+}
+.piano__key.is-white:last-child { border-right: 0; }
+.piano__key.is-white.is-active {
+  background: linear-gradient(180deg, #d8ceb6 0%, #eae2cf 20%);
+  box-shadow: inset 0 -2px 0 var(--piano-ivory-shade), inset 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.piano__key.is-black {
+  z-index: 2;
+  height: 62%;
+  padding-bottom: 14px;
+  background: linear-gradient(180deg, #2b241e 0%, var(--piano-sharp) 70%, #000 100%);
+  border-radius: 0 0 4px 4px;
+  box-shadow: inset 0 -8px 0 #2e2721, 0 3px 4px rgba(0, 0, 0, 0.5);
+}
+.piano__key.is-black.is-active {
+  background: linear-gradient(180deg, #1a1612 0%, #0c0a08 100%);
+  box-shadow: inset 0 -3px 0 #2e2721, 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Retour visuel du jeu, en haut de la touche */
+.piano__key.is-target { box-shadow: inset 0 4px 0 var(--piano-gold); }
+.piano__key.is-hit { box-shadow: inset 0 4px 0 var(--piano-hit); }
+.piano__key.is-miss { box-shadow: inset 0 4px 0 var(--piano-miss); }
+
+.piano__name {
+  font-family: var(--piano-mono);
+  font-size: 0.66rem;
+  color: #8b7f68;
+}
+
+.piano__cap {
+  display: grid;
+  place-items: center;
+  width: 1.9em;
+  height: 1.9em;
+  border-radius: 5px;
+  font-family: var(--piano-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.is-white > .piano__cap { color: #4a4034; border: 1px solid #c9bea5; background: rgba(255, 255, 255, 0.4); }
+.is-black > .piano__cap { color: var(--piano-gold); border: 1px solid #4a3e30; font-size: 0.7rem; }
+.piano__key.is-active > .piano__cap { background: var(--piano-gold); border-color: var(--piano-gold); color: var(--piano-ebony); }
+
+@media (max-width: 560px) {
+  .piano__name,
+  .is-black > .piano__cap { display: none; }
+  .piano__cap { font-size: 0.66rem; width: 1.6em; height: 1.6em; }
+}
+
+/* ---------- Piste des notes qui tombent ---------- */
+.piano-lanes {
+  position: relative;
+  overflow: hidden;
+  background: var(--piano-ebony);
+}
+.piano-lanes__lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  transition: background 0.08s;
+}
+.piano-lanes__lane.is-white { border-right: 1px solid rgba(242, 236, 221, 0.06); }
+.piano-lanes__lane.is-black { z-index: 1; background: rgba(0, 0, 0, 0.35); }
+.piano-lanes__lane.is-active {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--piano-gold) 45%, transparent), transparent 70%);
+}
+.piano-lanes__notes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piano *,
+  .piano-lanes * { transition: none !important; }
+}
+
+/* ---------- Scène : piste + clavier ---------- */
+.piano-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.piano-stage__lanes {
+  flex: 1 1 auto;
+  min-height: 160px;
+  /* les notes arrivent du haut de l'écran : la piste se fond dans le fond de page */
+  mask-image: linear-gradient(180deg, transparent 0, #000 64px);
+}
+
+/* ---------- Réglages ---------- */
+.piano-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #9a8f7d;
+}
+.piano-setting select {
+  font: 0.85rem var(--piano-mono, ui-monospace, monospace);
+  color: #e9e2d2;
+  background: #110e0c;
+  border: 1px solid #3a322a;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.piano-setting select:hover { border-color: #8a7143; }
+.piano-setting :focus-visible { outline: 2px solid #c8a35a; outline-offset: 2px; }
+.piano-setting input[type='range'] { accent-color: #c8a35a; width: 100px; }

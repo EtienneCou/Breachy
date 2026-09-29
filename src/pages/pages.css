@@ -1,0 +1,71 @@
+.brand {
+  margin: 0;
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  background: linear-gradient(180deg, #e8cd8f 0%, var(--gold) 45%, var(--gold-dim) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.button {
+  font: 0.85rem var(--mono);
+  color: var(--text);
+  background: var(--ebony);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 9px;
+  cursor: pointer;
+}
+.button:hover { border-color: var(--gold-dim); }
+.button:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.pedal {
+  font: 0.78rem var(--mono);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 10px;
+  transition: all 0.12s;
+}
+.pedal.is-on { background: var(--gold); border-color: var(--gold); color: var(--ebony); }
+
+/* Une colonne plein écran : piste des notes (tout l'espace restant) -> clavier -> barre de réglages */
+.screen {
+  box-sizing: border-box;
+  height: 100svh;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 16px 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px 16px;
+  background: linear-gradient(180deg, var(--lacquer) 0%, var(--ebony) 100%);
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.bar__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+}
+.bar__brand { font-size: 1.6rem; }
+.bar__readout { margin: 0; flex: 1 1 auto; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.bar__note { font-family: var(--display); font-size: 1.5rem; line-height: 1; min-width: 4ch; }
+.bar__meta { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar__idle { font-family: var(--display); font-style: italic; color: var(--muted); font-size: 1.05rem; }
+.bar__octave { font: 1rem var(--mono); color: var(--gold); min-width: 1.2ch; text-align: center; }
+.bar__hint { margin: 0 0 0 auto; color: var(--muted); font-size: 0.8rem; }
+.bar__warning { margin: 0; color: #e8a39c; font-size: 0.85rem; }
+
+@media (max-width: 640px) {
+  .bar__hint { margin-left: 0; }
+}
