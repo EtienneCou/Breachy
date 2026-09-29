@@ -1,0 +1,171 @@
+.virtual-piano-wrapper {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+  margin-top: 1.5rem;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.piano-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.piano-badge {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+  letter-spacing: 0.03em;
+}
+
+.octave-indicator {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  background: rgba(30, 41, 59, 0.7);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+/* Piano Keyboard Layout */
+.piano-keyboard {
+  display: flex;
+  position: relative;
+  justify-content: center;
+  user-select: none;
+  overflow-x: auto;
+  padding: 0.5rem 0 1rem;
+}
+
+/* Keys */
+.piano-key {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.08s ease, background 0.15s ease, box-shadow 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  padding-bottom: 0.6rem;
+}
+
+/* White Keys */
+.white-key {
+  width: 44px;
+  height: 150px;
+  background: linear-gradient(to bottom, #f8fafc 0%, #e2e8f0 100%);
+  border: 1px solid #94a3b8;
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+  z-index: 1;
+  margin-right: -1px;
+}
+
+.white-key:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+.white-key:active:not(:disabled) {
+  transform: translateY(3px);
+  background: #cbd5e1;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.white-key .key-note-name {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.white-key .key-shortcut-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.15);
+  border: 1px solid rgba(2, 132, 199, 0.3);
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  margin-top: 0.25rem;
+  font-family: monospace;
+}
+
+/* Black Keys */
+.black-key {
+  width: 28px;
+  height: 95px;
+  background: linear-gradient(to bottom, #334155 0%, #0f172a 100%);
+  border: 1px solid #020617;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  z-index: 2;
+  margin-left: -14px;
+  margin-right: -14px;
+}
+
+.black-key:hover:not(:disabled) {
+  background: #1e293b;
+}
+
+.black-key:active:not(:disabled) {
+  transform: translateY(2px);
+  background: #020617;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.black-key .key-note-name {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.black-key .key-shortcut-tag {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.2);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 3px;
+  padding: 0.05rem 0.25rem;
+  margin-top: 0.2rem;
+  font-family: monospace;
+}
+
+/* Expected / Target Note Glow */
+.piano-key.target-note {
+  animation: targetGlow 1.2s infinite alternate;
+}
+
+.white-key.target-note {
+  background: linear-gradient(to bottom, #e0f2fe 0%, #7dd3fc 100%) !important;
+  border-color: #0284c7;
+}
+
+.black-key.target-note {
+  background: linear-gradient(to bottom, #1e3a8a 0%, #1e40af 100%) !important;
+  border-color: #38bdf8;
+}
+
+.keyboard-tip {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.keyboard-tip strong {
+  color: #f8fafc;
+}
+
+@keyframes targetGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.5), inset 0 0 8px rgba(56, 189, 248, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 24px rgba(56, 189, 248, 0.9), inset 0 0 14px rgba(56, 189, 248, 0.6);
+  }
+}

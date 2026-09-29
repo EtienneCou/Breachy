@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { parsePartition, SoundPlayerEngine } from '../utils/audioEngine';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { parsePartition, SoundPlayerEngine, noteToFrequency } from '../utils/audioEngine';
 import ReachyCoach from './ReachyCoach';
+import VirtualPiano from './VirtualPiano';
 import './SongPlayer.css';
 
 const AVAILABLE_SONGS = [
@@ -9,14 +10,16 @@ const AVAILABLE_SONGS = [
     title: 'Super Mario Bros - Thème',
     composer: 'Koji Kondo',
     file: '/songs/mario.txt',
-    icon: '🍄'
+    icon: '🍄',
+    defaultOctave: 6
   },
   {
     id: 'pirate',
     title: 'Pirates des Caraïbes - He\'s a Pirate',
     composer: 'Klaus Badelt & Hans Zimmer',
     file: '/songs/pirate.txt',
-    icon: '🏴‍☠️'
+    icon: '🏴‍☠️',
+    defaultOctave: 4
   }
 ];
 
@@ -26,11 +29,20 @@ export default function SongPlayer() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Playback states
+  // App mode: 'listen' | 'training'
+  const [activeMode, setActiveMode] = useState('listen');
+
+  // --- Listen Mode States ---
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [currentEventIndex, setCurrentEventIndex] = useState(-1);
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
+
+  // --- Training Mode States ---
+  const [trainingIndex, setTrainingIndex] = useState(0);
+  const [trainingFeedback, setTrainingFeedback] = useState(null);
+  const [score, setScore] = useState({ correct: 0, total: 0, combo: 0 });
+  const [baseOctave, setBaseOctave] = useState(selectedSong.defaultOctave);
 
   // Audio Engine & Timers Ref
   const soundEngineRef = useRef(null);
@@ -42,6 +54,14 @@ export default function SongPlayer() {
   useEffect(() => {
     speedRef.current = playbackSpeed;
   }, [playbackSpeed]);
+
+  // Sync base octave when selected song changes
+  useEffect(() => {
+    setBaseOctave(selectedSong.defaultOctave);
+    setTrainingIndex(0);
+    setScore({ correct: 0, total: 0, combo: 0 });
+    setTrainingFeedback(null);
+  }, [selectedSong]);
 
   // Initialize sound engine
   useEffect(() => {
@@ -55,6 +75,12 @@ export default function SongPlayer() {
       }
     };
   }, []);
+
+  // Filter playable notes for training (exclude rests)
+  const playableTrainingNotes = useMemo(() => {
+    if (!partitionData) return [];
+    return partitionData.events.filter((ev) => !ev.isRest && ev.frequency > 0);
+  }, [partitionData]);
 
   // Load partition when selected song changes
   useEffect(() => {
@@ -75,6 +101,7 @@ export default function SongPlayer() {
           setPartitionData(parsed);
           setCurrentTime(0);
           setCurrentEventIndex(-1);
+          setTrainingIndex(0);
         }
       } catch (err) {
         if (isMounted) {
@@ -92,7 +119,9 @@ export default function SongPlayer() {
     };
   }, [selectedSong]);
 
-  // Audio loop execution
+  // -------------------------------------------------------------
+  // LISTEN MODE CONTROLS
+  // -------------------------------------------------------------
   const startPlayback = () => {
     if (!partitionData || partitionData.events.length === 0) return;
 
@@ -109,7 +138,6 @@ export default function SongPlayer() {
       const elapsedVirtualTime = ((now - startTimeRef.current) / 1000) * speedRef.current;
 
       if (elapsedVirtualTime >= partitionData.totalDuration) {
-        // Song ended
         setCurrentTime(partitionData.totalDuration);
         stopPlayback();
         return;
@@ -117,7 +145,6 @@ export default function SongPlayer() {
 
       setCurrentTime(elapsedVirtualTime);
 
-      // Find current note event in partition
       const eventIndex = partitionData.events.findIndex(
         (ev) => elapsedVirtualTime >= ev.startTime && elapsedVirtualTime < ev.endTime
       );
@@ -128,7 +155,6 @@ export default function SongPlayer() {
 
         const currentEv = partitionData.events[eventIndex];
         if (!currentEv.isRest && currentEv.frequency > 0) {
-          // Note duration adjusted by speed
           const effectiveDuration = currentEv.duration / speedRef.current;
           soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration);
         }
@@ -183,7 +209,6 @@ export default function SongPlayer() {
     pausedAtRef.current = newTime;
     setCurrentTime(newTime);
 
-    // Update active event index
     const eventIndex = partitionData.events.findIndex(
       (ev) => newTime >= ev.startTime && newTime < ev.endTime
     );
@@ -194,6 +219,121 @@ export default function SongPlayer() {
     }
   };
 
+  // -------------------------------------------------------------
+  // TRAINING MODE LOGIC
+  // -------------------------------------------------------------
+  const expectedTrainingEvent = playableTrainingNotes[trainingIndex] || null;
+  const expectedNoteName = expectedTrainingEvent ? expectedTrainingEvent.note : null;
+
+  const handleUserPlayNote = useCallback((playedNote, keyInfo) => {
+    if (!soundEngineRef.current) return;
+
+    // Play the pressed note sound immediately
+    const freq = noteToFrequency(playedNote);
+    if (freq > 0) {
+      soundEngineRef.current.playNote(freq, 0.35);
+    }
+
+    if (activeMode !== 'training' || !expectedNoteName) return;
+
+    const cleanExpected = expectedNoteName.trim().toUpperCase();
+    const cleanPlayed = playedNote.trim().toUpperCase();
+
+    // Check if the played note matches the expected note
+    // Flexible check: exact match OR note letter matches if student is one octave apart
+    const isExactMatch = cleanPlayed === cleanExpected;
+    const isLetterMatch = cleanPlayed.replace(/\d+/, '') === cleanExpected.replace(/\d+/, '');
+
+    if (isExactMatch || isLetterMatch) {
+      // SUCCESS !
+      const newIndex = trainingIndex + 1;
+      const isCompleted = newIndex >= playableTrainingNotes.length;
+
+      setScore((prev) => ({
+        correct: prev.correct + 1,
+        total: prev.total + 1,
+        combo: prev.combo + 1
+      }));
+
+      if (isCompleted) {
+        setTrainingFeedback({
+          type: 'complete',
+          message: '🎉 Morceau terminé avec succès ! Reachy est très fier de toi !',
+          keyHint: null
+        });
+      } else {
+        const encouragements = [
+          'Excellent !',
+          'En plein dans le mille !',
+          'Superbe enchaînement !',
+          'Reachy adore ce rythme !',
+          'Parfait ! Continue comme ça !'
+        ];
+        const randomPraise = encouragements[Math.floor(Math.random() * encouragements.length)];
+
+        const nextNote = playableTrainingNotes[newIndex]?.note;
+        setTrainingFeedback({
+          type: 'success',
+          message: `${randomPraise} Note suivante : ${nextNote}`,
+          keyHint: keyInfo?.keyShortcut
+        });
+        setTrainingIndex(newIndex);
+      }
+    } else {
+      // BENEVOLENT MISTAKE FEEDBACK
+      setScore((prev) => ({
+        ...prev,
+        total: prev.total + 1,
+        combo: 0
+      }));
+
+      const gentleHints = [
+        `Presque ! Tu as joué ${cleanPlayed}. Cherche la note ${cleanExpected}.`,
+        `Pas d'inquiétude ! Reachy t'attend sur le ${cleanExpected}.`,
+        `Oups, écoute bien : Reachy attend ${cleanExpected}. Réessaye !`
+      ];
+      const randomHint = gentleHints[Math.floor(Math.random() * gentleHints.length)];
+
+      setTrainingFeedback({
+        type: 'mistake',
+        message: randomHint,
+        keyHint: null
+      });
+    }
+  }, [activeMode, expectedNoteName, trainingIndex, playableTrainingNotes]);
+
+  // Play expected note for training helper
+  const handleHearExpectedNote = () => {
+    if (!expectedTrainingEvent || !soundEngineRef.current) return;
+    soundEngineRef.current.playNote(expectedTrainingEvent.frequency, 0.5);
+    setTrainingFeedback({
+      type: 'hint',
+      message: `Écoute bien la note attendue : ${expectedTrainingEvent.note}`,
+      keyHint: null
+    });
+  };
+
+  const handleResetTraining = () => {
+    setTrainingIndex(0);
+    setScore({ correct: 0, total: 0, combo: 0 });
+    setTrainingFeedback({
+      type: 'hint',
+      message: "Entraînement réinitialisé. À toi de jouer !",
+      keyHint: null
+    });
+  };
+
+  const handleSkipTrainingNote = () => {
+    if (trainingIndex < playableTrainingNotes.length - 1) {
+      setTrainingIndex((prev) => prev + 1);
+      setTrainingFeedback({
+        type: 'hint',
+        message: `Note passée. Note suivante : ${playableTrainingNotes[trainingIndex + 1]?.note}`,
+        keyHint: null
+      });
+    }
+  };
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -201,7 +341,13 @@ export default function SongPlayer() {
   };
 
   const currentEvent = partitionData && currentEventIndex >= 0 ? partitionData.events[currentEventIndex] : null;
-  const currentNoteDisplay = currentEvent && !currentEvent.isRest ? currentEvent.note : 'Repos';
+  const currentNoteDisplay = activeMode === 'listen'
+    ? (currentEvent && !currentEvent.isRest ? currentEvent.note : 'Repos')
+    : expectedNoteName;
+
+  const trainingProgressPct = playableTrainingNotes.length > 0
+    ? Math.round((trainingIndex / playableTrainingNotes.length) * 100)
+    : 0;
 
   return (
     <div className="reachy-band-player">
@@ -211,12 +357,37 @@ export default function SongPlayer() {
           <span className="app-icon">🎵</span>
           <div>
             <h1>REACHY BAND</h1>
-            <p className="app-subtitle">Module d'écoute musicale avec Reachy Mini</p>
+            <p className="app-subtitle">Coach musical virtuel interactif avec Reachy Mini</p>
           </div>
         </div>
 
+        {/* Mode Switcher Tabs */}
+        <div className="mode-switcher">
+          <button
+            type="button"
+            className={`btn-mode ${activeMode === 'listen' ? 'active' : ''}`}
+            onClick={() => {
+              stopPlayback();
+              setActiveMode('listen');
+            }}
+          >
+            🎧 Mode Écoute
+          </button>
+          <button
+            type="button"
+            className={`btn-mode ${activeMode === 'training' ? 'active' : ''}`}
+            onClick={() => {
+              stopPlayback();
+              setActiveMode('training');
+            }}
+          >
+            🎯 Mode Entraînement
+          </button>
+        </div>
+
+        {/* Song Selector Dropdown */}
         <div className="song-selector">
-          <label htmlFor="song-select">Choisir un morceau :</label>
+          <label htmlFor="song-select">Morceau :</label>
           <select
             id="song-select"
             value={selectedSong.id}
@@ -240,128 +411,235 @@ export default function SongPlayer() {
         {/* Left Column: Reachy Coach */}
         <section className="coach-section">
           <ReachyCoach
+            mode={activeMode}
             isPlaying={isPlaying}
             currentNote={currentNoteDisplay}
             playbackRate={playbackSpeed}
+            trainingFeedback={trainingFeedback}
+            score={score}
           />
+
+          {/* Octave Controls for Training */}
+          {activeMode === 'training' && (
+            <div className="octave-control-box">
+              <span className="octave-label">Plage d'octave clavier :</span>
+              <div className="octave-btn-group">
+                <button
+                  type="button"
+                  className="btn-octave"
+                  onClick={() => setBaseOctave((o) => Math.max(1, o - 1))}
+                  title="Descendre d'une octave"
+                >
+                  -1 Octave
+                </button>
+                <span className="octave-current">Octave {baseOctave}</span>
+                <button
+                  type="button"
+                  className="btn-octave"
+                  onClick={() => setBaseOctave((o) => Math.min(7, o + 1))}
+                  title="Monter d'une octave"
+                >
+                  +1 Octave
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         {/* Right Column: Interactive Deck */}
         <section className="console-section">
           <div className="song-card">
-            <div className="song-info">
-              <span className="song-card-icon">{selectedSong.icon}</span>
-              <div>
-                <h2>{selectedSong.title}</h2>
-                <span className="composer">{selectedSong.composer}</span>
-              </div>
-            </div>
-
-            {/* Note & Sound Visualizer */}
-            <div className="note-visualizer-container">
-              <div className="note-monitor">
-                <span className="monitor-label">Note active</span>
-                <span className={`monitor-value ${isPlaying && currentNoteDisplay !== 'Repos' ? 'pulse' : ''}`}>
-                  {isPlaying ? currentNoteDisplay : '--'}
-                </span>
-              </div>
-
-              {/* Streaming Note Ribbon */}
-              <div className="note-ribbon">
-                {partitionData ? (
-                  partitionData.events.slice(
-                    Math.max(0, currentEventIndex - 3),
-                    Math.min(partitionData.events.length, currentEventIndex + 7)
-                  ).map((ev) => {
-                    const isActive = ev.id === currentEventIndex;
-                    return (
-                      <div
-                        key={ev.id}
-                        className={`ribbon-item ${isActive ? 'active' : ''} ${ev.isRest ? 'rest' : ''}`}
-                      >
-                        <span className="ribbon-note">{ev.note}</span>
-                        <span className="ribbon-dur">{ev.duration.toFixed(2)}s</span>
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div className="ribbon-placeholder">Chargement des notes...</div>
-                )}
-              </div>
-            </div>
-
-            {/* Timeline & Progress Bar */}
-            <div className="timeline-container">
-              <div className="time-display">
-                <span>{formatTime(currentTime)}</span>
-                <span>{partitionData ? formatTime(partitionData.totalDuration) : '00:00'}</span>
-              </div>
-              <input
-                type="range"
-                className="timeline-slider"
-                min="0"
-                max={partitionData ? partitionData.totalDuration : 100}
-                step="0.05"
-                value={currentTime}
-                onChange={handleSeek}
-                disabled={!partitionData || isLoading}
-              />
-            </div>
-
-            {/* Playback Controls */}
-            <div className="controls-row">
-              <div className="buttons-group">
-                <button
-                  type="button"
-                  id="btn-play-pause"
-                  className={`btn-control btn-play ${isPlaying ? 'playing' : ''}`}
-                  onClick={togglePlay}
-                  disabled={!partitionData || isLoading}
-                  title={isPlaying ? 'Mettre en pause' : 'Lancer l\'écoute'}
-                >
-                  {isPlaying ? '⏸ Pause' : '▶ Écouter'}
-                </button>
-
-                <button
-                  type="button"
-                  id="btn-stop"
-                  className="btn-control btn-stop"
-                  onClick={stopPlayback}
-                  disabled={!partitionData || (currentTime === 0 && !isPlaying)}
-                  title="Arrêter et recommencer"
-                >
-                  ⏹ Recommencer
-                </button>
-              </div>
-
-              {/* Speed Controls (0.5x, 0.75x, 1x, 1.25x) */}
-              <div className="speed-control-group">
-                <span className="speed-label">Vitesse d'entraînement :</span>
-                <div className="speed-buttons">
-                  {[0.5, 0.75, 1.0, 1.25].map((speed) => (
-                    <button
-                      key={speed}
-                      type="button"
-                      className={`btn-speed ${playbackSpeed === speed ? 'active' : ''}`}
-                      onClick={() => setPlaybackSpeed(speed)}
-                    >
-                      {speed}x
-                    </button>
-                  ))}
+            <div className="song-header-row">
+              <div className="song-info">
+                <span className="song-card-icon">{selectedSong.icon}</span>
+                <div>
+                  <h2>{selectedSong.title}</h2>
+                  <span className="composer">{selectedSong.composer}</span>
                 </div>
               </div>
+              <span className={`mode-badge ${activeMode}`}>
+                {activeMode === 'listen' ? 'Mode Écoute passive' : 'Mode Entraînement interactif'}
+              </span>
             </div>
+
+            {/* ----------------- MODE ECOUTE ----------------- */}
+            {activeMode === 'listen' && (
+              <>
+                {/* Note & Sound Visualizer */}
+                <div className="note-visualizer-container">
+                  <div className="note-monitor">
+                    <span className="monitor-label">Note active</span>
+                    <span className={`monitor-value ${isPlaying && currentNoteDisplay !== 'Repos' ? 'pulse' : ''}`}>
+                      {isPlaying ? currentNoteDisplay : '--'}
+                    </span>
+                  </div>
+
+                  {/* Streaming Note Ribbon */}
+                  <div className="note-ribbon">
+                    {partitionData ? (
+                      partitionData.events.slice(
+                        Math.max(0, currentEventIndex - 3),
+                        Math.min(partitionData.events.length, currentEventIndex + 7)
+                      ).map((ev) => {
+                        const isActive = ev.id === currentEventIndex;
+                        return (
+                          <div
+                            key={ev.id}
+                            className={`ribbon-item ${isActive ? 'active' : ''} ${ev.isRest ? 'rest' : ''}`}
+                          >
+                            <span className="ribbon-note">{ev.note}</span>
+                            <span className="ribbon-dur">{ev.duration.toFixed(2)}s</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="ribbon-placeholder">Chargement des notes...</div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Timeline & Progress Bar */}
+                <div className="timeline-container">
+                  <div className="time-display">
+                    <span>{formatTime(currentTime)}</span>
+                    <span>{partitionData ? formatTime(partitionData.totalDuration) : '00:00'}</span>
+                  </div>
+                  <input
+                    type="range"
+                    className="timeline-slider"
+                    min="0"
+                    max={partitionData ? partitionData.totalDuration : 100}
+                    step="0.05"
+                    value={currentTime}
+                    onChange={handleSeek}
+                    disabled={!partitionData || isLoading}
+                  />
+                </div>
+
+                {/* Playback Controls */}
+                <div className="controls-row">
+                  <div className="buttons-group">
+                    <button
+                      type="button"
+                      id="btn-play-pause"
+                      className={`btn-control btn-play ${isPlaying ? 'playing' : ''}`}
+                      onClick={togglePlay}
+                      disabled={!partitionData || isLoading}
+                    >
+                      {isPlaying ? '⏸ Pause' : '▶ Écouter'}
+                    </button>
+
+                    <button
+                      type="button"
+                      id="btn-stop"
+                      className="btn-control btn-stop"
+                      onClick={stopPlayback}
+                      disabled={!partitionData || (currentTime === 0 && !isPlaying)}
+                    >
+                      ⏹ Recommencer
+                    </button>
+                  </div>
+
+                  {/* Speed Controls */}
+                  <div className="speed-control-group">
+                    <span className="speed-label">Vitesse d'écoute :</span>
+                    <div className="speed-buttons">
+                      {[0.5, 0.75, 1.0, 1.25].map((speed) => (
+                        <button
+                          key={speed}
+                          type="button"
+                          className={`btn-speed ${playbackSpeed === speed ? 'active' : ''}`}
+                          onClick={() => setPlaybackSpeed(speed)}
+                        >
+                          {speed}x
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ----------------- MODE ENTRAINEMENT ----------------- */}
+            {activeMode === 'training' && (
+              <div className="training-dashboard">
+                {/* Progress bar */}
+                <div className="training-progress-header">
+                  <div className="progress-info">
+                    <span className="progress-label">Progression de l'exercice :</span>
+                    <span className="progress-value">
+                      Note {Math.min(trainingIndex + 1, playableTrainingNotes.length)} / {playableTrainingNotes.length} ({trainingProgressPct}%)
+                    </span>
+                  </div>
+                  <div className="training-score-chips">
+                    <span className="chip correct">✓ Justes : {score.correct}</span>
+                    <span className="chip combo">🔥 Combo : {score.combo}</span>
+                  </div>
+                </div>
+
+                <div className="progress-bar-wrapper">
+                  <div className="progress-bar-fill" style={{ width: `${trainingProgressPct}%` }}></div>
+                </div>
+
+                {/* Target Note Display Box */}
+                <div className="target-note-banner">
+                  <div className="target-box">
+                    <span className="target-label">Note à reproduire :</span>
+                    <span className="target-note-glow">{expectedNoteName || 'Bravo !'}</span>
+                  </div>
+
+                  <div className="training-actions">
+                    <button
+                      type="button"
+                      className="btn-training-action"
+                      onClick={handleHearExpectedNote}
+                      disabled={!expectedNoteName}
+                      title="Écouter comment sonne la note attendue"
+                    >
+                      🔊 Écouter la note
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-training-action secondary"
+                      onClick={handleSkipTrainingNote}
+                      disabled={trainingIndex >= playableTrainingNotes.length - 1}
+                      title="Passer à la note suivante"
+                    >
+                      ⏭ Passer
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-training-action reset"
+                      onClick={handleResetTraining}
+                      title="Recommencer l'exercice depuis le début"
+                    >
+                      🔄 Recommencer
+                    </button>
+                  </div>
+                </div>
+
+                {/* Next upcoming notes queue */}
+                <div className="upcoming-notes-row">
+                  <span className="upcoming-label">À suivre :</span>
+                  <div className="upcoming-chips">
+                    {playableTrainingNotes.slice(trainingIndex + 1, trainingIndex + 8).map((n, i) => (
+                      <span key={i} className="chip-upcoming">{n.note}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Virtual Piano for both keyboard & click play */}
+            <VirtualPiano
+              baseOctave={baseOctave}
+              expectedNote={activeMode === 'training' ? expectedNoteName : null}
+              onNotePress={handleUserPlayNote}
+            />
 
             {/* Status / Metadata */}
             {isLoading && <p className="status-msg">Chargement du morceau...</p>}
             {error && <p className="status-msg error">❌ {error}</p>}
-            {partitionData && !isLoading && !error && (
-              <div className="song-stats">
-                <span>Total : {partitionData.events.length} notes & silences</span>
-                <span>•</span>
-                <span>Prêt pour l'écoute Reachy</span>
-              </div>
-            )}
           </div>
         </section>
       </div>
