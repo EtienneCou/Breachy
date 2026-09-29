@@ -133,6 +133,32 @@
   margin-bottom: 0.75rem;
 }
 
+.card-title-row, .selected-title-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.format-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.format-badge.midi {
+  background: rgba(236, 72, 153, 0.2);
+  color: #f472b6;
+  border: 1px solid rgba(236, 72, 153, 0.4);
+}
+
+.format-badge.txt {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
 .song-badge-icon {
   font-size: 2rem;
   background: rgba(255, 255, 255, 0.05);

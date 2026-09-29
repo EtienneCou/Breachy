@@ -1,3 +1,5 @@
+import { Midi } from '@tonejs/midi';
+
 // Utility to convert musical note to frequency
 const NOTE_SEMITONES = {
   'C': 0, 'C#': 1, 'DB': 1,
@@ -58,15 +60,73 @@ export function parsePartition(textContent) {
       duration: duration,
       startTime: currentTime,
       endTime: currentTime + duration,
-      isRest: isRest
+      isRest: isRest,
+      velocity: 0.7
     });
 
     currentTime += duration;
   }
 
+  // For text files, all non-rest notes form the lead notes
+  const leadNotes = events.filter((ev) => !ev.isRest && ev.frequency > 0);
+
   return {
     events,
+    leadNotes,
     totalDuration: currentTime
+  };
+}
+
+/**
+ * Parses binary MIDI files (.mid)
+ */
+export function parseMidiBuffer(arrayBuffer) {
+  const midi = new Midi(arrayBuffer);
+  const rawNotes = [];
+
+  midi.tracks.forEach((track) => {
+    // Filter standard percussion to focus on melodic instruments
+    if (track.instrument?.percussion || track.channel === 9) return;
+
+    track.notes.forEach((n) => {
+      const freq = noteToFrequency(n.name);
+      if (freq > 0) {
+        rawNotes.push({
+          note: n.name,
+          frequency: freq,
+          duration: Math.max(0.08, n.duration),
+          startTime: n.time,
+          endTime: n.time + n.duration,
+          velocity: n.velocity || 0.7,
+          isRest: false
+        });
+      }
+    });
+  });
+
+  // Sort notes chronologically by startTime
+  rawNotes.sort((a, b) => a.startTime - b.startTime);
+
+  const events = rawNotes.map((ev, index) => ({
+    ...ev,
+    id: index
+  }));
+
+  // Build a distinct melodic lead track for Training Mode
+  // Filters notes so the user isn't asked to play 6 chords simultaneously
+  const leadNotes = [];
+  let lastLeadTime = -1;
+  for (const n of events) {
+    if (n.startTime >= lastLeadTime + 0.3) {
+      leadNotes.push(n);
+      lastLeadTime = n.startTime;
+    }
+  }
+
+  return {
+    events,
+    leadNotes,
+    totalDuration: midi.duration || (events.length > 0 ? events[events.length - 1].endTime : 0)
   };
 }
 

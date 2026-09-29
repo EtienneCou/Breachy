@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { parsePartition, SoundPlayerEngine, noteToFrequency } from '../utils/audioEngine';
+import { parsePartition, parseMidiBuffer, SoundPlayerEngine, noteToFrequency } from '../utils/audioEngine';
 import ReachyCoach from './ReachyCoach';
 import VirtualPiano from './VirtualPiano';
 import './SongPlayer.css';
@@ -13,7 +13,8 @@ const AVAILABLE_SONGS = [
     icon: '🍄',
     defaultOctave: 6,
     difficulty: 'Intermédiaire',
-    description: 'Le thème culte et rythmé de Nintendo'
+    description: 'Le thème culte et rythmé de Nintendo',
+    format: 'TXT'
   },
   {
     id: 'pirate',
@@ -23,7 +24,41 @@ const AVAILABLE_SONGS = [
     icon: '🏴‍☠️',
     defaultOctave: 4,
     difficulty: 'Débutant / Avancé',
-    description: 'Une mélodie épique et entraînante'
+    description: 'Une mélodie épique et entraînante',
+    format: 'TXT'
+  },
+  {
+    id: 'take_on_me',
+    title: 'A-ha - Take On Me',
+    composer: 'A-ha (Pål Waaktaar, Magne Furuholmen, Morten Harket)',
+    file: '/songs/Aha__Take_on_me.mid',
+    icon: '⚡',
+    defaultOctave: 5,
+    difficulty: 'Rythmé / Pop',
+    description: 'Le riff de synthétiseur légendaire des années 80',
+    format: 'MIDI'
+  },
+  {
+    id: 'bohemian',
+    title: 'Queen - Bohemian Rhapsody',
+    composer: 'Freddie Mercury',
+    file: '/songs/Queen_Bohemian_Rhapsody.mid',
+    icon: '👑',
+    defaultOctave: 4,
+    difficulty: 'Chef-d\'œuvre Rock',
+    description: 'La partie de piano mythique et les harmonies de Queen',
+    format: 'MIDI'
+  },
+  {
+    id: 'show_must_go_on',
+    title: 'Queen - The Show Must Go On',
+    composer: 'Queen (Brian May & Freddie Mercury)',
+    file: '/songs/show_must_go_on_Queen.mid',
+    icon: '🎭',
+    defaultOctave: 3,
+    difficulty: 'Épique & Émotion',
+    description: 'Une symphonie rock inoubliable avec cordes et guitares',
+    format: 'MIDI'
   }
 ];
 
@@ -39,7 +74,7 @@ export default function SongPlayer() {
   // --- Listen Mode States ---
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [currentEventIndex, setCurrentEventIndex] = useState(-1);
+  const [currentNotePlaying, setCurrentNotePlaying] = useState('--');
   const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
 
   // --- Training Mode States ---
@@ -49,9 +84,7 @@ export default function SongPlayer() {
   const [baseOctave, setBaseOctave] = useState(selectedSong.defaultOctave);
 
   // Background song playback during training
-  const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
   const [bgMusicPlaying, setBgMusicPlaying] = useState(false);
-  const [bgCurrentTime, setBgCurrentTime] = useState(0);
 
   // Audio Engine & Timers Ref
   const soundEngineRef = useRef(null);
@@ -60,6 +93,10 @@ export default function SongPlayer() {
   const startTimeRef = useRef(0);
   const pausedAtRef = useRef(0);
   const speedRef = useRef(playbackSpeed);
+
+  // Cursor for timeline event playback
+  const eventCursorRef = useRef(0);
+  const bgCursorRef = useRef(0);
 
   useEffect(() => {
     speedRef.current = playbackSpeed;
@@ -71,6 +108,7 @@ export default function SongPlayer() {
     setTrainingIndex(0);
     setScore({ correct: 0, total: 0, combo: 0 });
     setTrainingFeedback(null);
+    setCurrentNotePlaying('--');
     stopBgMusic();
   }, [selectedSong]);
 
@@ -90,13 +128,15 @@ export default function SongPlayer() {
     };
   }, []);
 
-  // Filter playable notes for training (exclude rests)
+  // Playable notes for Training Mode (lead track)
   const playableTrainingNotes = useMemo(() => {
     if (!partitionData) return [];
-    return partitionData.events.filter((ev) => !ev.isRest && ev.frequency > 0);
+    return partitionData.leadNotes && partitionData.leadNotes.length > 0
+      ? partitionData.leadNotes
+      : partitionData.events.filter((ev) => !ev.isRest && ev.frequency > 0);
   }, [partitionData]);
 
-  // Load partition when selected song changes
+  // Load partition (handles both .txt and .mid files)
   useEffect(() => {
     let isMounted = true;
     stopPlayback();
@@ -110,13 +150,24 @@ export default function SongPlayer() {
         if (!response.ok) {
           throw new Error(`Impossible de charger le fichier (${response.status})`);
         }
-        const text = await response.text();
+
+        const isMidi = selectedSong.file.toLowerCase().endsWith('.mid');
+        let parsed;
+
+        if (isMidi) {
+          const buffer = await response.arrayBuffer();
+          parsed = parseMidiBuffer(buffer);
+        } else {
+          const text = await response.text();
+          parsed = parsePartition(text);
+        }
+
         if (isMounted) {
-          const parsed = parsePartition(text);
           setPartitionData(parsed);
           setCurrentTime(0);
-          setCurrentEventIndex(-1);
+          setCurrentNotePlaying('--');
           setTrainingIndex(0);
+          eventCursorRef.current = 0;
         }
       } catch (err) {
         if (isMounted) {
@@ -144,15 +195,14 @@ export default function SongPlayer() {
     setActiveMode(targetMode);
 
     if (targetMode === 'listen') {
-      // Auto-start listen playback smoothly once loaded
       setTimeout(() => {
         startPlayback();
-      }, 150);
+      }, 200);
     }
   };
 
   // -------------------------------------------------------------
-  // LISTEN MODE CONTROLS
+  // LISTEN MODE PLAYBACK (TIMELINE CURSOR ENGINE)
   // -------------------------------------------------------------
   const startPlayback = () => {
     if (!partitionData || partitionData.events.length === 0) return;
@@ -163,7 +213,11 @@ export default function SongPlayer() {
     const startTimestamp = performance.now();
     startTimeRef.current = startTimestamp - (pausedAtRef.current * 1000) / speedRef.current;
 
-    let lastNoteIndex = -1;
+    // Reset cursor to the current time offset
+    const currentVirtualTime = pausedAtRef.current;
+    let cursor = partitionData.events.findIndex((e) => e.startTime >= currentVirtualTime);
+    if (cursor === -1) cursor = partitionData.events.length;
+    eventCursorRef.current = cursor;
 
     const tick = () => {
       const now = performance.now();
@@ -171,25 +225,26 @@ export default function SongPlayer() {
 
       if (elapsedVirtualTime >= partitionData.totalDuration) {
         setCurrentTime(partitionData.totalDuration);
+        setCurrentNotePlaying('--');
         stopPlayback();
         return;
       }
 
       setCurrentTime(elapsedVirtualTime);
 
-      const eventIndex = partitionData.events.findIndex(
-        (ev) => elapsedVirtualTime >= ev.startTime && elapsedVirtualTime < ev.endTime
-      );
-
-      if (eventIndex !== -1 && eventIndex !== lastNoteIndex) {
-        lastNoteIndex = eventIndex;
-        setCurrentEventIndex(eventIndex);
-
-        const currentEv = partitionData.events[eventIndex];
-        if (!currentEv.isRest && currentEv.frequency > 0) {
-          const effectiveDuration = currentEv.duration / speedRef.current;
-          soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration, 0, 0.22);
+      // Trigger all events scheduled up to elapsedVirtualTime
+      while (
+        eventCursorRef.current < partitionData.events.length &&
+        partitionData.events[eventCursorRef.current].startTime <= elapsedVirtualTime
+      ) {
+        const ev = partitionData.events[eventCursorRef.current];
+        if (!ev.isRest && ev.frequency > 0) {
+          const effectiveDuration = ev.duration / speedRef.current;
+          const vol = Math.min(0.25, (ev.velocity || 0.7) * 0.22);
+          soundEngineRef.current.playNote(ev.frequency, effectiveDuration, 0, vol);
+          setCurrentNotePlaying(ev.note);
         }
+        eventCursorRef.current++;
       }
 
       playbackTimerRef.current = requestAnimationFrame(tick);
@@ -216,8 +271,9 @@ export default function SongPlayer() {
       soundEngineRef.current.stopAll();
     }
     pausedAtRef.current = 0;
+    eventCursorRef.current = 0;
     setCurrentTime(0);
-    setCurrentEventIndex(-1);
+    setCurrentNotePlaying('--');
     setIsPlaying(false);
   };
 
@@ -241,10 +297,10 @@ export default function SongPlayer() {
     pausedAtRef.current = newTime;
     setCurrentTime(newTime);
 
-    const eventIndex = partitionData.events.findIndex(
-      (ev) => newTime >= ev.startTime && newTime < ev.endTime
-    );
-    setCurrentEventIndex(eventIndex);
+    // Reposition cursor
+    let cursor = partitionData.events.findIndex((ev) => ev.startTime >= newTime);
+    if (cursor === -1) cursor = partitionData.events.length;
+    eventCursorRef.current = cursor;
 
     if (wasPlaying) {
       startPlayback();
@@ -261,28 +317,30 @@ export default function SongPlayer() {
     setBgMusicPlaying(true);
 
     const startTimestamp = performance.now();
-    let lastBgIndex = -1;
+    bgCursorRef.current = 0;
 
     const bgTick = () => {
       const now = performance.now();
       const elapsedVirtualTime = ((now - startTimestamp) / 1000) * speedRef.current;
 
-      // Loop background music smoothly
       const loopTime = elapsedVirtualTime % partitionData.totalDuration;
-      setBgCurrentTime(loopTime);
 
-      const eventIndex = partitionData.events.findIndex(
-        (ev) => loopTime >= ev.startTime && loopTime < ev.endTime
-      );
+      // Handle loop reset
+      if (bgCursorRef.current >= partitionData.events.length || loopTime < (partitionData.events[bgCursorRef.current]?.startTime || 0) - 1.0) {
+        bgCursorRef.current = 0;
+      }
 
-      if (eventIndex !== -1 && eventIndex !== lastBgIndex) {
-        lastBgIndex = eventIndex;
-        const currentEv = partitionData.events[eventIndex];
-        if (!currentEv.isRest && currentEv.frequency > 0) {
-          const effectiveDuration = currentEv.duration / speedRef.current;
-          // Play at soft volume (0.07) so the student's own notes remain prominent!
-          soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration, 0, 0.07);
+      while (
+        bgCursorRef.current < partitionData.events.length &&
+        partitionData.events[bgCursorRef.current].startTime <= loopTime
+      ) {
+        const ev = partitionData.events[bgCursorRef.current];
+        if (!ev.isRest && ev.frequency > 0) {
+          const effectiveDuration = ev.duration / speedRef.current;
+          // Soft volume for background accompaniment
+          soundEngineRef.current.playNote(ev.frequency, effectiveDuration, 0, 0.06);
         }
+        bgCursorRef.current++;
       }
 
       bgPlaybackTimerRef.current = requestAnimationFrame(bgTick);
@@ -296,15 +354,13 @@ export default function SongPlayer() {
       cancelAnimationFrame(bgPlaybackTimerRef.current);
     }
     setBgMusicPlaying(false);
-    setBgCurrentTime(0);
+    bgCursorRef.current = 0;
   };
 
   const toggleBgMusic = () => {
     if (bgMusicPlaying) {
       stopBgMusic();
-      setBgMusicEnabled(false);
     } else {
-      setBgMusicEnabled(true);
       startBgMusic();
     }
   };
@@ -318,7 +374,7 @@ export default function SongPlayer() {
   const handleUserPlayNote = useCallback((playedNote, keyInfo) => {
     if (!soundEngineRef.current) return;
 
-    // Play the user's note with clear front volume
+    // Play note at full distinct volume for clear user feedback
     const freq = noteToFrequency(playedNote);
     if (freq > 0) {
       soundEngineRef.current.playNote(freq, 0.35, 0, 0.28);
@@ -329,7 +385,7 @@ export default function SongPlayer() {
     const cleanExpected = expectedNoteName.trim().toUpperCase();
     const cleanPlayed = playedNote.trim().toUpperCase();
 
-    // Check match
+    // Check match: exact match OR matching pitch letter
     const isExactMatch = cleanPlayed === cleanExpected;
     const isLetterMatch = cleanPlayed.replace(/\d+/, '') === cleanExpected.replace(/\d+/, '');
 
@@ -347,7 +403,7 @@ export default function SongPlayer() {
       if (isCompleted) {
         setTrainingFeedback({
           type: 'complete',
-          message: '🎉 Morceau terminé avec brio ! Reachy est fier de toi !',
+          message: '🎉 Félicitations ! Tu as joué tout le morceau avec Reachy !',
           keyHint: null
         });
       } else {
@@ -378,8 +434,8 @@ export default function SongPlayer() {
 
       const gentleHints = [
         `Presque ! Tu as joué ${cleanPlayed}. Reachy attend ${cleanExpected}.`,
-        `Pas d'inquiétude ! Reachy t'attend sur le ${cleanExpected}.`,
-        `Oups ! Écoute bien le rythme : Reachy attend ${cleanExpected}. Réessaye !`
+        `Pas de souci ! Reachy t'attend sur le ${cleanExpected}.`,
+        `Écoute bien : Reachy attend la note ${cleanExpected}. Réessaye !`
       ];
       const randomHint = gentleHints[Math.floor(Math.random() * gentleHints.length)];
 
@@ -428,9 +484,8 @@ export default function SongPlayer() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const currentEvent = partitionData && currentEventIndex >= 0 ? partitionData.events[currentEventIndex] : null;
   const currentNoteDisplay = activeMode === 'listen'
-    ? (currentEvent && !currentEvent.isRest ? currentEvent.note : 'Repos')
+    ? currentNotePlaying
     : expectedNoteName;
 
   const trainingProgressPct = playableTrainingNotes.length > 0
@@ -445,7 +500,7 @@ export default function SongPlayer() {
           <span className="app-icon">🤖🎵</span>
           <div>
             <h1>REACHY BAND</h1>
-            <p className="app-subtitle">Choisissez votre morceau : écoutez Reachy ou entraînez-vous avec lui !</p>
+            <p className="app-subtitle">Pratique musicale interactive avec Reachy Mini • Formats TXT & MIDI</p>
           </div>
         </div>
 
@@ -476,11 +531,10 @@ export default function SongPlayer() {
       </header>
 
       {/* -------------------------------------------------------------
-          SONG CATALOGUE & DUAL ACTION SELECTION
-          L'utilisateur choisit pour chaque morceau entre Jouer ou S'entraîner
+          SONG CATALOGUE & DUAL ACTION SELECTION (TXT & MIDI)
           ------------------------------------------------------------- */}
       <section className="song-catalogue-section">
-        <h2 className="catalogue-title">Catalogue des Morceaux : Choisissez votre défi</h2>
+        <h2 className="catalogue-title">Catalogue des Morceaux : 5 morceaux prêts à jouer</h2>
         <div className="song-cards-grid">
           {AVAILABLE_SONGS.map((song) => {
             const isSelected = selectedSong.id === song.id;
@@ -492,7 +546,10 @@ export default function SongPlayer() {
                 <div className="card-top">
                   <span className="song-badge-icon">{song.icon}</span>
                   <div className="song-meta">
-                    <h3>{song.title}</h3>
+                    <div className="card-title-row">
+                      <h3>{song.title}</h3>
+                      <span className={`format-badge ${song.format.toLowerCase()}`}>{song.format}</span>
+                    </div>
                     <p className="card-composer">{song.composer}</p>
                     <span className="card-difficulty">{song.difficulty}</span>
                   </div>
@@ -573,7 +630,10 @@ export default function SongPlayer() {
               <div className="song-info">
                 <span className="song-card-icon">{selectedSong.icon}</span>
                 <div>
-                  <h2>{selectedSong.title}</h2>
+                  <div className="selected-title-group">
+                    <h2>{selectedSong.title}</h2>
+                    <span className={`format-badge ${selectedSong.format.toLowerCase()}`}>{selectedSong.format}</span>
+                  </div>
                   <span className="composer">{selectedSong.composer}</span>
                 </div>
               </div>
@@ -589,8 +649,8 @@ export default function SongPlayer() {
                 <div className="note-visualizer-container">
                   <div className="note-monitor">
                     <span className="monitor-label">Note active</span>
-                    <span className={`monitor-value ${isPlaying && currentNoteDisplay !== 'Repos' ? 'pulse' : ''}`}>
-                      {isPlaying ? currentNoteDisplay : '--'}
+                    <span className={`monitor-value ${isPlaying && currentNotePlaying !== '--' ? 'pulse' : ''}`}>
+                      {isPlaying ? currentNotePlaying : '--'}
                     </span>
                   </div>
 
@@ -598,10 +658,10 @@ export default function SongPlayer() {
                   <div className="note-ribbon">
                     {partitionData ? (
                       partitionData.events.slice(
-                        Math.max(0, currentEventIndex - 3),
-                        Math.min(partitionData.events.length, currentEventIndex + 7)
+                        Math.max(0, eventCursorRef.current - 2),
+                        Math.min(partitionData.events.length, eventCursorRef.current + 8)
                       ).map((ev) => {
-                        const isActive = ev.id === currentEventIndex;
+                        const isActive = ev.note === currentNotePlaying;
                         return (
                           <div
                             key={ev.id}
@@ -613,7 +673,7 @@ export default function SongPlayer() {
                         );
                       })
                     ) : (
-                      <div className="ribbon-placeholder">Chargement des notes...</div>
+                      <div className="ribbon-placeholder">Chargement de la partition...</div>
                     )}
                   </div>
                 </div>
@@ -692,7 +752,7 @@ export default function SongPlayer() {
                       <p className="bg-track-desc">
                         {bgMusicPlaying
                           ? "Le morceau joue doucement en arrière-plan pour vous donner le tempo !"
-                          : "Activez pour entendre la mélodie en fond sonore pendant que vous jouez."}
+                          : "Activez pour entendre la musique en fond sonore pendant que vous jouez."}
                       </p>
                     </div>
                   </div>
