@@ -11,7 +11,9 @@ const AVAILABLE_SONGS = [
     composer: 'Koji Kondo',
     file: '/songs/mario.txt',
     icon: '🍄',
-    defaultOctave: 6
+    defaultOctave: 6,
+    difficulty: 'Intermédiaire',
+    description: 'Le thème culte et rythmé de Nintendo'
   },
   {
     id: 'pirate',
@@ -19,7 +21,9 @@ const AVAILABLE_SONGS = [
     composer: 'Klaus Badelt & Hans Zimmer',
     file: '/songs/pirate.txt',
     icon: '🏴‍☠️',
-    defaultOctave: 4
+    defaultOctave: 4,
+    difficulty: 'Débutant / Avancé',
+    description: 'Une mélodie épique et entraînante'
   }
 ];
 
@@ -44,9 +48,15 @@ export default function SongPlayer() {
   const [score, setScore] = useState({ correct: 0, total: 0, combo: 0 });
   const [baseOctave, setBaseOctave] = useState(selectedSong.defaultOctave);
 
+  // Background song playback during training
+  const [bgMusicEnabled, setBgMusicEnabled] = useState(false);
+  const [bgMusicPlaying, setBgMusicPlaying] = useState(false);
+  const [bgCurrentTime, setBgCurrentTime] = useState(0);
+
   // Audio Engine & Timers Ref
   const soundEngineRef = useRef(null);
   const playbackTimerRef = useRef(null);
+  const bgPlaybackTimerRef = useRef(null);
   const startTimeRef = useRef(0);
   const pausedAtRef = useRef(0);
   const speedRef = useRef(playbackSpeed);
@@ -61,6 +71,7 @@ export default function SongPlayer() {
     setTrainingIndex(0);
     setScore({ correct: 0, total: 0, combo: 0 });
     setTrainingFeedback(null);
+    stopBgMusic();
   }, [selectedSong]);
 
   // Initialize sound engine
@@ -72,6 +83,9 @@ export default function SongPlayer() {
       }
       if (playbackTimerRef.current) {
         cancelAnimationFrame(playbackTimerRef.current);
+      }
+      if (bgPlaybackTimerRef.current) {
+        cancelAnimationFrame(bgPlaybackTimerRef.current);
       }
     };
   }, []);
@@ -86,6 +100,7 @@ export default function SongPlayer() {
   useEffect(() => {
     let isMounted = true;
     stopPlayback();
+    stopBgMusic();
 
     async function loadSong() {
       setIsLoading(true);
@@ -118,6 +133,23 @@ export default function SongPlayer() {
       isMounted = false;
     };
   }, [selectedSong]);
+
+  // -------------------------------------------------------------
+  // SONG SELECTION WITH DIRECT CHOICE (JOUER vs S'ENTRAINER)
+  // -------------------------------------------------------------
+  const handleSelectSongWithMode = (song, targetMode) => {
+    stopPlayback();
+    stopBgMusic();
+    setSelectedSong(song);
+    setActiveMode(targetMode);
+
+    if (targetMode === 'listen') {
+      // Auto-start listen playback smoothly once loaded
+      setTimeout(() => {
+        startPlayback();
+      }, 150);
+    }
+  };
 
   // -------------------------------------------------------------
   // LISTEN MODE CONTROLS
@@ -156,7 +188,7 @@ export default function SongPlayer() {
         const currentEv = partitionData.events[eventIndex];
         if (!currentEv.isRest && currentEv.frequency > 0) {
           const effectiveDuration = currentEv.duration / speedRef.current;
-          soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration);
+          soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration, 0, 0.22);
         }
       }
 
@@ -220,6 +252,64 @@ export default function SongPlayer() {
   };
 
   // -------------------------------------------------------------
+  // BACKGROUND MUSIC DURING TRAINING (MORCEAU EN ARRIERE-PLAN)
+  // -------------------------------------------------------------
+  const startBgMusic = () => {
+    if (!partitionData || partitionData.events.length === 0) return;
+
+    soundEngineRef.current.initContext();
+    setBgMusicPlaying(true);
+
+    const startTimestamp = performance.now();
+    let lastBgIndex = -1;
+
+    const bgTick = () => {
+      const now = performance.now();
+      const elapsedVirtualTime = ((now - startTimestamp) / 1000) * speedRef.current;
+
+      // Loop background music smoothly
+      const loopTime = elapsedVirtualTime % partitionData.totalDuration;
+      setBgCurrentTime(loopTime);
+
+      const eventIndex = partitionData.events.findIndex(
+        (ev) => loopTime >= ev.startTime && loopTime < ev.endTime
+      );
+
+      if (eventIndex !== -1 && eventIndex !== lastBgIndex) {
+        lastBgIndex = eventIndex;
+        const currentEv = partitionData.events[eventIndex];
+        if (!currentEv.isRest && currentEv.frequency > 0) {
+          const effectiveDuration = currentEv.duration / speedRef.current;
+          // Play at soft volume (0.07) so the student's own notes remain prominent!
+          soundEngineRef.current.playNote(currentEv.frequency, effectiveDuration, 0, 0.07);
+        }
+      }
+
+      bgPlaybackTimerRef.current = requestAnimationFrame(bgTick);
+    };
+
+    bgPlaybackTimerRef.current = requestAnimationFrame(bgTick);
+  };
+
+  const stopBgMusic = () => {
+    if (bgPlaybackTimerRef.current) {
+      cancelAnimationFrame(bgPlaybackTimerRef.current);
+    }
+    setBgMusicPlaying(false);
+    setBgCurrentTime(0);
+  };
+
+  const toggleBgMusic = () => {
+    if (bgMusicPlaying) {
+      stopBgMusic();
+      setBgMusicEnabled(false);
+    } else {
+      setBgMusicEnabled(true);
+      startBgMusic();
+    }
+  };
+
+  // -------------------------------------------------------------
   // TRAINING MODE LOGIC
   // -------------------------------------------------------------
   const expectedTrainingEvent = playableTrainingNotes[trainingIndex] || null;
@@ -228,10 +318,10 @@ export default function SongPlayer() {
   const handleUserPlayNote = useCallback((playedNote, keyInfo) => {
     if (!soundEngineRef.current) return;
 
-    // Play the pressed note sound immediately
+    // Play the user's note with clear front volume
     const freq = noteToFrequency(playedNote);
     if (freq > 0) {
-      soundEngineRef.current.playNote(freq, 0.35);
+      soundEngineRef.current.playNote(freq, 0.35, 0, 0.28);
     }
 
     if (activeMode !== 'training' || !expectedNoteName) return;
@@ -239,8 +329,7 @@ export default function SongPlayer() {
     const cleanExpected = expectedNoteName.trim().toUpperCase();
     const cleanPlayed = playedNote.trim().toUpperCase();
 
-    // Check if the played note matches the expected note
-    // Flexible check: exact match OR note letter matches if student is one octave apart
+    // Check match
     const isExactMatch = cleanPlayed === cleanExpected;
     const isLetterMatch = cleanPlayed.replace(/\d+/, '') === cleanExpected.replace(/\d+/, '');
 
@@ -258,7 +347,7 @@ export default function SongPlayer() {
       if (isCompleted) {
         setTrainingFeedback({
           type: 'complete',
-          message: '🎉 Morceau terminé avec succès ! Reachy est très fier de toi !',
+          message: '🎉 Morceau terminé avec brio ! Reachy est fier de toi !',
           keyHint: null
         });
       } else {
@@ -288,9 +377,9 @@ export default function SongPlayer() {
       }));
 
       const gentleHints = [
-        `Presque ! Tu as joué ${cleanPlayed}. Cherche la note ${cleanExpected}.`,
+        `Presque ! Tu as joué ${cleanPlayed}. Reachy attend ${cleanExpected}.`,
         `Pas d'inquiétude ! Reachy t'attend sur le ${cleanExpected}.`,
-        `Oups, écoute bien : Reachy attend ${cleanExpected}. Réessaye !`
+        `Oups ! Écoute bien le rythme : Reachy attend ${cleanExpected}. Réessaye !`
       ];
       const randomHint = gentleHints[Math.floor(Math.random() * gentleHints.length)];
 
@@ -302,10 +391,9 @@ export default function SongPlayer() {
     }
   }, [activeMode, expectedNoteName, trainingIndex, playableTrainingNotes]);
 
-  // Play expected note for training helper
   const handleHearExpectedNote = () => {
     if (!expectedTrainingEvent || !soundEngineRef.current) return;
-    soundEngineRef.current.playNote(expectedTrainingEvent.frequency, 0.5);
+    soundEngineRef.current.playNote(expectedTrainingEvent.frequency, 0.5, 0, 0.28);
     setTrainingFeedback({
       type: 'hint',
       message: `Écoute bien la note attendue : ${expectedTrainingEvent.note}`,
@@ -354,20 +442,21 @@ export default function SongPlayer() {
       {/* Header Section */}
       <header className="player-header">
         <div className="logo-title">
-          <span className="app-icon">🎵</span>
+          <span className="app-icon">🤖🎵</span>
           <div>
             <h1>REACHY BAND</h1>
-            <p className="app-subtitle">Coach musical virtuel interactif avec Reachy Mini</p>
+            <p className="app-subtitle">Choisissez votre morceau : écoutez Reachy ou entraînez-vous avec lui !</p>
           </div>
         </div>
 
-        {/* Mode Switcher Tabs */}
+        {/* Global Mode Switcher Tabs */}
         <div className="mode-switcher">
           <button
             type="button"
             className={`btn-mode ${activeMode === 'listen' ? 'active' : ''}`}
             onClick={() => {
               stopPlayback();
+              stopBgMusic();
               setActiveMode('listen');
             }}
           >
@@ -384,27 +473,58 @@ export default function SongPlayer() {
             🎯 Mode Entraînement
           </button>
         </div>
-
-        {/* Song Selector Dropdown */}
-        <div className="song-selector">
-          <label htmlFor="song-select">Morceau :</label>
-          <select
-            id="song-select"
-            value={selectedSong.id}
-            onChange={(e) => {
-              const song = AVAILABLE_SONGS.find((s) => s.id === e.target.value);
-              if (song) setSelectedSong(song);
-            }}
-            disabled={isPlaying}
-          >
-            {AVAILABLE_SONGS.map((song) => (
-              <option key={song.id} value={song.id}>
-                {song.icon} {song.title}
-              </option>
-            ))}
-          </select>
-        </div>
       </header>
+
+      {/* -------------------------------------------------------------
+          SONG CATALOGUE & DUAL ACTION SELECTION
+          L'utilisateur choisit pour chaque morceau entre Jouer ou S'entraîner
+          ------------------------------------------------------------- */}
+      <section className="song-catalogue-section">
+        <h2 className="catalogue-title">Catalogue des Morceaux : Choisissez votre défi</h2>
+        <div className="song-cards-grid">
+          {AVAILABLE_SONGS.map((song) => {
+            const isSelected = selectedSong.id === song.id;
+            return (
+              <div
+                key={song.id}
+                className={`catalogue-card ${isSelected ? 'is-selected' : ''}`}
+              >
+                <div className="card-top">
+                  <span className="song-badge-icon">{song.icon}</span>
+                  <div className="song-meta">
+                    <h3>{song.title}</h3>
+                    <p className="card-composer">{song.composer}</p>
+                    <span className="card-difficulty">{song.difficulty}</span>
+                  </div>
+                </div>
+
+                <p className="card-description">{song.description}</p>
+
+                {/* Direct Action Choices for EACH Song */}
+                <div className="card-actions">
+                  <button
+                    type="button"
+                    className={`btn-choice btn-choice-listen ${isSelected && activeMode === 'listen' ? 'current-active' : ''}`}
+                    onClick={() => handleSelectSongWithMode(song, 'listen')}
+                    title={`Écouter Reachy jouer ${song.title}`}
+                  >
+                    ▶ Jouer le morceau
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`btn-choice btn-choice-train ${isSelected && activeMode === 'training' ? 'current-active' : ''}`}
+                    onClick={() => handleSelectSongWithMode(song, 'training')}
+                    title={`S'entraîner sur ${song.title} au clavier AZERTY`}
+                  >
+                    🎯 S'entraîner
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Main Grid: Coach Reachy + Music Console */}
       <div className="player-grid">
@@ -412,7 +532,7 @@ export default function SongPlayer() {
         <section className="coach-section">
           <ReachyCoach
             mode={activeMode}
-            isPlaying={isPlaying}
+            isPlaying={isPlaying || bgMusicPlaying}
             currentNote={currentNoteDisplay}
             playbackRate={playbackSpeed}
             trainingFeedback={trainingFeedback}
@@ -563,6 +683,29 @@ export default function SongPlayer() {
             {/* ----------------- MODE ENTRAINEMENT ----------------- */}
             {activeMode === 'training' && (
               <div className="training-dashboard">
+                {/* Backing Track In Background Option Banner */}
+                <div className="bg-track-banner">
+                  <div className="bg-track-left">
+                    <span className="bg-track-icon">🎶</span>
+                    <div>
+                      <strong>Morceau en arrière-plan</strong>
+                      <p className="bg-track-desc">
+                        {bgMusicPlaying
+                          ? "Le morceau joue doucement en arrière-plan pour vous donner le tempo !"
+                          : "Activez pour entendre la mélodie en fond sonore pendant que vous jouez."}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`btn-toggle-bg ${bgMusicPlaying ? 'active' : ''}`}
+                    onClick={toggleBgMusic}
+                    disabled={!partitionData}
+                  >
+                    {bgMusicPlaying ? '🔊 Arrière-plan : ACTIF' : '🔈 Jouer en arrière-plan'}
+                  </button>
+                </div>
+
                 {/* Progress bar */}
                 <div className="training-progress-header">
                   <div className="progress-info">

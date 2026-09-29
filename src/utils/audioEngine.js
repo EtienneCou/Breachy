@@ -89,7 +89,7 @@ export class SoundPlayerEngine {
     }
   }
 
-  playNote(frequency, duration, time = 0) {
+  playNote(frequency, duration, time = 0, volume = 0.22) {
     if (!frequency || frequency <= 0) return;
     this.initContext();
 
@@ -112,7 +112,7 @@ export class SoundPlayerEngine {
     const decay = Math.min(0.08, duration * 0.3);
     const release = Math.min(0.06, duration * 0.2);
     const sustainLevel = 0.55;
-    const peakVolume = 0.22;
+    const peakVolume = volume;
 
     gainNode.gain.setValueAtTime(0.0001, startTime);
     gainNode.gain.linearRampToValueAtTime(peakVolume, startTime + attack);
