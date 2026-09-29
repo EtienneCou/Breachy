@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SongLibrary from './pages/SongLibrary';
 import FreePlay from './pages/FreePlay';
-import Home from './pages/Home';
+import HomePage from './pages/HomePage';
 import SongPlayer from './components/SongPlayer';
 import PianoPage from './pages/PianoPage.jsx';
 import NoteScrollerDemo from './components/Notes_scroller/Notescrollerdemo.jsx';
@@ -12,7 +12,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('morceaux'); // 'accueil' | 'morceaux' | 'jeu_libre' | 'player'
+  const [activeTab, setActiveTab] = useState('accueil'); // 'accueil' | 'morceaux' | 'jeu_libre' | 'player'
   const [currentSong, setCurrentSong] = useState(null);
   const [currentMode, setCurrentMode] = useState('listen'); // 'listen' | 'training'
 
@@ -23,7 +23,7 @@ function App() {
   };
 
   const handleBackToLibrary = () => {
-    setActiveTab('morceaux');
+    setActiveTab('accueil');
   };
 
   // Determine mascot speech message based on current view
@@ -34,7 +34,7 @@ function App() {
     mascotMessage = currentMode === 'training'
       ? `Reachy t'entraîne sur ${currentSong?.title || 'le morceau'} ! 🎯`
       : `Reachy te joue ${currentSong?.title || 'le morceau'} ! 🎧`;
-  } else if (activeTab === 'accueil') {
+  } else if (activeTab === 'accueil' || activeTab === 'morceaux') {
     mascotMessage = "Bienvenue dans Reachy Band ! ✨";
   }
 
@@ -45,9 +45,10 @@ function App() {
 
       {/* Main Content Area wrapped in ErrorBoundary */}
       <main className="reachy-main-content">
-        <ErrorBoundary onReset={() => setActiveTab('morceaux')}>
-          {activeTab === 'accueil' && <Home onNavigate={setActiveTab} />}
-          {activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
+        <ErrorBoundary onReset={() => setActiveTab('accueil')}>
+          {(activeTab === 'accueil' || activeTab === 'morceaux') && (
+            <HomePage onPlaySong={handlePlaySongFromLibrary} onNavigate={setActiveTab} />
+          )}
           {activeTab === 'jeu_libre' && <FreePlay />}
           {activeTab === 'player' && (
             <SongPlayer
@@ -61,6 +62,7 @@ function App() {
           <Routes>
             <Route path="/pianoPage" element={<PianoPage />} />
             <Route path="/notes-scroller" element={<NoteScrollerDemo />} />
+            <Route path="*" element={null} />
           </Routes>
         </ErrorBoundary>
       </main>
