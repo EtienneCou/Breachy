@@ -4,6 +4,7 @@ import useTimeline from './Usetimeline';
 import { createPianoLayout } from './Notelayout';
 import { getSongDuration } from './Timeline';
 import { loadMusic, musicCatalog } from '../../data/musicData';
+import '../../App.css';
 
 const pianoLayout = createPianoLayout({ from: 'C3', to: 'C8' });
 
