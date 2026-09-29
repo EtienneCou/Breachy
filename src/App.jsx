@@ -5,6 +5,7 @@ import FreePlay from './pages/FreePlay';
 import Home from './pages/Home';
 import SongPlayer from './components/SongPlayer';
 import ReachyFloatingMascot from './components/ReachyFloatingMascot';
+import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
 
 function App() {
@@ -39,18 +40,20 @@ function App() {
       {/* Top Navbar */}
       <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Main Content Area */}
+      {/* Main Content Area wrapped in ErrorBoundary */}
       <main className="reachy-main-content">
-        {activeTab === 'accueil' && <Home onNavigate={setActiveTab} />}
-        {activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
-        {activeTab === 'jeu_libre' && <FreePlay />}
-        {activeTab === 'player' && (
-          <SongPlayer
-            initialSong={currentSong}
-            initialMode={currentMode}
-            onBack={handleBackToLibrary}
-          />
-        )}
+        <ErrorBoundary onReset={() => setActiveTab('morceaux')}>
+          {activeTab === 'accueil' && <Home onNavigate={setActiveTab} />}
+          {activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
+          {activeTab === 'jeu_libre' && <FreePlay />}
+          {activeTab === 'player' && (
+            <SongPlayer
+              initialSong={currentSong}
+              initialMode={currentMode}
+              onBack={handleBackToLibrary}
+            />
+          )}
+        </ErrorBoundary>
       </main>
 
       {/* Floating Reachy Mini Mascot (Bottom-Right) */}

@@ -614,10 +614,14 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
                 <span className="song-card-icon">{selectedSong.icon}</span>
                 <div>
                   <div className="selected-title-group">
-                    <h2>{selectedSong.title}</h2>
-                    <span className={`format-badge ${selectedSong.format.toLowerCase()}`}>{selectedSong.format}</span>
+                    <h2>{selectedSong?.title || 'Morceau'}</h2>
+                    {selectedSong?.file && (
+                      <span className={`format-badge ${selectedSong.file.toLowerCase().endsWith('.mid') ? 'midi' : 'txt'}`}>
+                        {selectedSong.file.toLowerCase().endsWith('.mid') ? 'MIDI' : 'TXT'}
+                      </span>
+                    )}
                   </div>
-                  <span className="composer">{selectedSong.composer}</span>
+                  <span className="composer">{selectedSong?.composer || ''}</span>
                 </div>
               </div>
               <span className={`mode-badge ${activeMode}`}>
