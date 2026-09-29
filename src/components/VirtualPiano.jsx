@@ -82,8 +82,16 @@ export default function VirtualPiano({
     if (!expectedNote || expectedNote === 'Repos') return false;
     const cleanExpected = expectedNote.trim().toUpperCase();
     const cleanFull = keyFullNote.toUpperCase();
-    // Match exact full note (e.g. "G4" == "G4") OR base note letter if octave matches
-    return cleanExpected === cleanFull;
+    if (cleanExpected === cleanFull) return true;
+
+    // Fallback: if exact note octave isn't in current view, highlight the pitch letter
+    const exactExists = keys.some((k) => k.fullNote.toUpperCase() === cleanExpected);
+    if (!exactExists) {
+      const expectedLetter = cleanExpected.replace(/\d+/, '');
+      const keyLetter = keyBaseNote.toUpperCase();
+      return expectedLetter === keyLetter;
+    }
+    return false;
   };
 
   return (

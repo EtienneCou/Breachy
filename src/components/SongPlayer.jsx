@@ -95,7 +95,7 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
   const [trainingIndex, setTrainingIndex] = useState(0);
   const [trainingFeedback, setTrainingFeedback] = useState(null);
   const [score, setScore] = useState({ correct: 0, total: 0, combo: 0 });
-  const [baseOctave, setBaseOctave] = useState(selectedSong.defaultOctave);
+  const [baseOctave, setBaseOctave] = useState(selectedSong?.defaultOctave || 4);
 
   // Background song playback during training
   const [bgMusicPlaying, setBgMusicPlaying] = useState(false);
@@ -118,7 +118,7 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
 
   // Sync base octave when selected song changes
   useEffect(() => {
-    setBaseOctave(selectedSong.defaultOctave);
+    setBaseOctave(selectedSong?.defaultOctave || 4);
     setTrainingIndex(0);
     setScore({ correct: 0, total: 0, combo: 0 });
     setTrainingFeedback(null);
@@ -385,6 +385,19 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
   const expectedTrainingEvent = playableTrainingNotes[trainingIndex] || null;
   const expectedNoteName = expectedTrainingEvent ? expectedTrainingEvent.note : null;
 
+  // Auto-shift piano keyboard octave to match the target note
+  useEffect(() => {
+    if (activeMode === 'training' && expectedNoteName) {
+      const match = expectedNoteName.match(/\d+/);
+      if (match) {
+        const targetOct = parseInt(match[0], 10);
+        if (targetOct && (targetOct < baseOctave || targetOct > baseOctave + 1)) {
+          setBaseOctave(targetOct);
+        }
+      }
+    }
+  }, [activeMode, expectedNoteName, baseOctave]);
+
   const handleUserPlayNote = useCallback((playedNote, keyInfo) => {
     if (!soundEngineRef.current) return;
 
@@ -551,58 +564,7 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
         </div>
       </header>
 
-      {/* -------------------------------------------------------------
-          SONG CATALOGUE & DUAL ACTION SELECTION (TXT & MIDI)
-          ------------------------------------------------------------- */}
-      <section className="song-catalogue-section">
-        <h2 className="catalogue-title">Catalogue des Morceaux : 5 morceaux prêts à jouer</h2>
-        <div className="song-cards-grid">
-          {AVAILABLE_SONGS.map((song) => {
-            const isSelected = selectedSong.id === song.id;
-            return (
-              <div
-                key={song.id}
-                className={`catalogue-card ${isSelected ? 'is-selected' : ''}`}
-              >
-                <div className="card-top">
-                  <span className="song-badge-icon">{song.icon}</span>
-                  <div className="song-meta">
-                    <div className="card-title-row">
-                      <h3>{song.title}</h3>
-                      <span className={`format-badge ${song.format.toLowerCase()}`}>{song.format}</span>
-                    </div>
-                    <p className="card-composer">{song.composer}</p>
-                    <span className="card-difficulty">{song.difficulty}</span>
-                  </div>
-                </div>
 
-                <p className="card-description">{song.description}</p>
-
-                {/* Direct Action Choices for EACH Song */}
-                <div className="card-actions">
-                  <button
-                    type="button"
-                    className={`btn-choice btn-choice-listen ${isSelected && activeMode === 'listen' ? 'current-active' : ''}`}
-                    onClick={() => handleSelectSongWithMode(song, 'listen')}
-                    title={`Écouter Reachy jouer ${song.title}`}
-                  >
-                    ▶ Jouer le morceau
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`btn-choice btn-choice-train ${isSelected && activeMode === 'training' ? 'current-active' : ''}`}
-                    onClick={() => handleSelectSongWithMode(song, 'training')}
-                    title={`S'entraîner sur ${song.title} au clavier AZERTY`}
-                  >
-                    🎯 S'entraîner
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
 
       {/* Main Grid: Coach Reachy + Music Console */}
       <div className="player-grid">

@@ -11,7 +11,8 @@ export const LIBRARY_SONGS = [
     duration: '2:36',
     coverGradient: 'linear-gradient(135deg, #1e293b, #0f172a)',
     coverEmoji: '🌕',
-    file: '/songs/mario.txt' // fallback partition
+    file: '/songs/au_clair_de_la_lune.txt',
+    defaultOctave: 4
   },
   {
     id: 'frere_jacques',
@@ -22,18 +23,8 @@ export const LIBRARY_SONGS = [
     duration: '1:40',
     coverGradient: 'linear-gradient(135deg, #fef3c7, #fde68a)',
     coverEmoji: '👦👦',
-    file: '/songs/pirate.txt'
-  },
-  {
-    id: 'let_it_be',
-    title: 'Let It Be',
-    composer: 'The Beatles',
-    category: 'Pop',
-    difficulty: 'Intermédiaire',
-    duration: '4:03',
-    coverGradient: 'linear-gradient(135deg, #e2e8f0, #94a3b8)',
-    coverEmoji: '🚶‍♂️🚶‍♂️🚶‍♂️🚶‍♂️',
-    file: '/songs/Aha__Take_on_me.mid'
+    file: '/songs/frere_jacques.txt',
+    defaultOctave: 4
   },
   {
     id: 'mario',
@@ -44,7 +35,8 @@ export const LIBRARY_SONGS = [
     duration: '1:25',
     coverGradient: 'linear-gradient(135deg, #fee2e2, #ef4444)',
     coverEmoji: '🍄',
-    file: '/songs/mario.txt'
+    file: '/songs/mario.txt',
+    defaultOctave: 6
   },
   {
     id: 'pirate',
@@ -55,18 +47,8 @@ export const LIBRARY_SONGS = [
     duration: '1:50',
     coverGradient: 'linear-gradient(135deg, #0284c7, #0f172a)',
     coverEmoji: '🏴‍☠️',
-    file: '/songs/pirate.txt'
-  },
-  {
-    id: 'bohemian',
-    title: 'Bohemian Rhapsody',
-    composer: 'Queen',
-    category: 'Pop',
-    difficulty: 'Intermédiaire',
-    duration: '5:55',
-    coverGradient: 'linear-gradient(135deg, #7c3aed, #4c1d95)',
-    coverEmoji: '👑',
-    file: '/songs/Queen_Bohemian_Rhapsody.mid'
+    file: '/songs/pirate.txt',
+    defaultOctave: 4
   },
   {
     id: 'take_on_me',
@@ -77,7 +59,20 @@ export const LIBRARY_SONGS = [
     duration: '3:45',
     coverGradient: 'linear-gradient(135deg, #06b6d4, #2563eb)',
     coverEmoji: '⚡',
-    file: '/songs/Aha__Take_on_me.mid'
+    file: '/songs/Aha__Take_on_me.mid',
+    defaultOctave: 5
+  },
+  {
+    id: 'bohemian',
+    title: 'Bohemian Rhapsody',
+    composer: 'Queen',
+    category: 'Pop',
+    difficulty: 'Intermédiaire',
+    duration: '5:55',
+    coverGradient: 'linear-gradient(135deg, #7c3aed, #4c1d95)',
+    coverEmoji: '👑',
+    file: '/songs/Queen_Bohemian_Rhapsody.mid',
+    defaultOctave: 4
   },
   {
     id: 'show_must_go_on',
@@ -88,8 +83,10 @@ export const LIBRARY_SONGS = [
     duration: '4:30',
     coverGradient: 'linear-gradient(135deg, #b91c1c, #450a0a)',
     coverEmoji: '🎭',
-    file: '/songs/show_must_go_on_Queen.mid'
+    file: '/songs/show_must_go_on_Queen.mid',
+    defaultOctave: 4
   },
+
   {
     id: 'comptine',
     title: 'Comptine d\'un autre été',
