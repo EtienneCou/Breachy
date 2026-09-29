@@ -1,0 +1,262 @@
+.reachy-coach-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  position: relative;
+  min-width: 260px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reachy-coach-container.is-playing {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 35px -5px rgba(99, 102, 241, 0.25), 0 0 20px rgba(56, 189, 248, 0.15);
+}
+
+.reachy-bubble {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 0.75rem 1.25rem;
+  border-radius: 14px;
+  text-align: center;
+  margin-bottom: 1.25rem;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  animation: float 3s ease-in-out infinite;
+}
+
+.reachy-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.9) transparent;
+  display: block;
+  width: 0;
+}
+
+.coach-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  margin-bottom: 0.25rem;
+}
+
+.coach-mood {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.speed-tag {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+/* Avatar construction */
+.reachy-avatar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Antennas */
+.reachy-antennas {
+  display: flex;
+  justify-content: space-between;
+  width: 90px;
+  position: absolute;
+  top: -24px;
+}
+
+.antenna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: bottom center;
+}
+
+.antenna.left {
+  transform: rotate(-18deg);
+}
+
+.antenna.right {
+  transform: rotate(18deg);
+}
+
+.is-playing .antenna.left {
+  animation: wiggleLeft 0.8s ease-in-out infinite alternate;
+}
+
+.is-playing .antenna.right {
+  animation: wiggleRight 0.8s ease-in-out infinite alternate 0.2s;
+}
+
+.antenna-orb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #38bdf8;
+  box-shadow: 0 0 10px #38bdf8;
+  transition: all 0.3s;
+}
+
+.is-playing .antenna-orb {
+  background: #a855f7;
+  box-shadow: 0 0 14px #c084fc;
+}
+
+.antenna-stem {
+  width: 4px;
+  height: 18px;
+  background: #94a3b8;
+  border-radius: 2px;
+}
+
+/* Head */
+.reachy-head {
+  width: 100px;
+  height: 80px;
+  background: linear-gradient(145deg, #f8fafc, #cbd5e1);
+  border-radius: 40px 40px 30px 30px;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.reachy-head.grooving {
+  animation: headBob 0.6s ease-in-out infinite alternate;
+}
+
+/* Visor & Eyes */
+.reachy-face {
+  background: #0f172a;
+  width: 72px;
+  height: 38px;
+  border-radius: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.eye {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px #38bdf8;
+  transition: all 0.2s;
+}
+
+.is-playing .eye {
+  background: #8b5cf6;
+  box-shadow: 0 0 10px #a78bfa;
+}
+
+.pupil {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.reachy-mouth {
+  width: 16px;
+  height: 4px;
+  background: #64748b;
+  border-radius: 2px;
+  margin-top: 6px;
+  transition: all 0.2s;
+}
+
+.reachy-mouth.speaking {
+  width: 24px;
+  height: 6px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+/* Neck & Torso */
+.reachy-neck {
+  width: 28px;
+  height: 12px;
+  background: #475569;
+  border-radius: 4px;
+  margin-top: -2px;
+}
+
+.reachy-torso {
+  width: 80px;
+  height: 32px;
+  background: linear-gradient(145deg, #e2e8f0, #94a3b8);
+  border-radius: 12px 12px 6px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heartbeat-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #34d399;
+  animation: pulseLed 1.5s infinite;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes headBob {
+  0% { transform: translateY(0) rotate(-2deg); }
+  100% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes wiggleLeft {
+  0% { transform: rotate(-22deg); }
+  100% { transform: rotate(-10deg); }
+}
+
+@keyframes wiggleRight {
+  0% { transform: rotate(10deg); }
+  100% { transform: rotate(22deg); }
+}
+
+@keyframes pulseLed {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
