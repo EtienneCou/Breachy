@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { parsePartition, parseMidiBuffer, SoundPlayerEngine, noteToFrequency } from '../utils/audioEngine';
 import ReachyCoach from './ReachyCoach';
 import VirtualPiano from './VirtualPiano';
+import { ResultsModal } from './results';
 import './SongPlayer.css';
 
 const AVAILABLE_SONGS = [
@@ -95,6 +96,12 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
   const [trainingIndex, setTrainingIndex] = useState(0);
   const [trainingFeedback, setTrainingFeedback] = useState(null);
   const [score, setScore] = useState({ correct: 0, total: 0, combo: 0 });
+
+  // --- Fin de morceau : popup de résultats ---
+  const [finishedResults, setFinishedResults] = useState(null);
+  const trainingLogRef = useRef([]); // une entrée par note : { time, expected, played, offsetMs }
+  const firstMistakeRef = useRef(null); // première fausse note jouée sur la note en cours
+  const lastCorrectAtRef = useRef(null); // performance.now() de la dernière note juste
   const [baseOctave, setBaseOctave] = useState(selectedSong?.defaultOctave || 4);
 
   // Background song playback during training
@@ -123,6 +130,10 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
     setScore({ correct: 0, total: 0, combo: 0 });
     setTrainingFeedback(null);
     setCurrentNotePlaying('--');
+    setFinishedResults(null);
+    trainingLogRef.current = [];
+    firstMistakeRef.current = null;
+    lastCorrectAtRef.current = null;
     stopBgMusic();
   }, [selectedSong]);
 
@@ -421,6 +432,20 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
       const newIndex = trainingIndex + 1;
       const isCompleted = newIndex >= playableTrainingNotes.length;
 
+      // Journal pour les résultats : écart entre le temps réellement pris depuis la note
+      // juste précédente et l'écart prévu par la partition (négatif = en avance).
+      const now = performance.now();
+      const previous = playableTrainingNotes[trainingIndex - 1];
+      const expectedGapMs = previous ? (expectedTrainingEvent.startTime - previous.startTime) * 1000 : 0;
+      trainingLogRef.current[trainingIndex] = {
+        time: expectedTrainingEvent.startTime,
+        expected: cleanExpected,
+        played: firstMistakeRef.current ?? cleanExpected,
+        offsetMs: lastCorrectAtRef.current === null ? 0 : Math.round(now - lastCorrectAtRef.current - expectedGapMs),
+      };
+      firstMistakeRef.current = null;
+      lastCorrectAtRef.current = now;
+
       setScore((prev) => ({
         correct: prev.correct + 1,
         total: prev.total + 1,
@@ -432,6 +457,14 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
           type: 'complete',
           message: '🎉 Félicitations ! Tu as joué tout le morceau avec Reachy !',
           keyHint: null
+        });
+        const lastNote = playableTrainingNotes[playableTrainingNotes.length - 1];
+        setFinishedResults({
+          song: { title: selectedSong.title, artist: selectedSong.composer, level: selectedSong.difficulty },
+          playedAt: new Date().toISOString(),
+          speed: 1,
+          duration: lastNote ? lastNote.startTime + (lastNote.duration || 0) : 0,
+          notes: trainingLogRef.current.filter(Boolean),
         });
       } else {
         const encouragements = [
@@ -453,6 +486,7 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
       }
     } else {
       // BENEVOLENT MISTAKE FEEDBACK
+      if (firstMistakeRef.current === null) firstMistakeRef.current = cleanPlayed;
       setScore((prev) => ({
         ...prev,
         total: prev.total + 1,
@@ -472,7 +506,7 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
         keyHint: null
       });
     }
-  }, [activeMode, expectedNoteName, trainingIndex, playableTrainingNotes]);
+  }, [activeMode, expectedNoteName, expectedTrainingEvent, trainingIndex, playableTrainingNotes, selectedSong]);
 
   const handleHearExpectedNote = () => {
     if (!expectedTrainingEvent || !soundEngineRef.current) return;
@@ -487,6 +521,10 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
   const handleResetTraining = () => {
     setTrainingIndex(0);
     setScore({ correct: 0, total: 0, combo: 0 });
+    setFinishedResults(null);
+    trainingLogRef.current = [];
+    firstMistakeRef.current = null;
+    lastCorrectAtRef.current = null;
     setTrainingFeedback({
       type: 'hint',
       message: "Entraînement réinitialisé. À toi de jouer !",
@@ -496,6 +534,14 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
 
   const handleSkipTrainingNote = () => {
     if (trainingIndex < playableTrainingNotes.length - 1) {
+      trainingLogRef.current[trainingIndex] = {
+        time: expectedTrainingEvent.startTime,
+        expected: expectedNoteName.trim().toUpperCase(),
+        played: null,
+        offsetMs: null,
+      };
+      firstMistakeRef.current = null;
+      lastCorrectAtRef.current = performance.now();
       setTrainingIndex((prev) => prev + 1);
       setTrainingFeedback({
         type: 'hint',
@@ -833,6 +879,18 @@ export default function SongPlayer({ initialSong, initialMode = 'listen', onBack
           </div>
         </section>
       </div>
+
+      {/* Popup de fin de morceau : Recommencer relance ce morceau, Quitter le ferme */}
+      {finishedResults && (
+        <ResultsModal
+          results={finishedResults}
+          onRestart={handleResetTraining}
+          onQuit={() => {
+            setFinishedResults(null);
+            if (onBack) onBack();
+          }}
+        />
+      )}
     </div>
   );
 }

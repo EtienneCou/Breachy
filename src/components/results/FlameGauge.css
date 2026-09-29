@@ -1,0 +1,114 @@
+/* Jauge de feu : fond de nuit pour que les flammes brillent. */
+.flame-gauge {
+  --fg-night: #0b1026;
+  --fg-night-2: #1e2448;
+  --fg-text: #ffffff;
+  --fg-muted: #94a3c8;
+  --fg-fill: linear-gradient(90deg, #f59e0b, #fbbf24);
+  --fg-glow: rgba(251, 191, 36, 0.45);
+  --fg-tier: #fcd34d;
+
+  display: grid;
+  gap: 0.25rem;
+  padding: 1.25rem 1.5rem 1rem;
+  color: var(--fg-text);
+  background: radial-gradient(ellipse at 50% 120%, var(--fg-night-2) 0%, var(--fg-night) 70%);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+/* Couleurs selon le palier */
+.flame-gauge[data-tier='warm'] { --fg-fill: linear-gradient(90deg, #f59e0b, #f97316); --fg-glow: rgba(249, 115, 22, 0.5); --fg-tier: #fdba74; }
+.flame-gauge[data-tier='fire'] { --fg-fill: linear-gradient(90deg, #f97316, #ef4444); --fg-glow: rgba(239, 68, 68, 0.55); --fg-tier: #fca5a5; }
+.flame-gauge[data-tier='blue'] {
+  --fg-fill: linear-gradient(90deg, #38bdf8, #2563eb 60%, #6366f1);
+  --fg-glow: rgba(56, 189, 248, 0.7);
+  --fg-tier: #7dd3fc;
+}
+
+.flame-gauge__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+}
+.flame-gauge__value {
+  font-size: clamp(3rem, 9vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.flame-gauge__unit { font-size: 0.5em; margin-left: 0.1em; color: var(--fg-muted); }
+.flame-gauge__tier {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--fg-tier);
+  transition: color 0.3s;
+}
+
+/* Scène : les flammes montent au-dessus de la jauge */
+.flame-gauge__stage {
+  position: relative;
+  height: 130px;
+}
+.flame-gauge__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.flame-gauge__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px; /* = TRACK_H dans FlameGauge.jsx */
+  padding: 4px; /* = INSET */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+.flame-gauge__fill {
+  height: 100%;
+  min-width: 0;
+  background: var(--fg-fill);
+  border-radius: 9999px;
+  box-shadow: 0 0 18px 2px var(--fg-glow);
+}
+
+.flame-gauge__ticks {
+  position: relative;
+  height: 1.4rem;
+  margin-top: 0.35rem;
+}
+.flame-gauge__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.flame-gauge__tick:last-child { transform: translateX(-100%); }
+.flame-gauge__tick::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -0.5rem;
+  width: 2px;
+  height: 0.35rem;
+  background: currentColor;
+  border-radius: 1px;
+}
+.flame-gauge__tick:last-child::before { left: auto; right: 1rem; }
+.flame-gauge__tick.is-reached { color: #ffffff; }
+.flame-gauge__tick.is-blue { color: #7dd3fc; }
+
+@media (prefers-reduced-motion: reduce) {
+  .flame-gauge * { transition: none !important; }
+}

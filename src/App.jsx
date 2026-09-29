@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import SongLibrary from './pages/SongLibrary';
 import FreePlay from './pages/FreePlay';
@@ -15,6 +15,16 @@ function App() {
   const [activeTab, setActiveTab] = useState('morceaux'); // 'accueil' | 'morceaux' | 'jeu_libre' | 'player'
   const [currentSong, setCurrentSong] = useState(null);
   const [currentMode, setCurrentMode] = useState('listen'); // 'listen' | 'training'
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Les onglets s'affichent sur "/", les autres routes (/pianoPage, /notes-scroller) ont leur propre page.
+  const onTabsPage = location.pathname === '/';
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    if (!onTabsPage) navigate('/');
+  };
 
   const handlePlaySongFromLibrary = (song, mode = 'listen') => {
     setCurrentSong(song);
@@ -41,15 +51,15 @@ function App() {
   return (
     <div className="reachy-app-root">
       {/* Top Navbar */}
-      <Navbar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Navbar activeTab={onTabsPage ? activeTab : null} onTabChange={handleTabChange} />
 
       {/* Main Content Area wrapped in ErrorBoundary */}
       <main className="reachy-main-content">
-        <ErrorBoundary onReset={() => setActiveTab('morceaux')}>
-          {activeTab === 'accueil' && <Home onNavigate={setActiveTab} />}
-          {activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
-          {activeTab === 'jeu_libre' && <FreePlay />}
-          {activeTab === 'player' && (
+        <ErrorBoundary onReset={() => handleTabChange('morceaux')}>
+          {onTabsPage && activeTab === 'accueil' && <Home onNavigate={setActiveTab} />}
+          {onTabsPage && activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
+          {onTabsPage && activeTab === 'jeu_libre' && <FreePlay />}
+          {onTabsPage && activeTab === 'player' && (
             <SongPlayer
               initialSong={currentSong}
               initialMode={currentMode}
