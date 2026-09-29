@@ -5,35 +5,35 @@ const songs = [
   {
     title: "Au clair de la lune",
     artist: "Traditionnel",
-    level: "Débutant",
+    level: "Enfants",
     duration: "2:36",
     image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "Frère Jacques",
     artist: "Traditionnel",
-    level: "Débutant",
+    level: "Enfants",
     duration: "1:40",
     image: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "Let It Be",
     artist: "The Beatles",
-    level: "Intermédiaire",
+    level: "Pop",
     duration: "4:03",
     image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "Comptine d'un autre été",
     artist: "Yann Tiersen",
-    level: "Intermédiaire",
+    level: "Films & Séries",
     duration: "3:18",
     image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "La Vie en rose",
     artist: "Édith Piaf",
-    level: "Intermédiaire",
+    level: "Variété",
     duration: "3:22",
     image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=300&q=80",
   },
@@ -54,28 +54,28 @@ const songs = [
   {
     title: "Can you feel the love tonight",
     artist: "Elton John (Le Roi Lion)",
-    level: "Intermédiaire",
+    level: "Films & Séries",
     duration: "4:10",
     image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "Hallelujah",
     artist: "Leonard Cohen",
-    level: "Intermédiaire",
+    level: "Pop",
     duration: "5:08",
     image: "https://images.unsplash.com/photo-1524650359799-842906ca1c06?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "River Flows in You",
     artist: "Yiruma",
-    level: "Intermédiaire",
+    level: "Pop",
     duration: "4:02",
     image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
   },
   {
     title: "Joyeux anniversaire",
     artist: "Traditionnel",
-    level: "Débutant",
+    level: "Enfants",
     duration: "1:12",
     image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=300&q=80",
   },
@@ -90,15 +90,15 @@ const songs = [
 
 const filters = [
   "Tous",
-  "Débutant",
-  "Intermédiaire",
+//   "Débutant",
+//   "Intermédiaire",
   "Classique",
   "Pop",
   "Films & Séries",
   "Variété",
   "Enfants",
   "Noël",
-  "Mes favoris",
+//   "Mes favoris",
 ];
 
 export default function HomePage() {
@@ -145,8 +145,14 @@ export default function HomePage() {
           box-sizing: border-box;
         }
 
-        body {
+        html,
+        body,
+        #root {
           margin: 0;
+          min-height: 100%;
+        }
+
+        body {
           font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
           background: #ffffff;
           color: #0b1026;
@@ -157,34 +163,39 @@ export default function HomePage() {
           font: inherit;
         }
 
+        button {
+          -webkit-tap-highlight-color: transparent;
+        }
+
         .songs-page {
           min-height: 100vh;
-          padding: 28px 4vw 36px;
+          padding: clamp(16px, 2vw, 28px);
           background:
-            radial-gradient(circle at 18% 10%, rgba(227, 236, 255, 0.24), transparent 32%),
-            linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+            radial-gradient(circle at 18% 10%, rgba(227, 236, 255, 0.22), transparent 34%),
+            #ffffff;
         }
 
         .container {
-          max-width: 1500px;
+          width: min(100%, 1500px);
           margin: 0 auto;
         }
 
         .brand {
           display: inline-flex;
           align-items: center;
-          gap: 14px;
-          margin-bottom: 40px;
-          font-size: 31px;
+          gap: 10px;
+          margin-bottom: clamp(22px, 3vw, 34px);
+          font-size: clamp(22px, 2vw, 29px);
           font-weight: 800;
-          letter-spacing: -0.9px;
+          letter-spacing: -0.7px;
         }
 
         .brand-mark {
           display: flex;
           align-items: center;
-          gap: 5px;
-          height: 32px;
+          gap: 4px;
+          height: 28px;
+          flex-shrink: 0;
         }
 
         .brand-mark span {
@@ -194,74 +205,76 @@ export default function HomePage() {
           background: #0b1026;
         }
 
-        .brand-mark span:nth-child(1) { height: 17px; }
-        .brand-mark span:nth-child(2) { height: 30px; }
-        .brand-mark span:nth-child(3) { height: 37px; }
-        .brand-mark span:nth-child(4) { height: 24px; }
-        .brand-mark span:nth-child(5) { height: 14px; }
+        .brand-mark span:nth-child(1) { height: 14px; }
+        .brand-mark span:nth-child(2) { height: 24px; }
+        .brand-mark span:nth-child(3) { height: 31px; }
+        .brand-mark span:nth-child(4) { height: 20px; }
+        .brand-mark span:nth-child(5) { height: 12px; }
 
         .top-row {
           display: grid;
-          grid-template-columns: minmax(420px, 1fr) minmax(420px, 0.95fr);
-          gap: 40px;
+          grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr);
+          gap: clamp(20px, 3vw, 42px);
           align-items: center;
-          margin-bottom: 22px;
+          margin-bottom: 18px;
         }
 
         h1 {
-          margin: 0 0 4px;
-          font-size: clamp(34px, 3vw, 52px);
-          line-height: 1.04;
-          letter-spacing: -1.6px;
+          margin: 0 0 6px;
+          font-size: clamp(30px, 3vw, 46px);
+          line-height: 1.05;
+          letter-spacing: -1.2px;
         }
 
         .subtitle {
           margin: 0;
           color: #7180b0;
-          font-size: 18px;
+          font-size: clamp(14px, 1.2vw, 17px);
+          line-height: 1.45;
         }
 
         .search-box {
           display: flex;
           align-items: center;
-          gap: 15px;
+          gap: 13px;
           width: 100%;
-          min-height: 62px;
-          padding: 0 20px;
-          border: 1px solid #e6e9f3;
-          border-radius: 18px;
-          box-shadow: 0 8px 24px rgba(30, 45, 90, 0.04);
-          background: rgba(255, 255, 255, 0.96);
+          min-height: 50px;
+          padding: 0 17px;
+          border: 1px solid #e5e9f2;
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.97);
+          box-shadow: 0 6px 20px rgba(30, 45, 90, 0.04);
         }
 
         .search-icon {
-          width: 20px;
-          height: 20px;
+          position: relative;
+          width: 18px;
+          height: 18px;
           border: 2px solid #8392c0;
           border-radius: 50%;
-          position: relative;
           flex: 0 0 auto;
         }
 
         .search-icon::after {
           content: "";
           position: absolute;
-          width: 9px;
+          width: 7px;
           height: 2px;
-          right: -7px;
-          bottom: -4px;
+          right: -6px;
+          bottom: -3px;
+          border-radius: 999px;
           background: #8392c0;
           transform: rotate(45deg);
-          border-radius: 999px;
         }
 
         .search-box input {
-          border: none;
-          outline: none;
-          flex: 1;
-          color: #17203c;
+          width: 100%;
+          min-width: 0;
+          border: 0;
+          outline: 0;
           background: transparent;
-          font-size: 17px;
+          color: #17203c;
+          font-size: 14px;
         }
 
         .search-box input::placeholder {
@@ -270,19 +283,31 @@ export default function HomePage() {
 
         .filters {
           display: flex;
-          flex-wrap: wrap;
-          gap: 14px;
-          margin-bottom: 22px;
+          gap: 9px;
+          margin-bottom: 18px;
+          padding-bottom: 2px;
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+
+        .filters::-webkit-scrollbar {
+          display: none;
         }
 
         .filter-btn {
+          flex: 0 0 auto;
+          min-height: 42px;
+          padding: 0 18px;
           border: 1px solid #e4e8f2;
+          border-radius: 13px;
           background: #ffffff;
           color: #0f1630;
-          padding: 15px 26px;
-          border-radius: 18px;
+          font-size: 13px;
           cursor: pointer;
-          transition: 0.2s ease;
+          transition:
+            background 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
         }
 
         .filter-btn:hover {
@@ -291,63 +316,71 @@ export default function HomePage() {
         }
 
         .filter-btn.active {
+          border-color: transparent;
           background: #eaf3ff;
           color: #0d69ff;
-          border-color: transparent;
           font-weight: 700;
         }
 
         .songs-grid {
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 14px;
+          gap: 12px;
           padding-bottom: 80px;
         }
 
         .song-card {
           display: grid;
-          grid-template-columns: 128px minmax(0, 1fr) auto;
-          gap: 18px;
+          grid-template-columns: 88px minmax(0, 1fr) auto;
+          gap: 12px;
           align-items: center;
-          min-height: 142px;
-          padding: 12px;
+          min-width: 0;
+          min-height: 108px;
+          padding: 9px;
           border: 1px solid #edf0f5;
-          border-radius: 18px;
+          border-radius: 15px;
           background: rgba(255, 255, 255, 0.98);
-          box-shadow: 0 6px 24px rgba(28, 38, 78, 0.035);
+          box-shadow: 0 5px 18px rgba(28, 38, 78, 0.035);
+          transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+        }
+
+        .song-card:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px rgba(28, 38, 78, 0.06);
         }
 
         .song-cover {
-          width: 128px;
-          height: 118px;
+          width: 88px;
+          aspect-ratio: 1 / 1;
           object-fit: cover;
-          border-radius: 12px;
+          border-radius: 10px;
           background: #eef2f9;
         }
 
         .song-main {
           min-width: 0;
-          align-self: stretch;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          padding: 2px 0;
         }
 
         .song-title {
-          margin: 0 0 4px;
-          font-size: 18px;
+          margin: 0 0 3px;
+          font-size: clamp(14px, 1vw, 16px);
           font-weight: 800;
-          line-height: 1.2;
+          line-height: 1.25;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
         }
 
         .artist {
-          margin: 0 0 8px;
+          margin: 0 0 7px;
           color: #7381ad;
-          font-size: 15px;
+          font-size: 12.5px;
+          line-height: 1.3;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
@@ -355,18 +388,18 @@ export default function HomePage() {
 
         .song-meta {
           display: flex;
-          flex-direction: column;
-          gap: 8px;
-          align-items: flex-start;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 7px;
         }
 
         .badge {
           display: inline-flex;
           align-items: center;
-          min-height: 25px;
-          padding: 3px 10px;
-          border-radius: 9px;
-          font-size: 13px;
+          min-height: 21px;
+          padding: 2px 8px;
+          border-radius: 8px;
+          font-size: 11px;
           font-weight: 600;
         }
 
@@ -386,60 +419,66 @@ export default function HomePage() {
         }
 
         .duration {
-          display: flex;
+          display: inline-flex;
           align-items: center;
-          gap: 7px;
+          gap: 6px;
           color: #6879ab;
-          font-size: 14px;
+          font-size: 12px;
         }
 
         .clock {
-          width: 17px;
-          height: 17px;
-          border: 2px solid #8190bd;
-          border-radius: 50%;
           position: relative;
+          width: 14px;
+          height: 14px;
+          border: 1.5px solid #8190bd;
+          border-radius: 50%;
+          flex: 0 0 auto;
         }
 
         .clock::before,
         .clock::after {
           content: "";
           position: absolute;
-          left: 7px;
-          top: 3px;
-          width: 2px;
+          left: 5.5px;
+          width: 1.5px;
           border-radius: 999px;
           background: #8190bd;
-          transform-origin: bottom;
+          transform-origin: bottom center;
         }
 
         .clock::before {
-          height: 5px;
+          top: 2px;
+          height: 4px;
         }
 
         .clock::after {
-          height: 4px;
+          top: 5px;
+          height: 3px;
           transform: rotate(125deg);
         }
 
         .song-actions {
+          align-self: stretch;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           align-items: flex-end;
-          align-self: stretch;
-          padding: 4px 4px 4px 0;
+          gap: 8px;
+          padding: 1px 2px 1px 0;
         }
 
         .favorite-btn {
-          width: 36px;
-          height: 36px;
-          border: none;
+          display: grid;
+          place-items: center;
+          width: 28px;
+          height: 28px;
+          padding: 0;
+          border: 0;
           background: transparent;
           color: #6f82b7;
-          cursor: pointer;
-          font-size: 28px;
+          font-size: 23px;
           line-height: 1;
+          cursor: pointer;
         }
 
         .favorite-btn.active {
@@ -450,16 +489,20 @@ export default function HomePage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          gap: 9px;
-          min-width: 118px;
-          height: 44px;
-          border: none;
-          border-radius: 10px;
+          gap: 8px;
+          min-width: 88px;
+          height: 36px;
+          padding: 0 13px;
+          border: 0;
+          border-radius: 9px;
           background: #edf5ff;
           color: #0d6dff;
+          font-size: 13px;
           font-weight: 700;
           cursor: pointer;
-          transition: 0.2s ease;
+          transition:
+            background 0.2s ease,
+            transform 0.2s ease;
         }
 
         .play-btn:hover {
@@ -470,31 +513,32 @@ export default function HomePage() {
         .play-triangle {
           width: 0;
           height: 0;
-          border-top: 8px solid transparent;
-          border-bottom: 8px solid transparent;
-          border-left: 13px solid #1677ff;
+          border-top: 6px solid transparent;
+          border-bottom: 6px solid transparent;
+          border-left: 10px solid #1677ff;
         }
 
         .reachy {
           position: fixed;
-          right: 22px;
-          bottom: 18px;
+          right: 18px;
+          bottom: 14px;
+          z-index: 20;
           display: flex;
-          align-items: end;
-          gap: 14px;
+          align-items: flex-end;
+          gap: 10px;
           pointer-events: none;
         }
 
         .reachy-bubble {
-          max-width: 180px;
-          padding: 14px 18px;
-          border-radius: 28px 28px 10px 28px;
-          background: #ffffff;
+          max-width: 150px;
+          padding: 12px 14px;
           border: 1px solid #e9edf6;
+          border-radius: 22px 22px 8px 22px;
+          background: #ffffff;
           color: #6b7daf;
-          font-size: 14px;
-          line-height: 1.35;
-          box-shadow: 0 8px 30px rgba(34, 47, 87, 0.07);
+          font-size: 12px;
+          line-height: 1.4;
+          box-shadow: 0 8px 26px rgba(34, 47, 87, 0.07);
         }
 
         .reachy-robot {
@@ -503,96 +547,118 @@ export default function HomePage() {
           align-items: center;
           gap: 4px;
           color: #7180b0;
-          font-size: 13px;
+          font-size: 11px;
         }
 
         .robot-head {
           position: relative;
-          width: 70px;
-          height: 58px;
+          width: 58px;
+          height: 48px;
+          border: 1px solid #dfe5ef;
           border-radius: 50%;
           background: linear-gradient(145deg, #ffffff, #e9edf4);
-          border: 1px solid #dfe5ef;
-          box-shadow: 0 8px 20px rgba(20, 34, 70, 0.10);
+          box-shadow: 0 7px 16px rgba(20, 34, 70, 0.1);
         }
 
         .robot-head::before {
           content: "";
           position: absolute;
           left: 50%;
-          top: -28px;
+          top: -21px;
           width: 2px;
-          height: 28px;
+          height: 21px;
           background: #757e8f;
         }
 
         .robot-head::after {
           content: "";
           position: absolute;
-          left: calc(50% - 4px);
-          top: -32px;
-          width: 8px;
-          height: 8px;
+          left: calc(50% - 3px);
+          top: -25px;
+          width: 6px;
+          height: 6px;
           border-radius: 50%;
           background: #757e8f;
         }
 
         .eye {
           position: absolute;
-          top: 22px;
-          width: 11px;
-          height: 11px;
+          top: 18px;
+          width: 9px;
+          height: 9px;
           border-radius: 50%;
           background: #0c0f16;
         }
 
-        .eye.left { left: 17px; }
-        .eye.right { right: 17px; }
+        .eye.left {
+          left: 14px;
+        }
+
+        .eye.right {
+          right: 14px;
+        }
 
         .empty {
           grid-column: 1 / -1;
-          padding: 60px 20px;
+          padding: 50px 20px;
           text-align: center;
           color: #7c88aa;
+          font-size: 14px;
         }
+          .reachy-image {
+  width: 95px;
+  height: auto;
+  object-fit: contain;
+}
 
-        @media (max-width: 1200px) {
+        @media (max-width: 1180px) {
           .songs-grid {
             grid-template-columns: repeat(2, minmax(0, 1fr));
           }
         }
 
-        @media (max-width: 850px) {
+        @media (max-width: 900px) {
+          .top-row {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+
+          .search-box {
+            max-width: 100%;
+          }
+        }
+
+        @media (max-width: 700px) {
           .songs-page {
-            padding: 22px 18px 120px;
+            padding: 16px 14px 100px;
           }
 
           .brand {
-            margin-bottom: 28px;
+            margin-bottom: 20px;
           }
 
-          .top-row {
-            grid-template-columns: 1fr;
-            gap: 22px;
+          h1 {
+            font-size: clamp(28px, 8vw, 36px);
           }
 
           .songs-grid {
             grid-template-columns: 1fr;
+            gap: 10px;
           }
 
-          .filters {
-            flex-wrap: nowrap;
-            overflow-x: auto;
-            padding-bottom: 4px;
+          .song-card {
+            grid-template-columns: 78px minmax(0, 1fr) auto;
+            min-height: 96px;
+            padding: 8px;
+          }
+
+          .song-cover {
+            width: 78px;
           }
 
           .filter-btn {
-            white-space: nowrap;
-          }
-
-          .reachy {
-            right: 12px;
-            bottom: 10px;
+            min-height: 39px;
+            padding: 0 15px;
           }
 
           .reachy-bubble {
@@ -600,40 +666,66 @@ export default function HomePage() {
           }
         }
 
-        @media (max-width: 560px) {
-          .brand {
-            font-size: 25px;
+        @media (max-width: 480px) {
+          .songs-page {
+            padding-inline: 12px;
           }
 
-          h1 {
-            font-size: 36px;
+          .brand {
+            font-size: 21px;
+          }
+
+          .brand-mark {
+            transform: scale(0.9);
+            transform-origin: left center;
           }
 
           .subtitle {
-            font-size: 16px;
+            font-size: 14px;
+          }
+
+          .search-box {
+            min-height: 46px;
           }
 
           .song-card {
-            grid-template-columns: 92px minmax(0, 1fr);
+            grid-template-columns: 68px minmax(0, 1fr);
+            gap: 10px;
           }
 
           .song-cover {
-            width: 92px;
-            height: 92px;
+            width: 68px;
           }
 
           .song-actions {
             grid-column: 1 / -1;
             flex-direction: row-reverse;
             align-items: center;
-            padding-left: 110px;
-            margin-top: -8px;
+            padding: 0 0 0 78px;
+            margin-top: -2px;
+          }
+
+          .favorite-btn {
+            margin-left: auto;
           }
 
           .play-btn {
-            min-width: 110px;
+            min-width: 84px;
+            height: 34px;
+            font-size: 12px;
+          }
+
+          .reachy {
+            right: 10px;
+            bottom: 8px;
+          }
+
+          .robot-head {
+            width: 52px;
+            height: 43px;
           }
         }
+
       `}</style>
 
       <div className="container">
@@ -705,7 +797,7 @@ export default function HomePage() {
                     <p className="artist">{song.artist}</p>
 
                     <div className="song-meta">
-                      <span className={`badge ${levelClass}`}>{song.level}</span>
+                      {/* <span className={`badge ${levelClass}`}>{song.level}</span> */}
                       <span className="duration">
                         <span className="clock" aria-hidden="true" />
                         {song.duration}
@@ -714,7 +806,7 @@ export default function HomePage() {
                   </div>
 
                   <div className="song-actions">
-                    <button
+                   {/*  <button
                       type="button"
                       className={`favorite-btn ${isFavorite ? "active" : ""}`}
                       onClick={() => toggleFavorite(song.title)}
@@ -725,7 +817,7 @@ export default function HomePage() {
                       }
                     >
                       {isFavorite ? "♥" : "♡"}
-                    </button>
+                    </button> */}
 
                     <button
                       type="button"
@@ -745,19 +837,19 @@ export default function HomePage() {
         </main>
       </div>
 
-      <div className="reachy" aria-hidden="true">
+      {/* <div className="reachy" aria-hidden="true">
         <div className="reachy-bubble">
           Un nouveau morceau pour aujourd'hui ? 🎵
         </div>
 
         <div className="reachy-robot">
-          <div className="robot-head">
-            <span className="eye left" />
-            <span className="eye right" />
-          </div>
+         <img
+  src="https://store.pollen-robotics.com/cdn/shop/files/reachy-mini-wireless-front_df78baf3-d984-45b2-8647-12c891a3ee32.png?v=1779980188&width=2560"
+  alt="Reachy Mini"
+  className="reachy-image"/>
           <span>Reachy mini</span>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

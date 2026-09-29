@@ -1,0 +1,304 @@
+.reachy-coach-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at center, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  position: relative;
+  min-width: 270px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reachy-coach-container.mood-success {
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 15px 35px -5px rgba(16, 185, 129, 0.25), 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.reachy-coach-container.mood-mistake {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 15px 35px -5px rgba(245, 158, 11, 0.2);
+}
+
+.reachy-bubble {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 0.85rem 1.25rem;
+  border-radius: 14px;
+  text-align: center;
+  margin-bottom: 1.25rem;
+  position: relative;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  min-width: 220px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.reachy-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: rgba(15, 23, 42, 0.9) transparent;
+  display: block;
+  width: 0;
+}
+
+.coach-badge-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+}
+
+.coach-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+}
+
+.combo-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: #fff;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  animation: pulse 1s infinite alternate;
+}
+
+.coach-mood {
+  margin: 0.2rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #f8fafc;
+  line-height: 1.3;
+}
+
+.reachy-hint-box {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.reachy-hint-box kbd {
+  background: #334155;
+  color: #38bdf8;
+  border: 1px solid #64748b;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+}
+
+.speed-tag {
+  display: inline-block;
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+/* Avatar */
+.reachy-avatar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Antennas */
+.reachy-antennas {
+  display: flex;
+  justify-content: space-between;
+  width: 90px;
+  position: absolute;
+  top: -24px;
+}
+
+.antenna {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform-origin: bottom center;
+}
+
+.antenna.left {
+  transform: rotate(-18deg);
+}
+
+.antenna.right {
+  transform: rotate(18deg);
+}
+
+.is-playing .antenna.left, .antenna.left.bounce {
+  animation: wiggleLeft 0.8s ease-in-out infinite alternate;
+}
+
+.is-playing .antenna.right, .antenna.right.bounce {
+  animation: wiggleRight 0.8s ease-in-out infinite alternate 0.2s;
+}
+
+.antenna-orb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transition: all 0.3s;
+}
+
+.antenna-stem {
+  width: 4px;
+  height: 18px;
+  background: #94a3b8;
+  border-radius: 2px;
+}
+
+/* Head */
+.reachy-head {
+  width: 100px;
+  height: 80px;
+  background: linear-gradient(145deg, #f8fafc, #cbd5e1);
+  border-radius: 40px 40px 30px 30px;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  position: relative;
+  transition: transform 0.2s ease;
+}
+
+.reachy-head.grooving {
+  animation: headBob 0.6s ease-in-out infinite alternate;
+}
+
+.reachy-head.tilt {
+  transform: rotate(6deg);
+}
+
+/* Visor & Eyes */
+.reachy-face {
+  background: #0f172a;
+  width: 72px;
+  height: 38px;
+  border-radius: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 8px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.eye {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.pupil {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: all 0.2s;
+}
+
+.pupil.happy-eye {
+  height: 2px;
+  width: 8px;
+  border-radius: 2px;
+}
+
+.reachy-mouth {
+  width: 16px;
+  height: 4px;
+  background: #64748b;
+  border-radius: 2px;
+  margin-top: 6px;
+  transition: all 0.2s;
+}
+
+.reachy-mouth.speaking {
+  width: 24px;
+  height: 6px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+}
+
+.reachy-mouth.smile {
+  width: 20px;
+  height: 8px;
+  border-radius: 0 0 10px 10px;
+  background: #10b981;
+}
+
+/* Neck & Torso */
+.reachy-neck {
+  width: 28px;
+  height: 12px;
+  background: #475569;
+  border-radius: 4px;
+  margin-top: -2px;
+}
+
+.reachy-torso {
+  width: 80px;
+  height: 32px;
+  background: linear-gradient(145deg, #e2e8f0, #94a3b8);
+  border-radius: 12px 12px 6px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heartbeat-led {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulseLed 1.5s infinite;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes headBob {
+  0% { transform: translateY(0) rotate(-2deg); }
+  100% { transform: translateY(-6px) rotate(2deg); }
+}
+
+@keyframes wiggleLeft {
+  0% { transform: rotate(-22deg); }
+  100% { transform: rotate(-10deg); }
+}
+
+@keyframes wiggleRight {
+  0% { transform: rotate(10deg); }
+  100% { transform: rotate(22deg); }
+}
+
+@keyframes pulseLed {
+  0%, 100% { opacity: 0.5; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.2); }
+}

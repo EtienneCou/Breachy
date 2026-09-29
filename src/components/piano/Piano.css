@@ -105,6 +105,7 @@
   place-items: center;
   width: 1.9em;
   height: 1.9em;
+  padding: 0;
   border-radius: 5px;
   font-family: var(--piano-mono);
   font-size: 0.8rem;
