@@ -62,8 +62,15 @@ const AVAILABLE_SONGS = [
   }
 ];
 
-export default function SongPlayer() {
-  const [selectedSong, setSelectedSong] = useState(AVAILABLE_SONGS[0]);
+export default function SongPlayer({ initialSong, onBack }) {
+  const [selectedSong, setSelectedSong] = useState(initialSong || AVAILABLE_SONGS[0]);
+
+  // Sync if initialSong changes from parent
+  useEffect(() => {
+    if (initialSong) {
+      setSelectedSong(initialSong);
+    }
+  }, [initialSong]);
   const [partitionData, setPartitionData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -496,11 +503,18 @@ export default function SongPlayer() {
     <div className="reachy-band-player">
       {/* Header Section */}
       <header className="player-header">
-        <div className="logo-title">
-          <span className="app-icon">🤖🎵</span>
-          <div>
-            <h1>REACHY BAND</h1>
-            <p className="app-subtitle">Pratique musicale interactive avec Reachy Mini • Formats TXT & MIDI</p>
+        <div className="header-left-col">
+          {onBack && (
+            <button type="button" className="btn-back-library" onClick={onBack}>
+              ← Tous les morceaux
+            </button>
+          )}
+          <div className="logo-title">
+            <span className="app-icon">{selectedSong.icon || '🎵'}</span>
+            <div>
+              <h1>{selectedSong.title}</h1>
+              <p className="app-subtitle">{selectedSong.composer} • Mode {activeMode === 'listen' ? 'Écoute' : 'Entraînement'}</p>
+            </div>
           </div>
         </div>
 
