@@ -1,0 +1,56 @@
+.transport {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #edf0f4;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 8px 24px rgba(47, 63, 87, 0.08);
+  color: #607080;
+  font: 14px/1.2 system-ui, sans-serif;
+}
+
+.transport button {
+  padding: 6px 12px;
+  border: 1px solid #e2e7ed;
+  border-radius: 6px;
+  background: #fff;
+  color: inherit;
+  cursor: pointer;
+}
+
+.transport button:hover {
+  background: #f4f7fa;
+}
+
+.transport button:focus-visible,
+.transport input:focus-visible {
+  outline: 2px solid #147cf5;
+  outline-offset: 2px;
+}
+
+.transport button[aria-pressed='true'] {
+  background: #147cf5;
+  border-color: #147cf5;
+  color: #fff;
+}
+
+.transport__progress {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.transport__progress input {
+  flex: 1;
+  min-width: 0;
+}
+
+.transport__speeds {
+  display: flex;
+  gap: 4px;
+}
