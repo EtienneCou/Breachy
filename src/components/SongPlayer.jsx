@@ -62,8 +62,21 @@ const AVAILABLE_SONGS = [
   }
 ];
 
-export default function SongPlayer({ initialSong, onBack }) {
+export default function SongPlayer({ initialSong, initialMode = 'listen', onBack }) {
   const [selectedSong, setSelectedSong] = useState(initialSong || AVAILABLE_SONGS[0]);
+  const [partitionData, setPartitionData] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // App mode: 'listen' | 'training'
+  const [activeMode, setActiveMode] = useState(initialMode);
+
+  // Sync if initialMode changes
+  useEffect(() => {
+    if (initialMode) {
+      setActiveMode(initialMode);
+    }
+  }, [initialMode]);
 
   // Sync if initialSong changes from parent
   useEffect(() => {
@@ -71,12 +84,6 @@ export default function SongPlayer({ initialSong, onBack }) {
       setSelectedSong(initialSong);
     }
   }, [initialSong]);
-  const [partitionData, setPartitionData] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  // App mode: 'listen' | 'training'
-  const [activeMode, setActiveMode] = useState('listen');
 
   // --- Listen Mode States ---
   const [isPlaying, setIsPlaying] = useState(false);

@@ -10,9 +10,11 @@ import './App.css';
 function App() {
   const [activeTab, setActiveTab] = useState('morceaux'); // 'accueil' | 'morceaux' | 'jeu_libre' | 'player'
   const [currentSong, setCurrentSong] = useState(null);
+  const [currentMode, setCurrentMode] = useState('listen'); // 'listen' | 'training'
 
-  const handlePlaySongFromLibrary = (song) => {
+  const handlePlaySongFromLibrary = (song, mode = 'listen') => {
     setCurrentSong(song);
+    setCurrentMode(mode);
     setActiveTab('player');
   };
 
@@ -25,7 +27,9 @@ function App() {
   if (activeTab === 'jeu_libre') {
     mascotMessage = "À toi de jouer !";
   } else if (activeTab === 'player') {
-    mascotMessage = `C'est parti pour ${currentSong ? currentSong.title : 'le morceau'} ! 🎹`;
+    mascotMessage = currentMode === 'training'
+      ? `Reachy t'entraîne sur ${currentSong?.title || 'le morceau'} ! 🎯`
+      : `Reachy te joue ${currentSong?.title || 'le morceau'} ! 🎧`;
   } else if (activeTab === 'accueil') {
     mascotMessage = "Bienvenue dans Reachy Band ! ✨";
   }
@@ -41,7 +45,11 @@ function App() {
         {activeTab === 'morceaux' && <SongLibrary onPlaySong={handlePlaySongFromLibrary} />}
         {activeTab === 'jeu_libre' && <FreePlay />}
         {activeTab === 'player' && (
-          <SongPlayer initialSong={currentSong} onBack={handleBackToLibrary} />
+          <SongPlayer
+            initialSong={currentSong}
+            initialMode={currentMode}
+            onBack={handleBackToLibrary}
+          />
         )}
       </main>
 

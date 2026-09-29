@@ -266,16 +266,30 @@ export default function SongLibrary({ onPlaySong }) {
                     <span className="duration-tag">🕒 {song.duration}</span>
                   </div>
 
-                  <button
-                    type="button"
-                    className="btn-card-play"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPlaySong(song);
-                    }}
-                  >
-                    ▶ Jouer
-                  </button>
+                  <div className="card-actions-group">
+                    <button
+                      type="button"
+                      className="btn-card-listen"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlaySong(song, 'listen');
+                      }}
+                      title="Écouter Reachy jouer le morceau"
+                    >
+                      ▶ Écouter
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-card-train"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPlaySong(song, 'training');
+                      }}
+                      title="S'entraîner à jouer le morceau au piano AZERTY"
+                    >
+                      🎯 S'entraîner
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
