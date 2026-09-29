@@ -1,0 +1,33 @@
+/* Styles de la page piano uniquement, rangés sous .piano-page
+   pour ne pas déborder sur les autres pages. */
+.piano-page {
+  /* Piste + clavier sur toute la hauteur, barre de commande en colonne à droite */
+  box-sizing: border-box;
+  height: 100svh;
+  padding: 0 16px 16px;
+  display: flex;
+  gap: 16px;
+  color-scheme: light;
+  background: #ffffff;
+}
+
+.piano-page__stage {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.piano-page__transport {
+  flex: none;
+  /* Carte à la taille de son contenu, en haut à droite */
+  align-self: flex-start;
+  margin-top: 16px;
+  border: 1px solid #edf0f5;
+  border-radius: 18px;
+  box-shadow: 0 6px 24px rgba(28, 38, 78, 0.06);
+}
+
+/* Écran étroit : la barre passe sous le clavier */
+@media (max-width: 720px) {
+  .piano-page { flex-direction: column; }
+  .piano-page__transport { width: auto; margin-top: 0; flex-direction: row; flex-wrap: wrap; }
+}

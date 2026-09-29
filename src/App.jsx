@@ -6,7 +6,7 @@ import FreePlay from './pages/FreePlay';
 import Home from './pages/Home';
 import SongPlayer from './components/SongPlayer';
 import PianoPage from './pages/PianoPage.jsx';
-import NoteScrollerDemo from './Components/Notes_scroller/Notescrollerdemo.jsx';
+import NoteScrollerDemo from './components/Notes_scroller/Notescrollerdemo.jsx';
 import ReachyFloatingMascot from './components/ReachyFloatingMascot';
 import ErrorBoundary from './components/ErrorBoundary';
 import './App.css';
