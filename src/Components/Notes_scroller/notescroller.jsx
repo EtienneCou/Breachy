@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import Note from './Note';
+import Note from './note';
 import { resolveNoteLayout } from './Notelayout';
 import { EPS, getNotesStartingBetween, getVisibleNotes, prepareNotes } from './Timeline';
 import './notescroller.css';
