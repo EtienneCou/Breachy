@@ -43,6 +43,20 @@ export function useMusic(musicId) {
   return { music: loaded.music, notes: loaded.notes, status: loaded.status }
 }
 
+/**
+ * Charge les notes d'un morceau à partir de son id (mêmes sources que useMusic).
+ * Retourne { label, notes } ou null si le morceau est inconnu ou sans partition.
+ */
+export async function loadSongNotes(musicId) {
+  const found = await resolveMusic(musicId)
+  if (!found) return null
+  try {
+    return { label: found.label, notes: await loadMusic(found.item) }
+  } finally {
+    found.cleanup?.()
+  }
+}
+
 // Trouve de quoi charger le morceau : { item (format loadMusic), label, cleanup? } ou null.
 async function resolveMusic(id) {
   if (!id) return null

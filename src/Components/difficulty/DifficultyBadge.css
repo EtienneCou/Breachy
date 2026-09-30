@@ -1,0 +1,23 @@
+/* Pastille de difficulté : la couleur dépend du niveau (voir utils/difficulty.js). */
+.difficulty-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 25px;
+  padding: 3px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  color: var(--difficulty-color);
+  background: var(--difficulty-bg);
+  border-radius: 9px;
+}
+
+.difficulty-badge__dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  background: var(--difficulty-color);
+  border-radius: 50%;
+}

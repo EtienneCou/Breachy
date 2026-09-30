@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DifficultyBadge } from "../../Components/difficulty";
 
 import songsCatalog from "../../resources/catalog";
 
@@ -1795,6 +1796,8 @@ export default function SongsPage() {
                     <div className="song-meta">
 
                       {/* <span className={`badge ${levelClass}`}>{song.level}</span> */}
+                      {/* Difficulté calculée à partir des notes (rien pour un morceau sans partition) */}
+                      <DifficultyBadge musicId={song.id} />
 
                       <span className="duration">
 
