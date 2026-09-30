@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { DifficultyBadge } from "./difficulty";
+import { SongCard } from "./songCard";
+import { useSongsInfo } from "../hooks/useSongsInfo";
+
+const NEW_FOR_DAYS = 7; // étiquette « Nouveau » pendant une semaine après l'ajout
 
 
 import {
@@ -11,11 +14,20 @@ export default function UserSongs({
   refreshKey,
   onPlay,
   onPractice, // ouvre le jeu (piano + notes qui tombent) avec ce morceau
+  onSongsChange, // (morceaux) prévient la page de la liste des morceaux ajoutés
+  showHeader = true, // titre « Mes musiques » (inutile dans l'onglet « Mes morceaux »)
 }) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userSongsRefresh, setUserSongsRefresh] =
   useState(0);
+
+  useEffect(() => {
+    onSongsChange?.(songs);
+  }, [songs, onSongsChange]);
+
+  // Difficulté, durée et mélodie de chaque morceau ajouté (calculées à partir du fichier)
+  const songInfos = useSongsInfo(songs.map((song) => `user:${song.id}`));
 
   const loadSongs = async () => {
     try {
@@ -31,7 +43,14 @@ export default function UserSongs({
           new Date(a.createdAt)
       );
 
-      setSongs(sortedSongs);
+      // « Nouveau » : ajouté il y a moins de NEW_FOR_DAYS jours (calculé au chargement)
+      const now = Date.now();
+      setSongs(
+        sortedSongs.map((song) => ({
+          ...song,
+          isNew: now - new Date(song.createdAt) < NEW_FOR_DAYS * 24 * 3600 * 1000,
+        }))
+      );
     } catch (error) {
       console.error(
         "Erreur chargement MIDI :",
@@ -74,9 +93,11 @@ export default function UserSongs({
   if (songs.length === 0) {
     return (
       <section className="user-songs-section">
-        <div className="user-songs-header">
-          <h2>Mes musiques</h2>
-        </div>
+        {showHeader && (
+          <div className="user-songs-header">
+            <h2>Mes musiques</h2>
+          </div>
+        )}
 
         <div className="empty-user-songs">
           <span>♫</span>
@@ -102,103 +123,36 @@ export default function UserSongs({
   return (
     <section className="user-songs-section">
 
-      <div className="user-songs-header">
-        <div>
-          <h2>Mes musiques</h2>
+      {showHeader && (
+        <div className="user-songs-header">
+          <div>
+            <h2>Mes musiques</h2>
 
-          <p>
-            {songs.length} morceau
-            {songs.length > 1 ? "x" : ""}
-            {" "}ajouté
-            {songs.length > 1 ? "s" : ""}
-          </p>
+            <p>
+              {songs.length} morceau
+              {songs.length > 1 ? "x" : ""}
+              {" "}ajouté
+              {songs.length > 1 ? "s" : ""}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
 
       <div className="user-songs-grid">
 
         {songs.map((song) => (
-
-          <article
-            className="user-song-card"
+          <SongCard
             key={song.id}
-          >
-
-            <div className="user-song-icon">
-              ♫
-            </div>
-
-
-            <div className="user-song-main">
-
-              <h3>
-                {song.title}
-              </h3>
-
-              <p>
-                Ma musique
-              </p>
-
-              <span>
-                {song.size
-                  ? `${(
-                      song.size / 1024
-                    ).toFixed(1)} Ko`
-                  : "Fichier MIDI"}
-              </span>
-
-              {/* Difficulté calculée à partir des notes du fichier */}
-              <div className="user-song-difficulty">
-                <DifficultyBadge musicId={`user:${song.id}`} />
-              </div>
-
-            </div>
-
-
-            <div className="user-song-actions">
-
-              {onPractice && (
-                <button
-                  type="button"
-                  className="user-play-btn user-practice-btn"
-                  onClick={() => onPractice(song)}
-                  title="S'entraîner au piano sur ce morceau"
-                >
-                  🎹 S'entraîner
-                </button>
-              )}
-
-              <button
-                type="button"
-                className="user-play-btn"
-                onClick={() =>
-                  onPlay?.(song)
-                }
-              >
-                <span className="play-icon">
-                  ▶
-                </span>
-
-                Jouer
-              </button>
-
-
-              <button
-                type="button"
-                className="user-delete-btn"
-                onClick={() =>
-                  handleDelete(song.id)
-                }
-                title="Supprimer"
-              >
-                ×
-              </button>
-
-            </div>
-
-          </article>
-
+            title={song.title}
+            subtitle="Ma musique"
+            musicId={`user:${song.id}`}
+            info={songInfos[`user:${song.id}`]}
+            isNew={song.isNew}
+            onPractice={onPractice ? () => onPractice(song) : undefined}
+            onListen={() => onPlay?.(song)}
+            onDelete={() => handleDelete(song.id)}
+          />
         ))}
 
       </div>
@@ -251,11 +205,8 @@ function Styles() {
 
       .user-songs-grid {
         display: grid;
-
-        grid-template-columns:
-          repeat(3, minmax(0, 1fr));
-
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 18px;
       }
 
 
@@ -382,18 +333,12 @@ function Styles() {
         background: #dfeeff;
       }
 
-      .user-song-difficulty {
-        margin-top: 6px;
-      }
-
-      .user-song-difficulty:empty {
-        display: none;
-      }
 
       .user-practice-btn {
         color: #4338ca;
         background: #eef2ff;
       }
+
 
       .user-practice-btn:hover {
         background: #e0e7ff;
@@ -492,21 +437,18 @@ function Styles() {
 
 
       @media (max-width: 1180px) {
-
         .user-songs-grid {
-          grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+          /* mêmes colonnes que le catalogue */
+          grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
         }
-
       }
 
 
       @media (max-width: 700px) {
-
         .user-songs-grid {
-          grid-template-columns: 1fr;
+          grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+          gap: 12px;
         }
-
       }
 
 

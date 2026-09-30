@@ -13,7 +13,8 @@ import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
 import { melodyFor, splitSong } from '../utils/songParts.js'
 import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
-import { TIMING } from '../utils/gameStats.js'
+import { TIMING, computeGameStats } from '../utils/gameStats.js'
+import { saveResult } from '../utils/bestScores.js'
 import './PianoPage.css'
 
 // Morceau chargé quand l'adresse n'en indique pas : il a un accompagnement,
@@ -78,6 +79,7 @@ export default function PianoPage() {
   return (
     <PianoSession
       key={`${musicId}:${status}`}
+      musicId={musicId}
       title={music?.label ?? ''}
       notes={melody}
       backing={accompaniment}
@@ -86,7 +88,7 @@ export default function PianoPage() {
   )
 }
 
-function PianoSession({ title, notes, backing, sidebar }) {
+function PianoSession({ musicId, title, notes, backing, sidebar }) {
   const navigate = useNavigate()
 
   // Démarre le moteur audio dès la première interaction avec la page, pour que
@@ -261,6 +263,13 @@ function PianoSession({ title, notes, backing, sidebar }) {
       }),
     }
   }, [finished, title, score, bestStreak, clock.speed, duration, plan, hits, wrongs])
+
+  // Meilleur résultat du morceau, affiché sur sa carte à l'accueil.
+  useEffect(() => {
+    if (!results) return
+    const { successPercent, stars } = computeGameStats(results)
+    saveResult(musicId, { successPercent, stars, score: results.score })
+  }, [results, musicId])
 
   // Vitesse juste en dessous de l'actuelle, proposée à la fin si le morceau était trop dur.
   const slowerSpeed = [...SPEEDS].reverse().find((s) => s < clock.speed) ?? null
