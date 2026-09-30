@@ -36,6 +36,7 @@ function parseMidiNotes(arrayBuffer, idPrefix) {
       track: trackIndex,
       channel: track.channel,
       instrument: track.instrument?.name,
+      program: track.instrument?.number, // numéro d'instrument General MIDI (0 = piano)
       velocity: note.velocity, // force de la note (0 à 1)
     }))
     .sort((a, b) => a.start - b.start);
