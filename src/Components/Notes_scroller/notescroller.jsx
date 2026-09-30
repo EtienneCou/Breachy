@@ -27,7 +27,8 @@ function getStatus(note, time, override, markMissed) {
  * Zone de défilement des notes.
  *
  * Props
- *  - notes            [{ id, note, start, duration }] en secondes
+ *  - notes            [{ id, note, start, duration, label? }] en secondes
+ *                     (label : texte affiché sur la note, par défaut son nom)
  *  - currentTime      temps musical courant (secondes) — la seule source de vérité
  *  - playing          optionnel : sert à ne pas émettre onNoteReached en pause
  *  - lookahead        secondes visibles entre le haut et la hit line (défaut 4)
@@ -104,7 +105,7 @@ export default function NoteScroller({
           return (
             <Note
               key={note.id}
-              label={showLabels ? note.note : undefined}
+              label={showLabels ? (note.label ?? note.note) : undefined}
               status={getStatus(note, currentTime, noteStates?.[note.id], markMissed)}
               accidental={layout.accidental}
               x={layout.x}

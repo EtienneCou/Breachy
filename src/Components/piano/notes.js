@@ -12,6 +12,9 @@ export const octaveOf = (midi) => Math.floor(midi / 12) - 1
 export const midiToFreq = (midi) => 440 * Math.pow(2, (midi - 69) / 12)
 export const noteName = (midi) => SOLFEGE[midi % 12] + octaveOf(midi)
 export const scientificName = (midi) => LETTERS[midi % 12] + octaveOf(midi)
+// 'C#4' (dièse ASCII) : format attendu par le Notes_scroller et les fichiers de morceaux
+const ASCII_LETTERS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+export const asciiName = (midi) => ASCII_LETTERS[midi % 12] + octaveOf(midi)
 
 // Parse un nom de note ("C4", "D#5", "Eb3") en numéro midi.
 export function noteToMidi(name) {
@@ -86,6 +89,31 @@ function buildKeymap(plan, start) {
   return { from: start, to: last, bindings }
 }
 
+// ---------- Fenêtre de 10 touches blanches ----------
+// Le clavier du jeu : toujours les 10 mêmes touches blanches de la rangée du milieu
+// (Q S D F G H J K L M en AZERTY) et les noires au-dessus. Seules les notes changent
+// quand la fenêtre change d'octave.
+export const WINDOW_WHITE_KEYS = 10
+MANUALS.window = {
+  whites: MANUALS.home.whites.slice(0, WINDOW_WHITE_KEYS),
+  slots: MANUALS.home.slots.slice(0, WINDOW_WHITE_KEYS - 1),
+}
+
+// Plus haute note d'une fenêtre qui commence sur la touche blanche `base`.
+export function windowTop(base) {
+  let midi = base
+  for (let whites = 1; whites < WINDOW_WHITE_KEYS; ) {
+    midi++
+    if (!isBlack(midi)) whites++
+  }
+  return midi
+}
+
+/** Clavier de 10 touches blanches à partir de la note blanche `base`. */
+export function keymapForWindow(base) {
+  return { ...buildKeymap(['window'], base), missing: [] }
+}
+
 /**
  * Clavier pour le jeu libre : un manuel à partir du Do de l'octave choisie.
  * Retourne { from, to, bindings: { code: midi }, missing: [] }.
@@ -144,4 +172,24 @@ export function getKeyboardLayout(from, to) {
     }
   }
   return keys
+}
+
+/**
+ * Position des notes pour le Notes_scroller, calée sur les touches du piano :
+ * (nom de note, ex. 'C#4') -> { x: centre, width } en fractions de 0 à 1, ou null
+ * si la note est hors du clavier. À passer en `noteLayout` au NoteScroller.
+ */
+export function createScrollerLayout(from, to, { fill = 0.86 } = {}) {
+  const byMidi = new Map(getKeyboardLayout(from, to).map((key) => [key.midi, key]))
+  return (name) => {
+    let midi
+    try {
+      midi = noteToMidi(name)
+    } catch {
+      return null
+    }
+    const key = byMidi.get(midi)
+    if (!key) return null
+    return { x: (key.left + key.width / 2) / 100, width: (key.width * fill) / 100, accidental: key.black }
+  }
 }

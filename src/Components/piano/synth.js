@@ -13,8 +13,9 @@ const PARTIALS = [
 
 class PianoSynth {
   ctx = null
-  master = null
-  volume = 0.7
+  master = null // sortie commune (piano + accompagnement)
+  pianoBus = null // voie du piano seul
+  volume = 0.7 // volume du piano joué par le joueur, de 0 à 1
   sustain = false
   voices = new Map() // midi -> { out, oscs }
   held = new Set() // notes dont la touche est encore enfoncée
@@ -26,15 +27,18 @@ class PianoSynth {
       comp.threshold.value = -14
       comp.ratio.value = 4
       this.master = this.ctx.createGain()
-      this.master.gain.value = this.volume
       this.master.connect(comp).connect(this.ctx.destination)
+      this.pianoBus = this.ctx.createGain()
+      this.pianoBus.gain.value = this.volume
+      this.pianoBus.connect(this.master)
     }
     if (this.ctx.state === 'suspended') this.ctx.resume()
   }
 
+  // Volume du piano seul (l'accompagnement a son propre réglage dans backingSynth).
   setVolume(v) {
     this.volume = v
-    if (this.master) this.master.gain.value = v
+    if (this.pianoBus) this.pianoBus.gain.value = v
   }
 
   setSustain(on) {
@@ -61,10 +65,10 @@ class PianoSynth {
     filter.frequency.setValueAtTime(Math.min(f * 8, 16000), t)
     filter.frequency.exponentialRampToValueAtTime(Math.min(f * 2.5, 16000), t + decay * 0.5)
     out.gain.setValueAtTime(0, t)
-    out.gain.linearRampToValueAtTime(0.32, t + 0.004)
-    out.gain.exponentialRampToValueAtTime(0.11, t + 0.35)
+    out.gain.linearRampToValueAtTime(0.5, t + 0.004)
+    out.gain.exponentialRampToValueAtTime(0.18, t + 0.35)
     out.gain.exponentialRampToValueAtTime(0.0006, t + decay)
-    filter.connect(out).connect(this.master)
+    filter.connect(out).connect(this.pianoBus)
 
     const oscs = PARTIALS.map(([mult, type, amp, detune]) => {
       const osc = ctx.createOscillator()

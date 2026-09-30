@@ -91,8 +91,25 @@
 
 /* Retour visuel du jeu, en haut de la touche */
 .piano__key.is-target { box-shadow: inset 0 4px 0 var(--piano-accent); }
-.piano__key.is-hit { box-shadow: inset 0 4px 0 var(--piano-hit); }
-.piano__key.is-miss { box-shadow: inset 0 4px 0 var(--piano-miss); }
+/* Réussie / ratée : toute la touche change de couleur, même enfoncée */
+.piano__key.is-white.is-hit {
+  background: linear-gradient(180deg, #dcfce7 0%, #86efac 70%, var(--piano-hit) 100%);
+  box-shadow: inset 0 -2px 0 var(--piano-hit), 0 0 18px color-mix(in srgb, var(--piano-hit) 55%, transparent);
+}
+.piano__key.is-black.is-hit {
+  background: linear-gradient(180deg, #22c55e 0%, #15803d 100%);
+  box-shadow: inset 0 -3px 0 #166534, 0 0 18px color-mix(in srgb, var(--piano-hit) 55%, transparent);
+}
+.piano__key.is-white.is-miss {
+  background: linear-gradient(180deg, #fee2e2 0%, #fca5a5 70%, var(--piano-miss) 100%);
+  box-shadow: inset 0 -2px 0 var(--piano-miss);
+}
+.piano__key.is-black.is-miss {
+  background: linear-gradient(180deg, #ef4444 0%, #991b1b 100%);
+  box-shadow: inset 0 -3px 0 #7f1d1d;
+}
+.piano__key.is-hit > .piano__cap { background: var(--piano-hit); border-color: var(--piano-hit); color: #ffffff; }
+.piano__key.is-miss > .piano__cap { background: var(--piano-miss); border-color: var(--piano-miss); color: #ffffff; }
 
 .piano__name {
   font-family: var(--piano-mono);
