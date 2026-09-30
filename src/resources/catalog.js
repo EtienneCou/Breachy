@@ -6,8 +6,24 @@
  * - src/data/ (catalogue de musique de l'équipe)
  */
 import { musicCatalog } from "../data/musicData";
+import bicycleUrl from "./audio/abicycle.mid?url";
 
 export const songsCatalog = [
+  {
+    id: "abicycle",
+    title: "abicycle",
+    artist: "Harry Dacre (Daisy Bell)",
+    level: "Classique",
+    duration: "2:04",
+    image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=300&q=80",
+    musicItem: {
+      id: "abicycle",
+      label: "abicycle",
+      type: "midi",
+      url: bicycleUrl,
+    },
+    file: "abicycle.mid",
+  },
   {
     id: "mario",
     title: "Super Mario Bros",
