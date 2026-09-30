@@ -1,6 +1,6 @@
 # Piano : comment le brancher
 
-La page du piano est `src/pages/PianoPage.jsx`. La piste des notes et le clavier occupent toute la hauteur, et la barre de commande (`components/transport`) est en colonne à droite : jouer / pause, recommencer, vitesse, octave et volume. Sans morceau, c'est du jeu libre. Le clavier d'ordinateur est toujours considéré en AZERTY.
+La page du piano est `src/Pages/PianoPage.jsx`. La piste des notes et le clavier occupent toute la hauteur, et la barre de commande (`Components/transport`) est en colonne à droite : jouer / pause, recommencer, vitesse, octave et volume. Sans morceau, c'est du jeu libre. Le clavier d'ordinateur est toujours considéré en AZERTY.
 
 ## Donner un morceau au piano
 
@@ -26,11 +26,11 @@ Pour convertir des noms de notes : `noteToMidi('D#5')` renvoie `75`.
 - **Ligne d'arrivée** : le bas de la piste touche la bande rouge du clavier.
 - **Horloge** : `src/hooks/useSongClock.js` est prévu pour la partie. Il donne `time` en secondes (négatif pendant un décompte), `play`, `pause` et `restart`. `toSongTime(time)` convertit le `time` d'un appui en temps du morceau, à comparer avec le moment prévu de la note.
 
-## Composants disponibles (`src/components/piano`)
+## Composants disponibles (`src/Components/piano`)
 
 | Élément | Rôle |
 |---|---|
-| `TransportBar` (dans `components/transport`) | Barre de commande : `<TransportBar clock={clock} piano={piano} />` |
+| `TransportBar` (dans `Components/transport`) | Barre de commande : `<TransportBar clock={clock} piano={piano} />` |
 | `usePiano({ notes, onNoteOn, onNoteOff })` | Clavier d'ordinateur, son, touches enfoncées, plage |
 | `PianoStage` | Piste + clavier collés, qui remplissent la hauteur disponible |
 | `Piano` / `PianoLanes` | Le clavier seul / la piste seule |
