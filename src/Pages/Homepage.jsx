@@ -1,4 +1,11 @@
 import React, { useMemo, useState } from "react";
+import songsCatalog from "../resources/catalog";
+import PracticePlayer from "../Components/Practice/PracticePlayer";
+import useSongPlayer from "../hooks/useSongPlayer";
+
+const songs = songsCatalog;
+
+
 import { createPortal } from "react-dom";
 import { songs } from "../data/songs";
 import MidiUploader from "../Components/MidiUploader";
@@ -23,6 +30,18 @@ export default function SongsPage() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
+  const [isPracticeActive, setIsPracticeActive] = useState(false);
+  const { playSong } = useSongPlayer();
+
+  const handleStartPractice = (song) => {
+    playSong(song);
+    setIsPracticeActive(true);
+  };
+
+  const handlePlay = (song) => {
+    playSong(song);
+    setIsPracticeActive(true);
+  };
 
   const filteredSongs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -425,6 +444,37 @@ export default function SongsPage() {
         .play-btn:hover {
           background: #deedff;
           transform: translateY(-1px);
+        }
+
+        .action-buttons-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          align-items: flex-end;
+        }
+
+        .practice-btn-card {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-width: 118px;
+          height: 36px;
+          border: 1px solid #c7d2fe;
+          border-radius: 10px;
+          background: #eef2ff;
+          color: #4338ca;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .practice-btn-card:hover {
+          background: #e0e7ff;
+          border-color: #818cf8;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
         }
 
         .play-triangle {
@@ -871,16 +921,27 @@ export default function SongsPage() {
                       }
                     >
                       {isFavorite ? "♥" : "♡"}
-                    </button> */}
-
-                    <button
-                      type="button"
-                      className="play-btn"
-                      onClick={() => console.log("Jouer :", song.title)}
-                    >
-                      <span className="play-triangle" aria-hidden="true" />
-                      Jouer
                     </button>
+
+                    <div className="action-buttons-group">
+                      <button
+                        type="button"
+                        className="practice-btn-card"
+                        onClick={() => handleStartPractice(song)}
+                        title="S'entraîner avec ce morceau en arrière-plan"
+                      >
+                        🎹 S'entraîner
+                      </button>
+
+                      <button
+                        type="button"
+                        className="play-btn"
+                        onClick={() => handlePlay(song)}
+                      >
+                        <span className="play-triangle" aria-hidden="true" />
+                        Jouer
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
@@ -916,6 +977,18 @@ export default function SongsPage() {
           </p>
         </div>
 
+        <div className="reachy-robot">
+          <div className="robot-head">
+            <span className="eye left" />
+            <span className="eye right" />
+          </div>
+          <span>Reachy mini</span>
+        </div>
+      </div>
+
+      {isPracticeActive && (
+        <PracticePlayer onClose={() => setIsPracticeActive(false)} />
+      )}
   <MidiUploader
   onSongAdded={(song) => {
 
