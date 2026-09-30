@@ -1991,8 +1991,9 @@ export default function SongsPage() {
 
 
 
+      {isPracticeActive && (
+        <PracticePlayer onClose={() => setIsPracticeActive(false)} />
+      )}
     </div>
-
   );
-
 }

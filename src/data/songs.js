@@ -1,5 +1,12 @@
 export const songsList = [
   {
+    title: "abicycle",
+    artist: "Harry Dacre (Daisy Bell)",
+    level: "Classique",
+    duration: "2:04",
+    image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?auto=format&fit=crop&w=300&q=80",
+  },
+  {
     title: "Au clair de la lune",
     artist: "Traditionnel",
     level: "Débutant",
