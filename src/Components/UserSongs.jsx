@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { DifficultyBadge } from "./difficulty";
 
 
 import {
@@ -146,6 +147,11 @@ export default function UserSongs({
                     ).toFixed(1)} Ko`
                   : "Fichier MIDI"}
               </span>
+
+              {/* Difficulté calculée à partir des notes du fichier */}
+              <div className="user-song-difficulty">
+                <DifficultyBadge musicId={`user:${song.id}`} />
+              </div>
 
             </div>
 
@@ -374,6 +380,14 @@ function Styles() {
 
       .user-play-btn:hover {
         background: #dfeeff;
+      }
+
+      .user-song-difficulty {
+        margin-top: 6px;
+      }
+
+      .user-song-difficulty:empty {
+        display: none;
       }
 
       .user-practice-btn {
