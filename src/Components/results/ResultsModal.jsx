@@ -13,7 +13,7 @@ import './ResultsModal.css'
  * - slowerSpeed      vitesse plus lente disponible (ex. 0.75), ou null
  * - onRestartSlower  recommencer à `slowerSpeed` : proposé quand la réussite est faible
  */
-const SLOW_DOWN_BELOW = 25 // % de réussite en dessous duquel on propose de ralentir
+const SLOW_DOWN_BELOW = 50 // % de réussite en dessous duquel on propose de ralentir
 
 export default function ResultsModal({ results, onRestart, onQuit, slowerSpeed = null, onRestartSlower }) {
   const stats = useMemo(() => computeGameStats(results), [results])
