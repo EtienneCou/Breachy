@@ -98,11 +98,13 @@ export default function SongsPage() {
 
         !q ||
 
-        song.title.toLowerCase().includes(q) ||
+        song.title?.toLowerCase().includes(q) ||
 
-        song.artist.toLowerCase().includes(q) ||
+        song.artist?.toLowerCase().includes(q) ||
 
-        song.level.toLowerCase().includes(q);
+        song.category?.toLowerCase().includes(q) ||
+
+        song.level?.toLowerCase().includes(q);
 
 
 
@@ -114,7 +116,7 @@ export default function SongsPage() {
 
           ? true
 
-          : song.level === activeFilter;
+          : (song.category === activeFilter || song.level === activeFilter);
 
 
 
@@ -1790,7 +1792,9 @@ export default function SongsPage() {
 
                     <div className="song-meta">
 
-                      {/* <span className={`badge ${levelClass}`}>{song.level}</span> */}
+                      <span className="badge">
+                        {song.category || song.level}
+                      </span>
 
                       <span className="duration">
 
