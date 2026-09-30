@@ -1,0 +1,230 @@
+/* Détail des résultats. Toutes les classes commencent par gr- (game results)
+   pour ne pas entrer en collision avec les styles globaux de l'appli.
+   Les couleurs des issues sont aussi définies sur .results-modal (ResultsModal.css). */
+.gr-details {
+  /* Couleurs des 5 issues d'une note, de la meilleure à la moins bonne */
+  --gr-perfect: #1d4ed8;
+  --gr-good: #60a5fa;
+  --gr-offbeat: #f59e0b;
+  --gr-wrong: #dc2626;
+  /* « Manquée » n'est pas une couleur mais des hachures grises : rien n'a été joué */
+  --gr-missed: #94a3b8;
+  --gr-hatch: repeating-linear-gradient(135deg, #e2e8f0 0 4px, #f8fafc 4px 8px);
+
+  --gr-text: #0f172a;
+  --gr-muted: #64748b;
+  --gr-faint: #94a3b8;
+  --gr-line: #e2e8f0;
+  --gr-card: #ffffff;
+  --gr-primary: #2563eb;
+  --gr-primary-hover: #1d4ed8;
+
+  display: grid;
+  gap: 1.25rem;
+  color: var(--gr-text);
+}
+
+/* ---------- Remplissages par issue ---------- */
+.gr-fill--perfect { fill: var(--gr-perfect); background: var(--gr-perfect); color: #ffffff; }
+.gr-fill--good { fill: var(--gr-good); background: var(--gr-good); color: var(--gr-text); }
+.gr-fill--offbeat { fill: var(--gr-offbeat); background: var(--gr-offbeat); color: var(--gr-text); }
+.gr-fill--wrong { fill: var(--gr-wrong); background: var(--gr-wrong); color: #ffffff; }
+.gr-fill--missed { fill: var(--gr-missed); background: var(--gr-hatch); color: var(--gr-muted); box-shadow: inset 0 0 0 1px var(--gr-missed); }
+
+.gr-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: none;
+}
+.gr-swatch--perfect { background: var(--gr-perfect); }
+.gr-swatch--good { background: var(--gr-good); }
+.gr-swatch--offbeat { background: var(--gr-offbeat); }
+.gr-swatch--wrong { background: var(--gr-wrong); }
+.gr-swatch--missed { background: var(--gr-hatch); box-shadow: inset 0 0 0 1px var(--gr-missed); }
+
+/* ---------- Cartes ---------- */
+.gr-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+.gr-card {
+  display: grid;
+  align-content: start;
+  gap: 1.1rem;
+  min-width: 0;
+  padding: 1.6rem 1.75rem;
+  background: var(--gr-card);
+  border: 1px solid #eef2f7;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+.gr-card__title { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.gr-card__subtitle { margin: 0.2rem 0 0; font-size: 0.88rem; color: var(--gr-muted); }
+.gr-note { margin: 0; font-size: 0.9rem; color: #334155; line-height: 1.5; }
+
+/* ---------- Barre de répartition ---------- */
+.gr-bar-wrap,
+.gr-chart,
+.gr-ribbon-wrap { position: relative; }
+.gr-bar {
+  display: flex;
+  gap: 2px;
+  height: 22px;
+}
+.gr-bar__seg {
+  min-width: 4px;
+  border-radius: 2px;
+  cursor: default;
+}
+.gr-bar__seg:first-child { border-radius: 6px 2px 2px 6px; }
+.gr-bar__seg:last-child { border-radius: 2px 6px 6px 2px; }
+.gr-bar__seg:only-child { border-radius: 6px; }
+
+.gr-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+.gr-legend__item {
+  display: grid;
+  grid-template-columns: 10px auto minmax(0, 1fr) 2.5ch 5ch;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+.gr-legend__label { font-weight: 700; }
+.gr-legend__hint { color: var(--gr-muted); font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gr-legend__count { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.gr-legend__pct { text-align: right; color: var(--gr-muted); font-variant-numeric: tabular-nums; }
+
+.gr-legend--compact { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
+.gr-legend--compact .gr-legend__item { display: flex; gap: 0.45rem; font-size: 0.85rem; }
+.gr-legend--compact .gr-legend__label { font-weight: 600; color: #334155; }
+
+/* ---------- Histogramme ---------- */
+.gr-chart__svg { display: block; width: 100%; height: auto; overflow: visible; }
+.gr-zone { fill: #f1f6ff; }
+.gr-zone__label { font-size: 11px; font-weight: 600; fill: var(--gr-muted); }
+.gr-grid { stroke: #eef2f7; stroke-width: 1; }
+.gr-baseline { stroke: #cbd5e1; stroke-width: 1; }
+.gr-zero { stroke: var(--gr-faint); stroke-width: 1; stroke-dasharray: 3 3; }
+.gr-avg { fill: var(--gr-text); }
+.gr-axis { font-size: 11px; fill: var(--gr-muted); font-variant-numeric: tabular-nums; }
+.gr-axis--strong { font-weight: 700; fill: #334155; }
+.gr-hit { fill: transparent; cursor: default; }
+.gr-hit:hover { fill: rgba(37, 99, 235, 0.06); }
+
+/* ---------- Partition note par note ---------- */
+.gr-ribbon {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 6px;
+}
+.gr-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 40px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border-radius: 8px;
+  cursor: default;
+  transition: transform 0.12s;
+}
+.gr-chip:hover,
+.gr-chip:focus-visible { transform: translateY(-2px); }
+.gr-chip:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+.gr-chip__played {
+  position: absolute;
+  right: 3px;
+  bottom: 1px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  opacity: 0.85;
+  text-decoration: line-through;
+}
+
+/* ---------- À retravailler ---------- */
+.gr-trouble {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.gr-trouble__item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.15rem;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  border-radius: 16px;
+}
+.gr-trouble__note { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; }
+.gr-trouble__ratio { font-size: 0.9rem; color: var(--gr-muted); }
+.gr-trouble__ratio strong { color: var(--gr-text); }
+.gr-trouble__kinds { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+.gr-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #334155;
+  background: #ffffff;
+  border: 1px solid var(--gr-line);
+  border-radius: 9999px;
+}
+
+.gr-tip {
+  margin: 0;
+  padding: 1rem 1.2rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #1e3a8a;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 16px;
+}
+.gr-tip__who { display: block; margin-bottom: 0.2rem; font-weight: 800; color: #1d4ed8; }
+
+/* ---------- Infobulle ---------- */
+.gr-tooltip {
+  position: absolute;
+  z-index: 10;
+  transform: translate(-50%, calc(-100% - 12px));
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  color: #ffffff;
+  background: #0f172a;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.2);
+  pointer-events: none;
+}
+
+/* ---------- Petits écrans ---------- */
+@media (max-width: 760px) {
+  .gr-columns { grid-template-columns: 1fr; }
+  .gr-trouble { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .gr-legend__hint { display: none; }
+  .gr-legend__item { grid-template-columns: 10px minmax(0, 1fr) 2.5ch 5ch; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-details * { transition: none !important; }
+}

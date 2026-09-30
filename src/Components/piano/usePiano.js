@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react'
 import {
-  KEY_LABELS, MAX_OCTAVE, MIN_OCTAVE, OCTAVE_DOWN, OCTAVE_UP, SUSTAIN, keymapForNotes, keymapForOctave,
+  KEY_LABELS, MAX_OCTAVE, MIN_OCTAVE, OCTAVE_DOWN, OCTAVE_UP, SUSTAIN, keymapForNotes, keymapForOctave, keymapForWindow,
 } from './notes.js'
 import { pianoSynth } from './synth.js'
 
@@ -8,6 +8,9 @@ import { pianoSynth } from './synth.js'
  * Gère le jeu au clavier d'ordinateur, le son et l'état des touches enfoncées.
  *
  * Options :
+ * - windowBase         note midi (blanche) où commence la fenêtre de 10 touches
+ *                      blanches du jeu. Prioritaire sur `notes` ; la changer fait
+ *                      changer le clavier d'octave. Désactive le changement d'octave manuel.
  * - notes              notes midi du morceau choisi. Si fourni, le clavier
  *                      s'adapte tout seul pour couvrir toutes ces notes et le
  *                      changement d'octave est désactivé (plage fixe pour le jeu).
@@ -19,6 +22,7 @@ import { pianoSynth } from './synth.js'
  * - onNoteOff(midi, { time, source })
  */
 export function usePiano({
+  windowBase,
   notes,
   initialOctave = 4,
   allowOctaveShift = true,
@@ -33,11 +37,12 @@ export function usePiano({
 
   // Clé stable pour ne recalculer le clavier que si les notes changent vraiment.
   const notesKey = notes ? [...new Set(notes)].sort((a, b) => a - b).join(',') : null
-  const keymap = useMemo(
-    () => (notesKey === null ? keymapForOctave(octave) : keymapForNotes(notesKey ? notesKey.split(',').map(Number) : [])),
-    [notesKey, octave],
-  )
-  const canShiftOctave = allowOctaveShift && notesKey === null
+  const keymap = useMemo(() => {
+    if (windowBase != null) return keymapForWindow(windowBase)
+    if (notesKey === null) return keymapForOctave(octave)
+    return keymapForNotes(notesKey ? notesKey.split(',').map(Number) : [])
+  }, [windowBase, notesKey, octave])
+  const canShiftOctave = allowOctaveShift && notesKey === null && windowBase == null
 
   // touche physique -> note midi jouée (pour relâcher la bonne note même si l'octave a changé)
   const pressedCodes = useRef(new Map())

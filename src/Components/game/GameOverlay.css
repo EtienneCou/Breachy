@@ -1,0 +1,188 @@
+/* Effets de jeu posés sur la piste des notes. */
+.game-overlay {
+  --go-perfect: #16a34a;
+  --go-good: #1f7bff;
+  --go-late: #f59e0b;
+  --go-text: #0b1026;
+  --go-font: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+  font-family: var(--go-font);
+}
+
+/* ---------- Décompte ---------- */
+.game-overlay__countdown {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(5rem, 16vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #1f7bff;
+  text-shadow: 0 10px 30px rgba(31, 123, 255, 0.35);
+  animation: go-count 1s ease-out both;
+}
+.game-overlay__countdown.is-go {
+  font-size: clamp(2.5rem, 8vw, 4.5rem);
+  color: var(--go-perfect);
+  text-shadow: 0 10px 30px rgba(22, 163, 74, 0.35);
+  white-space: nowrap;
+  animation-duration: 0.8s;
+}
+@keyframes go-count {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(1.8); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); }
+}
+
+/* ---------- Série ---------- */
+.game-overlay__combo {
+  position: absolute;
+  right: 16px;
+  top: 76px; /* sous le fondu du haut de la piste */
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+}
+.game-overlay__streak {
+  padding: 6px 14px;
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--go-text);
+  background: #ffffff;
+  border: 2px solid #fed7aa;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(249, 115, 22, 0.18);
+  animation: go-pop 0.25s ease-out;
+}
+.game-overlay__streak.is-hot {
+  color: #ffffff;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border-color: transparent;
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.35);
+}
+@keyframes go-pop {
+  0% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.game-overlay__milestone {
+  position: absolute;
+  left: 50%;
+  top: 30%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  font-weight: 800;
+  white-space: nowrap;
+  color: #ffffff;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.35);
+  animation: go-milestone 1.6s ease-out both;
+}
+@keyframes go-milestone {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.5); }
+  15% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+  25% { transform: translateX(-50%) scale(1); }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
+/* Multiplicateur de points */
+.game-overlay__multiplier {
+  padding: 4px 12px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: #1f7bff;
+  border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(31, 123, 255, 0.3);
+  animation: go-pop 0.35s ease-out;
+}
+.game-overlay__multiplier.is-x3 { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35); }
+.game-overlay__multiplier.is-x4 { background: linear-gradient(135deg, #38bdf8, #2563eb 60%, #6366f1); box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5); }
+
+/* ---------- Clavier en feu (FireLine) ---------- */
+.game-overlay__fire {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 140px;
+  pointer-events: none;
+}
+
+/* ---------- Note réussie : étincelles + mot ---------- */
+.game-overlay__burst {
+  --tone: var(--go-good);
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+}
+.game-overlay__burst.is-perfect { --tone: var(--go-perfect); }
+.game-overlay__burst.is-late { --tone: var(--go-late); }
+
+.game-overlay__spark {
+  position: absolute;
+  left: -4px;
+  bottom: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tone);
+  box-shadow: 0 0 8px var(--tone);
+  animation: go-spark 0.45s ease-out forwards;
+}
+@keyframes go-spark {
+  0% { opacity: 1; transform: rotate(var(--angle)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: rotate(var(--angle)) translateY(-46px) scale(0.3); }
+}
+
+.game-overlay__word {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  transform: translateX(var(--shift, -50%));
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--tone);
+  text-shadow: 0 2px 0 #ffffff, 0 0 12px #ffffff;
+  animation: go-word 0.6s ease-out forwards;
+}
+@keyframes go-word {
+  0% { opacity: 0; transform: translate(var(--shift, -50%), 6px) scale(0.7); }
+  25% { opacity: 1; transform: translate(var(--shift, -50%), 0) scale(1.1); }
+  100% { opacity: 0; transform: translate(var(--shift, -50%), -34px) scale(1); }
+}
+
+/* ---------- Ligne de frappe qui pulse ---------- */
+.game-overlay__pulse {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #1f7bff 20%, #60a5fa 50%, #1f7bff 80%, transparent);
+  box-shadow: 0 0 18px 4px rgba(31, 123, 255, 0.45);
+  animation: go-pulse 0.45s ease-out forwards;
+}
+@keyframes go-pulse {
+  0% { opacity: 1; transform: scaleY(1.6); }
+  100% { opacity: 0.15; transform: scaleY(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-overlay * { animation-duration: 0.01s !important; }
+  .game-overlay__pulse { display: none; }
+}

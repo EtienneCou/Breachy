@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { DifficultyBadge } from "./difficulty";
 
 
 import {
   getAllMidiSongs,
   deleteMidiSong,
-} from "../services/midiDatabase";
+} from "../Services/MidiDatabase";
 
 export default function UserSongs({
   refreshKey,
   onPlay,
+  onPractice, // ouvre le jeu (piano + notes qui tombent) avec ce morceau
 }) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -146,10 +148,26 @@ export default function UserSongs({
                   : "Fichier MIDI"}
               </span>
 
+              {/* Difficulté calculée à partir des notes du fichier */}
+              <div className="user-song-difficulty">
+                <DifficultyBadge musicId={`user:${song.id}`} />
+              </div>
+
             </div>
 
 
             <div className="user-song-actions">
+
+              {onPractice && (
+                <button
+                  type="button"
+                  className="user-play-btn user-practice-btn"
+                  onClick={() => onPractice(song)}
+                  title="S'entraîner au piano sur ce morceau"
+                >
+                  🎹 S'entraîner
+                </button>
+              )}
 
               <button
                 type="button"
@@ -362,6 +380,23 @@ function Styles() {
 
       .user-play-btn:hover {
         background: #dfeeff;
+      }
+
+      .user-song-difficulty {
+        margin-top: 6px;
+      }
+
+      .user-song-difficulty:empty {
+        display: none;
+      }
+
+      .user-practice-btn {
+        color: #4338ca;
+        background: #eef2ff;
+      }
+
+      .user-practice-btn:hover {
+        background: #e0e7ff;
       }
 
 
