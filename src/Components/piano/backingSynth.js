@@ -1,0 +1,185 @@
+import { midiToFreq, noteToMidi } from './notes.js'
+import { pianoSynth } from './synth.js'
+
+// Synthé d'accompagnement : joue les autres instruments du morceau pendant que
+// le joueur joue la mélodie. Il partage le contexte audio et le volume du piano.
+
+const DRUM_CHANNEL = 9
+
+// Timbre par famille d'instruments (d'après le nom General MIDI de la piste).
+const TIMBRES = {
+  bass: { type: 'triangle', attack: 0.005, release: 0.08, gain: 0.22, cutoff: 6, pluck: false },
+  pluck: { type: 'triangle', attack: 0.003, release: 0.15, gain: 0.12, cutoff: 5, pluck: true },
+  keys: { type: 'triangle', attack: 0.004, release: 0.2, gain: 0.1, cutoff: 6, pluck: true },
+  pad: { type: 'sawtooth', attack: 0.12, release: 0.35, gain: 0.035, cutoff: 3, pluck: false },
+  brass: { type: 'sawtooth', attack: 0.03, release: 0.12, gain: 0.05, cutoff: 4, pluck: false },
+  lead: { type: 'square', attack: 0.01, release: 0.1, gain: 0.045, cutoff: 5, pluck: false },
+}
+
+// Le curseur suit l'oreille (petits volumes réglables finement). Le facteur 1,2
+// compense une partie du limiteur : même à 100 %, le fond reste sous le piano.
+const volumeCurve = (v) => v * v * 1.2
+
+function familyOf(instrument = '') {
+  const name = instrument.toLowerCase()
+  if (name.includes('bass')) return 'bass'
+  if (/guitar|harp|pluck|pizzicato|banjo|sitar/.test(name)) return 'pluck'
+  if (/piano|harpsichord|clav|organ|celesta|glock|vibra|marimba|xylo|bell/.test(name)) return 'keys'
+  if (/string|ensemble|pad|choir|voice|aahs|oohs|synthstring/.test(name)) return 'pad'
+  if (/brass|horn|trumpet|trombone|tuba|sax|oboe|bassoon|clarinet|flute|piccolo|whistle/.test(name)) return 'brass'
+  return 'lead'
+}
+
+class BackingSynth {
+  volume = 0.5 // position du curseur Accompagnement, de 0 à 1
+  input = null // entrée : toutes les notes de l'accompagnement
+  bus = null // volume de l'accompagnement, après le limiteur
+  noise = null
+  voices = new Set()
+
+  // À appeler depuis une action du joueur (clic sur Jouer) : le navigateur l'exige pour le son.
+  ensure() {
+    pianoSynth.ensureContext()
+    const { ctx } = pianoSynth
+    if (!this.bus) {
+      // notes -> limiteur -> volume -> sortie commune : même avec 20 à 30 notes en même
+      // temps (cordes, batterie…), l'accompagnement reste plafonné sous le piano.
+      this.input = ctx.createGain()
+      const limiter = ctx.createDynamicsCompressor()
+      limiter.threshold.value = -24
+      limiter.knee.value = 6
+      limiter.ratio.value = 12
+      limiter.attack.value = 0.005
+      limiter.release.value = 0.2
+      this.bus = ctx.createGain()
+      this.bus.gain.value = volumeCurve(this.volume)
+      this.input.connect(limiter).connect(this.bus).connect(pianoSynth.master)
+      // une seconde de bruit blanc, réutilisée pour toute la batterie
+      this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
+      const data = this.noise.getChannelData(0)
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1
+    }
+    return ctx
+  }
+
+  setVolume(v) {
+    this.volume = v
+    if (this.bus) this.bus.gain.value = volumeCurve(v)
+  }
+
+  get currentTime() {
+    return pianoSynth.ctx?.currentTime ?? 0
+  }
+
+  /** Programme une note de l'accompagnement à l'instant audio `when`, pour `duration` secondes. */
+  play(note, when, duration) {
+    const ctx = this.ensure()
+    let midi
+    try {
+      midi = noteToMidi(note.note)
+    } catch {
+      return
+    }
+    // force de la note dans le fichier MIDI : le fond garde ses nuances au lieu de tout jouer fort
+    const velocity = note.velocity ?? 0.7
+    if (note.channel === DRUM_CHANNEL) this.drum(ctx, midi, when, velocity)
+    else this.tone(ctx, midi, familyOf(note.instrument), when, Math.max(0.05, duration), velocity)
+  }
+
+  tone(ctx, midi, family, when, duration, velocity = 0.7) {
+    const t = { ...TIMBRES[family], gain: TIMBRES[family].gain * velocity }
+    const f = midiToFreq(midi)
+    const osc = ctx.createOscillator()
+    const filter = ctx.createBiquadFilter()
+    const gain = ctx.createGain()
+    osc.type = t.type
+    osc.frequency.value = f
+    filter.type = 'lowpass'
+    // graves : filtre moins fermé pour garder les harmoniques (sinon la basse s'entend mal)
+    filter.frequency.value = Math.min(9000, Math.max(f * t.cutoff, 900))
+    const end = when + duration
+    gain.gain.setValueAtTime(0, when)
+    gain.gain.linearRampToValueAtTime(t.gain, when + t.attack)
+    if (t.pluck) gain.gain.exponentialRampToValueAtTime(t.gain * 0.25, Math.max(when + t.attack + 0.01, end))
+    else gain.gain.setValueAtTime(t.gain, end)
+    gain.gain.exponentialRampToValueAtTime(0.0001, end + t.release)
+    osc.connect(filter).connect(gain).connect(this.input)
+    osc.start(when)
+    osc.stop(end + t.release + 0.05)
+    this.track(osc, gain)
+  }
+
+  drum(ctx, midi, when, velocity = 0.7) {
+    if (midi === 35 || midi === 36) return this.kick(ctx, when, velocity)
+    if ([41, 43, 45, 47, 48, 50].includes(midi)) return this.tom(ctx, when, 90 + (midi - 41) * 12, 0.3 * velocity)
+    const hat = midi === 42 || midi === 44
+    const openHat = midi === 46
+    const cymbal = [49, 51, 52, 53, 55, 57, 59].includes(midi)
+    const snare = midi === 38 || midi === 40 || midi === 37 || midi === 39
+    const decay = hat ? 0.05 : openHat ? 0.25 : cymbal ? 0.7 : snare ? 0.15 : 0.08
+    const level = (hat ? 0.08 : cymbal ? 0.06 : snare ? 0.2 : 0.08) * velocity
+    const src = ctx.createBufferSource()
+    src.buffer = this.noise
+    const filter = ctx.createBiquadFilter()
+    filter.type = snare ? 'bandpass' : 'highpass'
+    filter.frequency.value = snare ? 1800 : hat || openHat ? 7000 : 5000
+    const gain = ctx.createGain()
+    gain.gain.setValueAtTime(level, when)
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + decay)
+    src.connect(filter).connect(gain).connect(this.input)
+    src.start(when)
+    src.stop(when + decay + 0.05)
+    this.track(src, gain)
+    if (snare) this.tom(ctx, when, 180, 0.12 * velocity)
+  }
+
+  kick(ctx, when, velocity = 0.7) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.setValueAtTime(150, when)
+    osc.frequency.exponentialRampToValueAtTime(40, when + 0.12)
+    gain.gain.setValueAtTime(0.4 * velocity, when)
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.3)
+    osc.connect(gain).connect(this.input)
+    osc.start(when)
+    osc.stop(when + 0.35)
+    this.track(osc, gain)
+  }
+
+  tom(ctx, when, freq, level = 0.3) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.frequency.setValueAtTime(freq, when)
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.6, when + 0.2)
+    gain.gain.setValueAtTime(level, when)
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.25)
+    osc.connect(gain).connect(this.input)
+    osc.start(when)
+    osc.stop(when + 0.3)
+    this.track(osc, gain)
+  }
+
+  track(source, gain) {
+    const voice = { source, gain }
+    this.voices.add(voice)
+    source.onended = () => this.voices.delete(voice)
+  }
+
+  /** Coupe tout ce qui sonne ou est programmé (pause, recommencer, changement de vitesse). */
+  stopAll() {
+    const now = this.currentTime
+    for (const { source, gain } of this.voices) {
+      try {
+        gain.gain.cancelScheduledValues(now)
+        gain.gain.setTargetAtTime(0, now, 0.02)
+        source.stop(now + 0.1)
+      } catch {
+        // déjà arrêtée
+      }
+    }
+    this.voices.clear()
+  }
+}
+
+// Une seule instance pour toute l'application.
+export const backingSynth = new BackingSynth()

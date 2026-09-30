@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import songsCatalog from "../../resources/catalog";
 
@@ -64,13 +65,15 @@ export default function SongsPage() {
 
   const { playSong } = useSongPlayer();
 
+  const navigate = useNavigate();
 
 
+
+  // « S'entraîner » ouvre le jeu (piano + notes qui tombent) avec ce morceau.
+  // Seuls les morceaux qui ont une partition (`musicItem`) peuvent être joués.
   const handleStartPractice = (song) => {
 
-    playSong(song);
-
-    setIsPracticeActive(true);
+    navigate(`/piano?morceau=${encodeURIComponent(song.id)}`);
 
   };
 
@@ -1736,6 +1739,7 @@ export default function SongsPage() {
             playSong(song);
             setIsPracticeActive(true);
           }}
+          onPractice={(song) => navigate(`/piano?morceau=${encodeURIComponent(`user:${song.id}`)}`)}
         />
 
 
@@ -1844,7 +1848,9 @@ export default function SongsPage() {
 
                         onClick={() => handleStartPractice(song)}
 
-                        title="S'entraîner avec ce morceau en arrière-plan"
+                        disabled={!song.musicItem}
+
+                        title={song.musicItem ? "S'entraîner au piano sur ce morceau" : "Pas encore de partition pour ce morceau"}
 
                       >
 

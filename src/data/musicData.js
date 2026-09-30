@@ -26,12 +26,17 @@ function parseMidiNotes(arrayBuffer, idPrefix) {
   const midi = new Midi(arrayBuffer);
 
   return midi.tracks
-    .flatMap((track) => track.notes)
-    .map((note, index) => ({
+    // on garde la piste et l'instrument de chaque note pour pouvoir n'en jouer qu'une
+    .flatMap((track, trackIndex) => track.notes.map((note) => ({ note, track, trackIndex })))
+    .map(({ note, track, trackIndex }, index) => ({
       id: `${idPrefix}-${index}`,
       note: note.name,
       start: note.time,
       duration: note.duration,
+      track: trackIndex,
+      channel: track.channel,
+      instrument: track.instrument?.name,
+      velocity: note.velocity, // force de la note (0 à 1)
     }))
     .sort((a, b) => a.start - b.start);
 }
