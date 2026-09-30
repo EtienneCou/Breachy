@@ -1,108 +1,212 @@
-
-import React, { useMemo, useState } from "react";
-import MidiUploader from "../Components/MiniUploader";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import MidiUploader from "../components/MiniUploader";
 
 const songs = [
   {
+    id: "au_clair_de_la_lune",
     title: "Au clair de la lune",
     artist: "Traditionnel",
-    level: "Enfants",
+    level: "Débutant",
+    category: "Enfants",
     duration: "2:36",
     image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/au_clair_de_la_lune.txt",
+    defaultOctave: 4,
   },
   {
+    id: "frere_jacques",
     title: "Frère Jacques",
     artist: "Traditionnel",
-    level: "Enfants",
+    level: "Débutant",
+    category: "Enfants",
     duration: "1:40",
     image: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/frere_jacques.txt",
+    defaultOctave: 4,
   },
   {
+    id: "let_it_be",
     title: "Let It Be",
     artist: "The Beatles",
-    level: "Pop",
+    level: "Intermédiaire",
+    category: "Pop",
     duration: "4:03",
     image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/au_clair_de_la_lune.txt",
+    defaultOctave: 4,
   },
   {
+    id: "comptine",
     title: "Comptine d'un autre été",
     artist: "Yann Tiersen",
-    level: "Films & Séries",
+    level: "Intermédiaire",
+    category: "Films & Séries",
     duration: "3:18",
     image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
   },
   {
+    id: "la_vie_en_rose",
     title: "La Vie en rose",
     artist: "Édith Piaf",
-    level: "Variété",
+    level: "Intermédiaire",
+    category: "Variété",
     duration: "3:22",
     image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
   },
   {
+    id: "fur_elise",
     title: "Für Elise",
     artist: "L. van Beethoven",
     level: "Classique",
+    category: "Classique",
     duration: "3:02",
     image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/mario.txt",
+    defaultOctave: 4,
   },
   {
+    id: "clair_de_lune",
     title: "Clair de lune",
     artist: "C. Debussy",
     level: "Classique",
+    category: "Classique",
     duration: "5:12",
     image: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/au_clair_de_la_lune.txt",
+    defaultOctave: 4,
   },
   {
+    id: "can_you_feel_the_love",
     title: "Can you feel the love tonight",
     artist: "Elton John (Le Roi Lion)",
-    level: "Films & Séries",
+    level: "Intermédiaire",
+    category: "Films & Séries",
     duration: "4:10",
     image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
   },
   {
+    id: "hallelujah",
     title: "Hallelujah",
     artist: "Leonard Cohen",
-    level: "Pop",
+    level: "Intermédiaire",
+    category: "Pop",
     duration: "5:08",
     image: "https://images.unsplash.com/photo-1524650359799-842906ca1c06?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/au_clair_de_la_lune.txt",
+    defaultOctave: 4,
   },
   {
+    id: "river_flows_in_you",
     title: "River Flows in You",
     artist: "Yiruma",
-    level: "Pop",
+    level: "Intermédiaire",
+    category: "Pop",
     duration: "4:02",
     image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
   },
   {
+    id: "joyeux_anniversaire",
     title: "Joyeux anniversaire",
     artist: "Traditionnel",
-    level: "Enfants",
+    level: "Débutant",
+    category: "Enfants",
     duration: "1:12",
     image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/frere_jacques.txt",
+    defaultOctave: 4,
   },
   {
+    id: "bella_ciao",
     title: "Bella Ciao",
     artist: "Traditionnel",
     level: "Intermédiaire",
+    category: "Films & Séries",
     duration: "3:45",
     image: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
+  },
+  {
+    id: "take_on_me",
+    title: "Take On Me",
+    artist: "A-ha",
+    level: "Intermédiaire",
+    category: "Pop",
+    duration: "3:45",
+    image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/Aha__Take_on_me.mid",
+    defaultOctave: 5,
+  },
+  {
+    id: "queen_bohemian",
+    title: "Bohemian Rhapsody",
+    artist: "Queen",
+    level: "Intermédiaire",
+    category: "Pop",
+    duration: "5:55",
+    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/Queen_Bohemian_Rhapsody.mid",
+    defaultOctave: 4,
+  },
+  {
+    id: "queen_show_must_go_on",
+    title: "The Show Must Go On",
+    artist: "Queen",
+    level: "Intermédiaire",
+    category: "Pop",
+    duration: "4:30",
+    image: "https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/show_must_go_on_Queen.mid",
+    defaultOctave: 4,
+  },
+  {
+    id: "mario",
+    title: "Super Mario Bros - Thème",
+    artist: "Koji Kondo",
+    level: "Intermédiaire",
+    category: "Films & Séries",
+    duration: "1:25",
+    image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/mario.txt",
+    defaultOctave: 6,
+  },
+  {
+    id: "pirate",
+    title: "He's a Pirate",
+    artist: "Hans Zimmer & Klaus Badelt",
+    level: "Intermédiaire",
+    category: "Films & Séries",
+    duration: "1:50",
+    image: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=300&q=80",
+    file: "/songs/pirate.txt",
+    defaultOctave: 4,
   },
 ];
 
 const filters = [
   "Tous",
-//   "Débutant",
-//   "Intermédiaire",
+  "Débutant",
+  "Intermédiaire",
   "Classique",
   "Pop",
   "Films & Séries",
   "Variété",
   "Enfants",
   "Noël",
-//   "Mes favoris",
+  "Mes favoris",
 ];
 
-export default function SongsPage() {
+export default function HomePage({ onPlaySong, onNavigate }) {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
@@ -116,18 +220,17 @@ export default function SongsPage() {
         !q ||
         song.title.toLowerCase().includes(q) ||
         song.artist.toLowerCase().includes(q) ||
-        song.level.toLowerCase().includes(q);
+        song.level.toLowerCase().includes(q) ||
+        song.category.toLowerCase().includes(q);
 
       const matchesFilter =
-        activeFilter === "Tous" ||
-        activeFilter === "Mes favoris"
+        activeFilter === "Tous"
           ? true
-          : song.level === activeFilter;
+          : activeFilter === "Mes favoris"
+          ? favorites.includes(song.title)
+          : song.level === activeFilter || song.category === activeFilter;
 
-      const matchesFavorite =
-        activeFilter !== "Mes favoris" || favorites.includes(song.title);
-
-      return matchesSearch && matchesFilter && matchesFavorite;
+      return matchesSearch && matchesFilter;
     });
   }, [search, activeFilter, favorites]);
 
@@ -137,6 +240,23 @@ export default function SongsPage() {
         ? current.filter((item) => item !== title)
         : [...current, title]
     );
+  };
+
+  const handlePlay = (song, mode = "training") => {
+    if (onPlaySong) {
+      onPlaySong({
+        id: song.id,
+        title: song.title,
+        composer: song.artist,
+        category: song.category || song.level,
+        difficulty: song.level,
+        duration: song.duration,
+        file: song.file || "/songs/au_clair_de_la_lune.txt",
+        defaultOctave: song.defaultOctave || 4,
+      }, mode);
+    } else {
+      navigate("/pianoPage");
+    }
   };
 
   return (
@@ -807,7 +927,7 @@ export default function SongsPage() {
                     <p className="artist">{song.artist}</p>
 
                     <div className="song-meta">
-                      {/* <span className={`badge ${levelClass}`}>{song.level}</span> */}
+                      <span className={`badge ${levelClass}`}>{song.level}</span>
                       <span className="duration">
                         <span className="clock" aria-hidden="true" />
                         {song.duration}
@@ -816,7 +936,7 @@ export default function SongsPage() {
                   </div>
 
                   <div className="song-actions">
-                   {/*  <button
+                    <button
                       type="button"
                       className={`favorite-btn ${isFavorite ? "active" : ""}`}
                       onClick={() => toggleFavorite(song.title)}
@@ -827,12 +947,12 @@ export default function SongsPage() {
                       }
                     >
                       {isFavorite ? "♥" : "♡"}
-                    </button> */}
+                    </button>
 
                     <button
                       type="button"
                       className="play-btn"
-                      onClick={() => console.log("Jouer :", song.title)}
+                      onClick={() => handlePlay(song, 'training')}
                     >
                       <span className="play-triangle" aria-hidden="true" />
                       Jouer

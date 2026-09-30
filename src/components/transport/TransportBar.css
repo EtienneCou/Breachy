@@ -1,0 +1,169 @@
+.transport {
+  --transport-bg: #ffffff;
+  --transport-surface: #ffffff;
+  --transport-line: #e6e9f3;
+  --transport-text: #0b1026;
+  --transport-muted: #7180b0;
+  --transport-accent: #1f7bff;
+  --transport-accent-hover: #0d69ff;
+  --transport-accent-soft: #eaf3ff;
+  --transport-accent-ink: #ffffff;
+  --transport-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --transport-sans: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+
+  box-sizing: border-box;
+  display: flex;
+  gap: 18px;
+  padding: 16px 14px;
+  background: var(--transport-bg);
+  color: var(--transport-text);
+  font-family: var(--transport-sans);
+}
+.transport *,
+.transport *::before,
+.transport *::after { box-sizing: border-box; }
+
+/* Colonne à côté du piano : ne prend aucune hauteur à la piste des notes.
+   Tout doit tenir sans défilement : espacements proportionnels à la hauteur d'écran. */
+.transport--vertical {
+  flex-direction: column;
+  width: 184px;
+  gap: clamp(8px, 2vh, 18px);
+  padding: clamp(10px, 2vh, 16px) 14px;
+}
+/* En colonne, les gros boutons : icône à gauche, texte avec son raccourci en dessous */
+.transport--vertical .transport__main .transport__btn {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  justify-items: start;
+  column-gap: 10px;
+  row-gap: 1px;
+  padding: clamp(6px, 1.2vh, 10px) 12px;
+  text-align: left;
+}
+.transport--vertical .transport__main .transport__icon { grid-row: 1 / span 2; }
+.transport--vertical .transport__btn--play { padding-block: clamp(9px, 1.8vh, 14px); }
+.transport--horizontal {
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px 28px;
+}
+
+.transport__section {
+  display: grid;
+  gap: 6px;
+}
+.transport--horizontal .transport__section { min-width: 140px; }
+
+.transport__main { gap: 8px; }
+.transport--horizontal .transport__main { display: flex; }
+
+.transport__heading {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--transport-muted);
+}
+.transport__muted { color: var(--transport-muted); }
+
+.transport__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  padding: 8px 10px 6px;
+  font: inherit;
+  color: var(--transport-text);
+  background: var(--transport-surface);
+  border: 1px solid var(--transport-line);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, transform 0.06s;
+}
+.transport__btn:hover:not(:disabled) { border-color: var(--transport-accent); }
+.transport__btn:active:not(:disabled) { transform: translateY(1px); }
+.transport__btn:focus-visible,
+.transport__value:focus-visible,
+.transport__slider:focus-visible { outline: 2px solid var(--transport-accent); outline-offset: 2px; }
+.transport__btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.transport__btn--play {
+  padding-block: 12px 8px;
+  background: var(--transport-accent);
+  border-color: var(--transport-accent);
+  color: var(--transport-accent-ink);
+}
+.transport__btn--play .transport__label { font-size: 1rem; }
+.transport__btn--play:hover:not(:disabled) { background: var(--transport-accent-hover); border-color: var(--transport-accent-hover); }
+.transport__btn--play.is-playing { background: var(--transport-accent-soft); border-color: transparent; color: var(--transport-accent); }
+
+.transport__btn--small { width: 44px; flex: none; padding: 4px 0 3px; gap: 1px; }
+
+.transport__icon { flex: none; }
+.transport__label { font-size: 0.85rem; font-weight: 600; line-height: 1.1; }
+.transport__btn kbd {
+  font: 0.68rem var(--transport-mono);
+  color: inherit;
+  opacity: 0.65;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.transport__stepper {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 6px;
+}
+.transport__value {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  font: inherit;
+  color: var(--transport-text);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+}
+button.transport__value { cursor: pointer; }
+.transport__value-number { font: 500 1.15rem var(--transport-mono); font-variant-numeric: tabular-nums; color: var(--transport-accent); }
+.transport__value-word { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--transport-muted); }
+
+.transport__clock { font: 0.95rem var(--transport-mono); font-variant-numeric: tabular-nums; }
+.transport__progress {
+  display: block;
+  height: 4px;
+  background: var(--transport-line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.transport__progress span {
+  display: block;
+  height: 100%;
+  background: var(--transport-accent);
+  transform-origin: left;
+}
+
+.transport__slider { width: 100%; accent-color: var(--transport-accent); }
+
+/* Fenêtre très basse : on retire les détails secondaires plutôt que de faire défiler */
+@media (max-height: 560px) {
+  .transport--vertical .transport__value-word,
+  .transport--vertical .transport__btn--small kbd { display: none; }
+  .transport--vertical .transport__section { gap: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .transport * { transition: none !important; }
+}
