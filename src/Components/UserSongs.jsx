@@ -4,11 +4,12 @@ import React, { useEffect, useState } from "react";
 import {
   getAllMidiSongs,
   deleteMidiSong,
-} from "../services/midiDatabase";
+} from "../Services/MidiDatabase";
 
 export default function UserSongs({
   refreshKey,
   onPlay,
+  onPractice, // ouvre le jeu (piano + notes qui tombent) avec ce morceau
 }) {
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -150,6 +151,17 @@ export default function UserSongs({
 
 
             <div className="user-song-actions">
+
+              {onPractice && (
+                <button
+                  type="button"
+                  className="user-play-btn user-practice-btn"
+                  onClick={() => onPractice(song)}
+                  title="S'entraîner au piano sur ce morceau"
+                >
+                  🎹 S'entraîner
+                </button>
+              )}
 
               <button
                 type="button"
@@ -362,6 +374,15 @@ function Styles() {
 
       .user-play-btn:hover {
         background: #dfeeff;
+      }
+
+      .user-practice-btn {
+        color: #4338ca;
+        background: #eef2ff;
+      }
+
+      .user-practice-btn:hover {
+        background: #e0e7ff;
       }
 
 

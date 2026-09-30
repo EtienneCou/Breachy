@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent, useState } from 'react'
-import { pianoSynth } from '../piano'
+import { backingSynth, pianoSynth } from '../piano'
 import { TRANSPORT_KEYS } from './keys.js'
 import './TransportBar.css'
 
@@ -13,18 +13,18 @@ function formatTime(seconds) {
 
 /**
  * Barre de commande : jouer / pause, recommencer, vitesse, et si `piano`
- * est fourni, l'octave (en jeu libre) et le volume.
+ * est fourni, l'octave (en jeu libre) et le volume du piano.
  *
- * - clock        objet renvoyé par useSongClock()
- * - piano        objet renvoyé par usePiano() (optionnel)
+ * - clock          objet renvoyé par useSongClock()
+ * - piano          objet renvoyé par usePiano() (optionnel)
+ * - accompaniment  affiche le volume de l'accompagnement (quand la page en joue un)
  * - orientation  'vertical' (colonne à côté du piano) ou 'horizontal'
  * - shortcuts    raccourcis clavier : Entrée, Retour arrière, ↓, ↑
  */
-export default function TransportBar({ clock, piano, orientation = 'vertical', shortcuts = true, className = '' }) {
+export default function TransportBar({ clock, piano, accompaniment = false, orientation = 'vertical', shortcuts = true, className = '' }) {
   const { status, time, duration, speed } = clock
   const playing = status === 'playing'
   const finite = Number.isFinite(duration) && duration > 0
-  const [volume, setVolume] = useState(pianoSynth.volume)
 
   const handleKey = useEffectEvent((e) => {
     if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return
@@ -42,12 +42,6 @@ export default function TransportBar({ clock, piano, orientation = 'vertical', s
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [shortcuts])
-
-  const changeVolume = (e) => {
-    const v = Number(e.target.value)
-    setVolume(v)
-    pianoSynth.setVolume(v)
-  }
 
   const playLabel = playing ? 'Pause' : status === 'paused' ? 'Reprendre' : status === 'finished' ? 'Rejouer' : 'Jouer'
   const progress = finite ? Math.min(1, Math.max(0, time / duration)) : 0
@@ -118,25 +112,37 @@ export default function TransportBar({ clock, piano, orientation = 'vertical', s
         </Stepper>
       )}
 
-      {piano && (
-        <label className="transport__section" htmlFor="transport-volume">
-          <span className="transport__heading">
-            Volume <span className="transport__muted">{percent(volume)}</span>
-          </span>
-          <input
-            id="transport-volume"
-            className="transport__slider"
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={changeVolume}
-            onPointerUp={(e) => e.currentTarget.blur()}
-          />
-        </label>
-      )}
+      {piano && <VolumeSlider id="transport-volume-piano" label="Piano" synth={pianoSynth} />}
+      {accompaniment && <VolumeSlider id="transport-volume-backing" label="Accompagnement" synth={backingSynth} />}
     </div>
+  )
+}
+
+// Curseur de volume d'un synthé (pianoSynth ou backingSynth).
+function VolumeSlider({ id, label, synth }) {
+  const [volume, setVolume] = useState(synth.volume)
+  const change = (e) => {
+    const v = Number(e.target.value)
+    setVolume(v)
+    synth.setVolume(v)
+  }
+  return (
+    <label className="transport__section" htmlFor={id}>
+      <span className="transport__heading">
+        {label} <span className="transport__muted">{percent(volume)}</span>
+      </span>
+      <input
+        id={id}
+        className="transport__slider"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={volume}
+        onChange={change}
+        onPointerUp={(e) => e.currentTarget.blur()}
+      />
+    </label>
   )
 }
 

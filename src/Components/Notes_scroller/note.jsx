@@ -8,13 +8,14 @@ import { memo } from 'react';
  * Le bas de la barre correspond au début de la note (transform: translateY(-100%)
  * dans le CSS), la hauteur représente la durée.
  */
-function Note({ label, status, accidental, x, width, start, duration, unit }) {
+function Note({ label, status, accidental, x, width, start, duration, unit, color }) {
   const displayWidth = Math.max(width, 0.035);
   const style = {
     left: `${(x - displayWidth / 2) * 100}%`,
     width: `${displayWidth * 100}%`,
     top: `${-start * unit}%`,
     height: `${duration * unit}%`,
+    ...(color ? { '--ns-note-color': color } : null), // couleur propre à la note (optionnelle)
   };
   const className = `note note--${status}${accidental ? ' note--accidental' : ''}`;
 

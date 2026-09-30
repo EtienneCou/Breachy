@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { addMidiSong } from "../services/midiDatabase";
+import { addMidiSong } from "../Services/MidiDatabase";
 
 export default function MidiUploader({ onSongAdded }) {
   const [file, setFile] = useState(null);
