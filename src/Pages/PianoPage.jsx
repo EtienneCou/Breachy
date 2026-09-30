@@ -1,18 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
-  KEY_LABELS, PianoStage, asciiName, createScrollerLayout, keymapForWindow, noteToMidi, usePiano, windowTop,
+  KEY_LABELS, PianoStage, asciiName, createScrollerLayout, keymapForWindow, noteToMidi, pianoSynth, usePiano, windowTop,
 } from '../Components/piano'
 import { TransportBar } from '../Components/transport'
 import { NoteScroller, getSongDuration } from '../Components/Notes_scroller'
 import GameOverlay from '../Components/game/GameOverlay.jsx'
 import { NOTE_POINTS, heatLevel, multiplierFor } from '../Components/game/streakTiers.js'
 import { ResultsModal } from '../Components/results'
-import { musicCatalog } from '../data/musicData'
 import { useMusic } from '../hooks/useMusic.js'
 import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
-import { getParts, pickDefaultPart, splitSong } from '../utils/songParts.js'
+import { melodyFor, splitSong } from '../utils/songParts.js'
 import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
 import { TIMING } from '../utils/gameStats.js'
 import './PianoPage.css'
@@ -38,31 +37,40 @@ const KEY_COLORS = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#14b
  * À gauche : la piste des notes (Notes_scroller) et le clavier, sur toute la hauteur.
  * À droite : le morceau en cours, le retour à l'accueil et la barre de commande.
  *
- * Le morceau est choisi sur la page d'accueil, qui ouvre cette page avec son id
- * (celui de musicCatalog, data/musicData.js) : navigate(`/pianoPage?morceau=${id}`).
+ * Le morceau est choisi sur la page d'accueil (bouton « S'entraîner »), qui ouvre
+ * cette page avec son id : navigate(`/piano?morceau=${id}`). Voir hooks/useMusic.js
+ * pour les morceaux reconnus (catalogue de l'accueil, fichiers ajoutés par l'utilisateur).
  * Sans morceau dans l'adresse, un morceau de test est chargé (pas de jeu libre ici).
  */
 export default function PianoPage() {
   const [searchParams] = useSearchParams()
   const musicId = searchParams.get('morceau') ?? TEST_MUSIC_ID
-  const unknownMusic = musicId !== null && !musicCatalog.some((m) => m.id === musicId)
   const { music, notes, status } = useMusic(musicId)
 
   // Pour l'instant, le joueur joue toujours la mélodie, au piano.
-  const melodyPart = useMemo(() => pickDefaultPart(getParts(notes)), [notes])
+  const melodyPart = useMemo(() => melodyFor(musicId, notes), [musicId, notes])
   const { melody, backing } = useMemo(
-    () => splitSong(notes, melodyPart?.id ?? null, { leadIn: LEAD_IN }),
+    () => splitSong(notes, melodyPart.ids, { leadIn: LEAD_IN }),
     [notes, melodyPart],
   )
 
   const difficult = useMemo(() => isDifficult(melody), [melody])
+
+  // Morceau à une seule partie (ex. Mario, Pirates) : il n'y a pas d'autres instruments,
+  // alors l'accompagnement joue la mélodie en guide, doucement, au son d'un clavier.
+  const guided = backing.length === 0 && melody.length > 0
+  const accompaniment = useMemo(
+    () => (guided ? melody.map((n) => ({ ...n, id: `guide-${n.id}`, instrument: 'piano', channel: 0 })) : backing),
+    [guided, melody, backing],
+  )
 
   const songInfo = (
     <SongInfo
       title={music?.label}
       melodyLabel={melodyPart?.label}
       difficult={difficult}
-      status={unknownMusic ? 'unknown' : status}
+      guided={guided}
+      status={status}
     />
   )
 
@@ -72,7 +80,7 @@ export default function PianoPage() {
       key={`${musicId}:${status}`}
       title={music?.label ?? ''}
       notes={melody}
-      backing={backing}
+      backing={accompaniment}
       sidebar={songInfo}
     />
   )
@@ -80,6 +88,18 @@ export default function PianoPage() {
 
 function PianoSession({ title, notes, backing, sidebar }) {
   const navigate = useNavigate()
+
+  // Démarre le moteur audio dès la première interaction avec la page, pour que
+  // les premières touches jouées sonnent tout de suite.
+  useEffect(() => {
+    const warmUp = () => pianoSynth.ensureContext()
+    window.addEventListener('pointerdown', warmUp, { once: true })
+    window.addEventListener('keydown', warmUp, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', warmUp)
+      window.removeEventListener('keydown', warmUp)
+    }
+  }, [])
   const hasSong = notes.length > 0
   // le morceau dure jusqu'à la dernière note, mélodie ou accompagnement
   const duration = useMemo(
@@ -297,7 +317,7 @@ function PianoSession({ title, notes, backing, sidebar }) {
             </p>
           </div>
         )}
-        <TransportBar className="piano-page__transport" clock={clock} piano={piano} accompaniment={backing.length > 0} />
+        <TransportBar className="piano-page__transport" clock={clock} piano={piano} accompaniment />
       </aside>
 
       {results && (
@@ -341,7 +361,7 @@ function slotInfo(base) {
 
 const isWhite = (midi) => ![1, 3, 6, 8, 10].includes(midi % 12)
 
-function SongInfo({ title, melodyLabel, difficult, status }) {
+function SongInfo({ title, melodyLabel, difficult, guided, status }) {
   const navigate = useNavigate()
   return (
     <section className="piano-page__card" aria-label="Morceau">
@@ -359,6 +379,9 @@ function SongInfo({ title, melodyLabel, difficult, status }) {
       )}
       {status === 'ready' && melodyLabel && (
         <p className="piano-page__status">Tu joues la mélodie ({melodyLabel}) au piano, les autres instruments t'accompagnent.</p>
+      )}
+      {status === 'ready' && guided && (
+        <p className="piano-page__status">Ce morceau n'a qu'une partie : tu entends la mélodie en guide. Baisse « Accompagnement » pour jouer seul.</p>
       )}
       {status === 'loading' && <p className="piano-page__status">Chargement…</p>}
       {status === 'error' && <p className="piano-page__status piano-page__status--error">Impossible de charger ce morceau.</p>}
