@@ -1,48 +1,89 @@
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-// Morceaux jouables : `id` = identifiant du morceau dans musicCatalog (data/musicData.js),
-// utilisé par la page piano (/pianoPage?morceau=<id>).
 const songs = [
   {
-    id: "pirate",
-    title: "Pirates des Caraïbes",
-    artist: "Klaus Badelt",
+    title: "Au clair de la lune",
+    artist: "Traditionnel",
     level: "Débutant",
-    duration: "1:10",
-    image: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=300&q=80",
+    duration: "2:36",
+    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=300&q=80",
   },
   {
-    id: "mario",
-    title: "Super Mario Bros",
-    artist: "Koji Kondo",
-    level: "Intermédiaire",
-    duration: "0:14",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=300&q=80",
+    title: "Frère Jacques",
+    artist: "Traditionnel",
+    level: "Débutant",
+    duration: "1:40",
+    image: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=300&q=80",
   },
   {
-    id: "take-on-me",
-    title: "Take On Me",
-    artist: "A-ha",
+    title: "Let It Be",
+    artist: "The Beatles",
     level: "Intermédiaire",
-    duration: "3:44",
+    duration: "4:03",
+    image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Comptine d'un autre été",
+    artist: "Yann Tiersen",
+    level: "Intermédiaire",
+    duration: "3:18",
     image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80",
   },
   {
-    id: "bohemian-rhapsody",
-    title: "Bohemian Rhapsody",
-    artist: "Queen",
+    title: "La Vie en rose",
+    artist: "Édith Piaf",
     level: "Intermédiaire",
-    duration: "5:28",
+    duration: "3:22",
+    image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Für Elise",
+    artist: "L. van Beethoven",
+    level: "Classique",
+    duration: "3:02",
     image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=300&q=80",
   },
   {
-    id: "show-must-go-on",
-    title: "The Show Must Go On",
-    artist: "Queen",
-    level: "Intermédiaire",
-    duration: "3:58",
+    title: "Clair de lune",
+    artist: "C. Debussy",
+    level: "Classique",
+    duration: "5:12",
     image: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Can you feel the love tonight",
+    artist: "Elton John (Le Roi Lion)",
+    level: "Intermédiaire",
+    duration: "4:10",
+    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Hallelujah",
+    artist: "Leonard Cohen",
+    level: "Intermédiaire",
+    duration: "5:08",
+    image: "https://images.unsplash.com/photo-1524650359799-842906ca1c06?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "River Flows in You",
+    artist: "Yiruma",
+    level: "Intermédiaire",
+    duration: "4:02",
+    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Joyeux anniversaire",
+    artist: "Traditionnel",
+    level: "Débutant",
+    duration: "1:12",
+    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=300&q=80",
+  },
+  {
+    title: "Bella Ciao",
+    artist: "Traditionnel",
+    level: "Intermédiaire",
+    duration: "3:45",
+    image: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=300&q=80",
   },
 ];
 
@@ -60,7 +101,6 @@ const filters = [
 ];
 
 export default function SongsPage() {
-  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
@@ -688,7 +728,7 @@ export default function SongsPage() {
                     <button
                       type="button"
                       className="play-btn"
-                      onClick={() => navigate(`/pianoPage?morceau=${song.id}`)}
+                      onClick={() => console.log("Jouer :", song.title)}
                     >
                       <span className="play-triangle" aria-hidden="true" />
                       Jouer
