@@ -1,4 +1,4 @@
-export const songs = [
+export const songsList = [
   {
     title: "Au clair de la lune",
     artist: "Traditionnel",
