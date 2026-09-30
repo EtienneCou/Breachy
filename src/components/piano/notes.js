@@ -115,21 +115,14 @@ export function keymapForNotes(notes) {
   return { ...keymap, missing: [...new Set(notes)].filter((m) => !mapped.has(m)).sort((a, b) => a - b) }
 }
 
-// Ce qui est imprimé sur chaque touche physique selon la disposition.
+// Ce qui est imprimé sur chaque touche physique d'un clavier AZERTY.
 const LETTER_CODES = Object.fromEntries('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l) => [`Key${l}`, l]))
 const DIGIT_CODES = Object.fromEntries('0123456789'.split('').map((d) => [`Digit${d}`, d]))
 export const KEY_LABELS = {
-  qwerty: {
-    ...LETTER_CODES, ...DIGIT_CODES,
-    Semicolon: ';', Quote: "'", BracketLeft: '[', BracketRight: ']',
-    Comma: ',', Period: '.', Slash: '/', Minus: '-', Equal: '=',
-  },
-  azerty: {
-    ...LETTER_CODES, ...DIGIT_CODES,
-    KeyQ: 'A', KeyW: 'Z', KeyA: 'Q', KeyZ: 'W', KeyM: ',',
-    Semicolon: 'M', Quote: 'Ù', BracketLeft: '^', BracketRight: '$',
-    Comma: ';', Period: ':', Slash: '!', Minus: ')', Equal: '=',
-  },
+  ...LETTER_CODES, ...DIGIT_CODES,
+  KeyQ: 'A', KeyW: 'Z', KeyA: 'Q', KeyZ: 'W', KeyM: ',',
+  Semicolon: 'M', Quote: 'Ù', BracketLeft: '^', BracketRight: '$',
+  Comma: ';', Period: ':', Slash: '!', Minus: ')', Equal: '=',
 }
 
 // Position horizontale (en %) de chaque touche entre `from` et `to` inclus.
