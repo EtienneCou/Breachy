@@ -154,6 +154,9 @@
 }
 .piano-lanes__lane.is-white { border-right: 1px solid var(--piano-lane-line); }
 .piano-lanes__lane.is-black { z-index: 1; background: #fafbfd; }
+.piano-lanes__lane.is-target {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--piano-accent) 16%, transparent), transparent 75%);
+}
 .piano-lanes__lane.is-active {
   background: linear-gradient(0deg, color-mix(in srgb, var(--piano-accent) 30%, transparent), transparent 70%);
 }

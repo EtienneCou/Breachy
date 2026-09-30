@@ -28,7 +28,8 @@ function getStatus(note, time, override, markMissed) {
  *
  * Props
  *  - notes            [{ id, note, start, duration, label? }] en secondes
- *                     (label : texte affiché sur la note, par défaut son nom)
+ *                     (label : texte affiché sur la note, par défaut son nom ;
+ *                      color : couleur de la note, exposée en --ns-note-color)
  *  - currentTime      temps musical courant (secondes) — la seule source de vérité
  *  - playing          optionnel : sert à ne pas émettre onNoteReached en pause
  *  - lookahead        secondes visibles entre le haut et la hit line (défaut 4)
@@ -106,6 +107,7 @@ export default function NoteScroller({
             <Note
               key={note.id}
               label={showLabels ? (note.label ?? note.note) : undefined}
+              color={note.color}
               status={getStatus(note, currentTime, noteStates?.[note.id], markMissed)}
               accidental={layout.accidental}
               x={layout.x}

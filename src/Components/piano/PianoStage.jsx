@@ -11,7 +11,7 @@ export default function PianoStage({ piano, hints, children, className = '' }) {
   const { from, to } = piano.range
   return (
     <div className={`piano-stage ${className}`}>
-      <PianoLanes className="piano-stage__lanes" from={from} to={to} activeNotes={piano.activeNotes}>
+      <PianoLanes className="piano-stage__lanes" from={from} to={to} activeNotes={piano.activeNotes} hints={hints}>
         {children}
       </PianoLanes>
       <Piano

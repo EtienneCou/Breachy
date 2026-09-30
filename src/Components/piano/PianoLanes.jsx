@@ -3,13 +3,14 @@ import { getKeyboardLayout } from './notes.js'
 import './Piano.css'
 
 const NO_NOTES = new Set()
+const NO_HINTS = {}
 
 /**
  * Piste verticale posée au-dessus de <Piano> : une colonne par touche,
  * alignée au pixel près. Les notes qui tombent seront rendues en `children`,
  * positionnées avec getKeyboardLayout(from, to) (left / width en %).
  */
-export default function PianoLanes({ from, to, activeNotes = NO_NOTES, children, className = '' }) {
+export default function PianoLanes({ from, to, activeNotes = NO_NOTES, hints = NO_HINTS, children, className = '' }) {
   const keys = useMemo(() => getKeyboardLayout(from, to), [from, to])
 
   return (
@@ -18,7 +19,7 @@ export default function PianoLanes({ from, to, activeNotes = NO_NOTES, children,
         <div
           key={k.midi}
           aria-hidden="true"
-          className={`piano-lanes__lane ${k.black ? 'is-black' : 'is-white'}${activeNotes.has(k.midi) ? ' is-active' : ''}`}
+          className={`piano-lanes__lane ${k.black ? 'is-black' : 'is-white'}${activeNotes.has(k.midi) ? ' is-active' : ''}${hints[k.midi] === 'target' ? ' is-target' : ''}`}
           style={{ left: `${k.left}%`, width: `${k.width}%` }}
         />
       ))}
