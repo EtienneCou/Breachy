@@ -700,6 +700,15 @@
 
         }
 
+        /* Morceau sans partition : le jeu ne peut pas le charger */
+        .practice-btn-card:disabled,
+        .practice-btn-card:disabled:hover {
+          opacity: 0.45;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: none;
+        }
+
         .play-triangle {
 
           width: 0;
