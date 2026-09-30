@@ -1,0 +1,343 @@
+/* Style pour la barre d'entraînement en arrière-plan (Practice Player) */
+
+.practice-player-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 1080px;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 16px 24px;
+  color: #f8fafc;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.4),
+              0 0 30px rgba(99, 102, 241, 0.18);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: slideUpPractice 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slideUpPractice {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 40px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.practice-player-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+/* Infos morceau */
+.practice-song-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 220px;
+  max-width: 30%;
+}
+
+.practice-song-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.practice-song-details {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.practice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #818cf8;
+  margin-bottom: 2px;
+}
+
+.practice-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #34d399;
+  box-shadow: 0 0 8px #34d399;
+}
+
+.practice-badge-dot.paused {
+  background-color: #f59e0b;
+  box-shadow: none;
+}
+
+.practice-song-title {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+  margin: 0;
+}
+
+.practice-song-artist {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+/* Contrôles centraux */
+.practice-center-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.practice-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.practice-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.practice-btn:active {
+  transform: translateY(0);
+}
+
+.practice-btn.active {
+  background: #6366f1;
+  border-color: #818cf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.5);
+}
+
+.practice-play-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  border: none;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.45);
+  transition: all 0.2s ease;
+}
+
+.practice-play-btn:hover {
+  transform: scale(1.06);
+  box-shadow: 0 6px 22px rgba(99, 102, 241, 0.6);
+}
+
+/* Sélecteur de vitesse / tempo */
+.practice-speed-selector {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 3px;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.speed-option-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.speed-option-btn:hover {
+  color: #f1f5f9;
+}
+
+.speed-option-btn.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+/* Contrôles droits (volume et fermeture) */
+.practice-right-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.practice-volume-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.practice-volume-slider {
+  width: 80px;
+  height: 5px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+}
+
+.practice-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #818cf8;
+  cursor: pointer;
+  box-shadow: 0 0 6px rgba(129, 140, 248, 0.8);
+}
+
+.practice-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.practice-close-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Barre de progression / Timeline */
+.practice-timeline-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.practice-time {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  min-width: 38px;
+}
+
+.practice-time.current {
+  text-align: right;
+  color: #cbd5e1;
+}
+
+.practice-timeline-slider {
+  flex: 1;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+}
+
+.practice-timeline-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.1s ease;
+}
+
+.practice-timeline-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Message d'erreur */
+.practice-error-banner {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 860px) {
+  .practice-player-bar {
+    width: calc(100% - 24px);
+    bottom: 12px;
+    padding: 12px 16px;
+  }
+
+  .practice-player-top {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .practice-song-info {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .practice-center-controls {
+    flex: 1;
+    justify-content: space-between;
+  }
+}
