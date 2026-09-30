@@ -16,6 +16,10 @@ const TIMBRES = {
   lead: { type: 'square', attack: 0.01, release: 0.1, gain: 0.045, cutoff: 5, pluck: false },
 }
 
+// Le curseur suit l'oreille (petits volumes réglables finement). Le facteur 1,2
+// compense une partie du limiteur : même à 100 %, le fond reste sous le piano.
+const volumeCurve = (v) => v * v * 1.2
+
 function familyOf(instrument = '') {
   const name = instrument.toLowerCase()
   if (name.includes('bass')) return 'bass'
@@ -27,8 +31,9 @@ function familyOf(instrument = '') {
 }
 
 class BackingSynth {
-  volume = 0.25 // volume de l'accompagnement, de 0 à 1 (plus bas que le piano par défaut)
-  bus = null
+  volume = 0.5 // position du curseur Accompagnement, de 0 à 1
+  input = null // entrée : toutes les notes de l'accompagnement
+  bus = null // volume de l'accompagnement, après le limiteur
   noise = null
   voices = new Set()
 
@@ -37,9 +42,18 @@ class BackingSynth {
     pianoSynth.ensureContext()
     const { ctx } = pianoSynth
     if (!this.bus) {
+      // notes -> limiteur -> volume -> sortie commune : même avec 20 à 30 notes en même
+      // temps (cordes, batterie…), l'accompagnement reste plafonné sous le piano.
+      this.input = ctx.createGain()
+      const limiter = ctx.createDynamicsCompressor()
+      limiter.threshold.value = -24
+      limiter.knee.value = 6
+      limiter.ratio.value = 12
+      limiter.attack.value = 0.005
+      limiter.release.value = 0.2
       this.bus = ctx.createGain()
-      this.bus.gain.value = this.volume
-      this.bus.connect(pianoSynth.master)
+      this.bus.gain.value = volumeCurve(this.volume)
+      this.input.connect(limiter).connect(this.bus).connect(pianoSynth.master)
       // une seconde de bruit blanc, réutilisée pour toute la batterie
       this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
       const data = this.noise.getChannelData(0)
@@ -50,7 +64,7 @@ class BackingSynth {
 
   setVolume(v) {
     this.volume = v
-    if (this.bus) this.bus.gain.value = v
+    if (this.bus) this.bus.gain.value = volumeCurve(v)
   }
 
   get currentTime() {
@@ -66,12 +80,14 @@ class BackingSynth {
     } catch {
       return
     }
-    if (note.channel === DRUM_CHANNEL) this.drum(ctx, midi, when)
-    else this.tone(ctx, midi, familyOf(note.instrument), when, Math.max(0.05, duration))
+    // force de la note dans le fichier MIDI : le fond garde ses nuances au lieu de tout jouer fort
+    const velocity = note.velocity ?? 0.7
+    if (note.channel === DRUM_CHANNEL) this.drum(ctx, midi, when, velocity)
+    else this.tone(ctx, midi, familyOf(note.instrument), when, Math.max(0.05, duration), velocity)
   }
 
-  tone(ctx, midi, family, when, duration) {
-    const t = TIMBRES[family]
+  tone(ctx, midi, family, when, duration, velocity = 0.7) {
+    const t = { ...TIMBRES[family], gain: TIMBRES[family].gain * velocity }
     const f = midiToFreq(midi)
     const osc = ctx.createOscillator()
     const filter = ctx.createBiquadFilter()
@@ -79,28 +95,29 @@ class BackingSynth {
     osc.type = t.type
     osc.frequency.value = f
     filter.type = 'lowpass'
-    filter.frequency.value = Math.min(9000, f * t.cutoff)
+    // graves : filtre moins fermé pour garder les harmoniques (sinon la basse s'entend mal)
+    filter.frequency.value = Math.min(9000, Math.max(f * t.cutoff, 900))
     const end = when + duration
     gain.gain.setValueAtTime(0, when)
     gain.gain.linearRampToValueAtTime(t.gain, when + t.attack)
     if (t.pluck) gain.gain.exponentialRampToValueAtTime(t.gain * 0.25, Math.max(when + t.attack + 0.01, end))
     else gain.gain.setValueAtTime(t.gain, end)
     gain.gain.exponentialRampToValueAtTime(0.0001, end + t.release)
-    osc.connect(filter).connect(gain).connect(this.bus)
+    osc.connect(filter).connect(gain).connect(this.input)
     osc.start(when)
     osc.stop(end + t.release + 0.05)
     this.track(osc, gain)
   }
 
-  drum(ctx, midi, when) {
-    if (midi === 35 || midi === 36) return this.kick(ctx, when)
-    if ([41, 43, 45, 47, 48, 50].includes(midi)) return this.tom(ctx, when, 90 + (midi - 41) * 12)
+  drum(ctx, midi, when, velocity = 0.7) {
+    if (midi === 35 || midi === 36) return this.kick(ctx, when, velocity)
+    if ([41, 43, 45, 47, 48, 50].includes(midi)) return this.tom(ctx, when, 90 + (midi - 41) * 12, 0.3 * velocity)
     const hat = midi === 42 || midi === 44
     const openHat = midi === 46
     const cymbal = [49, 51, 52, 53, 55, 57, 59].includes(midi)
     const snare = midi === 38 || midi === 40 || midi === 37 || midi === 39
     const decay = hat ? 0.05 : openHat ? 0.25 : cymbal ? 0.7 : snare ? 0.15 : 0.08
-    const level = hat ? 0.12 : cymbal ? 0.08 : snare ? 0.3 : 0.12
+    const level = (hat ? 0.08 : cymbal ? 0.06 : snare ? 0.2 : 0.08) * velocity
     const src = ctx.createBufferSource()
     src.buffer = this.noise
     const filter = ctx.createBiquadFilter()
@@ -109,21 +126,21 @@ class BackingSynth {
     const gain = ctx.createGain()
     gain.gain.setValueAtTime(level, when)
     gain.gain.exponentialRampToValueAtTime(0.0001, when + decay)
-    src.connect(filter).connect(gain).connect(this.bus)
+    src.connect(filter).connect(gain).connect(this.input)
     src.start(when)
     src.stop(when + decay + 0.05)
     this.track(src, gain)
-    if (snare) this.tom(ctx, when, 180, 0.12)
+    if (snare) this.tom(ctx, when, 180, 0.12 * velocity)
   }
 
-  kick(ctx, when) {
+  kick(ctx, when, velocity = 0.7) {
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
     osc.frequency.setValueAtTime(150, when)
     osc.frequency.exponentialRampToValueAtTime(40, when + 0.12)
-    gain.gain.setValueAtTime(0.6, when)
+    gain.gain.setValueAtTime(0.4 * velocity, when)
     gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.3)
-    osc.connect(gain).connect(this.bus)
+    osc.connect(gain).connect(this.input)
     osc.start(when)
     osc.stop(when + 0.35)
     this.track(osc, gain)
@@ -136,7 +153,7 @@ class BackingSynth {
     osc.frequency.exponentialRampToValueAtTime(freq * 0.6, when + 0.2)
     gain.gain.setValueAtTime(level, when)
     gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.25)
-    osc.connect(gain).connect(this.bus)
+    osc.connect(gain).connect(this.input)
     osc.start(when)
     osc.stop(when + 0.3)
     this.track(osc, gain)

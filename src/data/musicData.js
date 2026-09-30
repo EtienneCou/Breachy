@@ -36,6 +36,7 @@ function parseMidiNotes(arrayBuffer, idPrefix) {
       track: trackIndex,
       channel: track.channel,
       instrument: track.instrument?.name,
+      velocity: note.velocity, // force de la note (0 à 1)
     }))
     .sort((a, b) => a.start - b.start);
 }
