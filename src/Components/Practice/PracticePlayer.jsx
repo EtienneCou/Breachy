@@ -1,0 +1,175 @@
+import React from "react";
+import useSongPlayer from "../../hooks/useSongPlayer";
+import "./PracticePlayer.css";
+
+function formatTime(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+}
+
+export default function PracticePlayer({ onClose }) {
+  const {
+    currentSong,
+    isPlaying,
+    currentTime,
+    duration,
+    volume,
+    playbackRate,
+    loop,
+    error,
+    pause,
+    resume,
+    seek,
+    setVolume,
+    setPlaybackRate,
+    setLoop,
+    restart,
+    stop,
+  } = useSongPlayer();
+
+  if (!currentSong) {
+    return null;
+  }
+
+  const speeds = [0.5, 0.75, 1.0, 1.25];
+
+  const handleClose = () => {
+    stop();
+    if (onClose) onClose();
+  };
+
+  const handleTimelineChange = (e) => {
+    const newTime = parseFloat(e.target.value);
+    seek(newTime);
+  };
+
+  const handleVolumeChange = (e) => {
+    setVolume(parseFloat(e.target.value));
+  };
+
+  return (
+    <aside className="practice-player-bar" aria-label="Lecteur d'entraînement audio en arrière-plan">
+      {error && (
+        <div className="practice-error-banner" role="alert">
+          <span>⚠️ {error}</span>
+        </div>
+      )}
+
+      <div className="practice-player-top">
+        {/* Infos sur le morceau d'entraînement */}
+        <div className="practice-song-info">
+          {currentSong.image && (
+            <img
+              src={currentSong.image}
+              alt={currentSong.title || "Morceau"}
+              className="practice-song-cover"
+            />
+          )}
+          <div className="practice-song-details">
+            <span className="practice-badge">
+              <span className={`practice-badge-dot ${!isPlaying ? "paused" : ""}`} />
+              Mode Entraînement {isPlaying ? "(En cours)" : "(Pause)"}
+            </span>
+            <h3 className="practice-song-title">{currentSong.title || "Morceau sélectionné"}</h3>
+            <p className="practice-song-artist">{currentSong.artist || "Accompagnement"}</p>
+          </div>
+        </div>
+
+        {/* Contrôles audio de l'entraînement */}
+        <div className="practice-center-controls">
+          <button
+            type="button"
+            className="practice-btn"
+            onClick={restart}
+            title="Recommencer depuis le début"
+            aria-label="Recommencer depuis le début"
+          >
+            ⏮️ Début
+          </button>
+
+          <button
+            type="button"
+            className="practice-play-btn"
+            onClick={isPlaying ? pause : resume}
+            title={isPlaying ? "Mettre en pause" : "Lancer le fond sonore"}
+            aria-label={isPlaying ? "Mettre en pause" : "Lancer le fond sonore"}
+          >
+            {isPlaying ? "⏸" : "▶"}
+          </button>
+
+          <button
+            type="button"
+            className={`practice-btn ${loop ? "active" : ""}`}
+            onClick={() => setLoop(!loop)}
+            title={loop ? "Boucle active" : "Activer la boucle"}
+            aria-label="Boucle automatique"
+          >
+            🔁 {loop ? "Boucle ON" : "Boucle"}
+          </button>
+
+          {/* Vitesse / Ralenti pour la pratique */}
+          <div className="practice-speed-selector" title="Vitesse de lecture d'entraînement">
+            {speeds.map((rate) => (
+              <button
+                key={rate}
+                type="button"
+                className={`speed-option-btn ${playbackRate === rate ? "active" : ""}`}
+                onClick={() => setPlaybackRate(rate)}
+              >
+                {rate}x
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Volume & Fermeture */}
+        <div className="practice-right-controls">
+          <div className="practice-volume-box">
+            <span title="Volume accompagnement" aria-hidden="true">
+              {volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
+            </span>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volume}
+              onChange={handleVolumeChange}
+              className="practice-volume-slider"
+              title={`Volume : ${Math.round(volume * 100)}%`}
+              aria-label="Volume du fond sonore"
+            />
+          </div>
+
+          <button
+            type="button"
+            className="practice-close-btn"
+            onClick={handleClose}
+            title="Quitter le mode entraînement"
+            aria-label="Fermer le lecteur d'entraînement"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Barre de progression / timeline */}
+      <div className="practice-timeline-container">
+        <span className="practice-time current">{formatTime(currentTime)}</span>
+        <input
+          type="range"
+          min="0"
+          max={duration || 100}
+          step="0.1"
+          value={currentTime}
+          onChange={handleTimelineChange}
+          className="practice-timeline-slider"
+          aria-label="Position dans le morceau"
+        />
+        <span className="practice-time total">{formatTime(duration)}</span>
+      </div>
+    </aside>
+  );
+}

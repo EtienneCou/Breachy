@@ -1,91 +1,11 @@
 import React, { useMemo, useState } from "react";
+import songsCatalog from "../resources/catalog";
+import PracticePlayer from "../Components/Practice/PracticePlayer";
+import useSongPlayer from "../hooks/useSongPlayer";
 
-const songs = [
-  {
-    title: "Au clair de la lune",
-    artist: "Traditionnel",
-    level: "Débutant",
-    duration: "2:36",
-    image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Frère Jacques",
-    artist: "Traditionnel",
-    level: "Débutant",
-    duration: "1:40",
-    image: "https://images.unsplash.com/photo-1516627145497-ae6968895b74?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Let It Be",
-    artist: "The Beatles",
-    level: "Intermédiaire",
-    duration: "4:03",
-    image: "https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Comptine d'un autre été",
-    artist: "Yann Tiersen",
-    level: "Intermédiaire",
-    duration: "3:18",
-    image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "La Vie en rose",
-    artist: "Édith Piaf",
-    level: "Intermédiaire",
-    duration: "3:22",
-    image: "https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Für Elise",
-    artist: "L. van Beethoven",
-    level: "Classique",
-    duration: "3:02",
-    image: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Clair de lune",
-    artist: "C. Debussy",
-    level: "Classique",
-    duration: "5:12",
-    image: "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Can you feel the love tonight",
-    artist: "Elton John (Le Roi Lion)",
-    level: "Intermédiaire",
-    duration: "4:10",
-    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Hallelujah",
-    artist: "Leonard Cohen",
-    level: "Intermédiaire",
-    duration: "5:08",
-    image: "https://images.unsplash.com/photo-1524650359799-842906ca1c06?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "River Flows in You",
-    artist: "Yiruma",
-    level: "Intermédiaire",
-    duration: "4:02",
-    image: "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Joyeux anniversaire",
-    artist: "Traditionnel",
-    level: "Débutant",
-    duration: "1:12",
-    image: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=300&q=80",
-  },
-  {
-    title: "Bella Ciao",
-    artist: "Traditionnel",
-    level: "Intermédiaire",
-    duration: "3:45",
-    image: "https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?auto=format&fit=crop&w=300&q=80",
-  },
-];
+const songs = songsCatalog;
+
+
 
 const filters = [
   "Tous",
@@ -104,6 +24,18 @@ export default function SongsPage() {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
+  const [isPracticeActive, setIsPracticeActive] = useState(false);
+  const { playSong } = useSongPlayer();
+
+  const handleStartPractice = (song) => {
+    playSong(song);
+    setIsPracticeActive(true);
+  };
+
+  const handlePlay = (song) => {
+    playSong(song);
+    setIsPracticeActive(true);
+  };
 
   const filteredSongs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -465,6 +397,37 @@ export default function SongsPage() {
           transform: translateY(-1px);
         }
 
+        .action-buttons-group {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          align-items: flex-end;
+        }
+
+        .practice-btn-card {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          min-width: 118px;
+          height: 36px;
+          border: 1px solid #c7d2fe;
+          border-radius: 10px;
+          background: #eef2ff;
+          color: #4338ca;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .practice-btn-card:hover {
+          background: #e0e7ff;
+          border-color: #818cf8;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+        }
+
         .play-triangle {
           width: 0;
           height: 0;
@@ -725,14 +688,25 @@ export default function SongsPage() {
                       {isFavorite ? "♥" : "♡"}
                     </button>
 
-                    <button
-                      type="button"
-                      className="play-btn"
-                      onClick={() => console.log("Jouer :", song.title)}
-                    >
-                      <span className="play-triangle" aria-hidden="true" />
-                      Jouer
-                    </button>
+                    <div className="action-buttons-group">
+                      <button
+                        type="button"
+                        className="practice-btn-card"
+                        onClick={() => handleStartPractice(song)}
+                        title="S'entraîner avec ce morceau en arrière-plan"
+                      >
+                        🎹 S'entraîner
+                      </button>
+
+                      <button
+                        type="button"
+                        className="play-btn"
+                        onClick={() => handlePlay(song)}
+                      >
+                        <span className="play-triangle" aria-hidden="true" />
+                        Jouer
+                      </button>
+                    </div>
                   </div>
                 </article>
               );
@@ -756,6 +730,10 @@ export default function SongsPage() {
           <span>Reachy mini</span>
         </div>
       </div>
+
+      {isPracticeActive && (
+        <PracticePlayer onClose={() => setIsPracticeActive(false)} />
+      )}
     </div>
   );
 }

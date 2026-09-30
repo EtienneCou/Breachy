@@ -12,6 +12,9 @@ export function useSongPlayer() {
   const [volume, setVolumeState] = useState(audioPlayer.getVolume());
   const [error, setError] = useState(audioPlayer.error);
 
+  const [playbackRate, setPlaybackRateState] = useState(audioPlayer.getPlaybackRate());
+  const [loop, setLoopState] = useState(audioPlayer.getLoop());
+
   useEffect(() => {
     const unsubscribe = audioPlayer.subscribe((event, data) => {
       switch (event) {
@@ -39,6 +42,12 @@ export function useSongPlayer() {
           break;
         case "volumechange":
           setVolumeState(data.volume);
+          break;
+        case "ratechange":
+          setPlaybackRateState(data.playbackRate);
+          break;
+        case "loopchange":
+          setLoopState(data.loop);
           break;
         case "error":
           setError(data.error);
@@ -96,12 +105,29 @@ export function useSongPlayer() {
     setVolumeState(volumeLevel);
   }, []);
 
+  const setPlaybackRate = useCallback((rate) => {
+    audioPlayer.setPlaybackRate(rate);
+    setPlaybackRateState(rate);
+  }, []);
+
+  const setLoop = useCallback((shouldLoop) => {
+    audioPlayer.setLoop(shouldLoop);
+    setLoopState(shouldLoop);
+  }, []);
+
+  const restart = useCallback(() => {
+    audioPlayer.seek(0);
+    audioPlayer.resume();
+  }, []);
+
   return {
     currentSong,
     isPlaying,
     currentTime,
     duration,
     volume,
+    playbackRate,
+    loop,
     error,
     playSong,
     pause,
@@ -109,6 +135,9 @@ export function useSongPlayer() {
     stop,
     seek,
     setVolume,
+    setPlaybackRate,
+    setLoop,
+    restart,
   };
 }
 
