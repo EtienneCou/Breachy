@@ -1,0 +1,166 @@
+/* Tokens partagés par le clavier et la piste de notes. Surchargeables depuis un parent. */
+.piano,
+.piano-lanes {
+  --piano-bg: #ffffff;
+  --piano-white-key: #ffffff;
+  --piano-white-shade: #eef0f5;
+  --piano-line: #e3e6ee;
+  --piano-lane-line: #f0f2f7;
+  --piano-sharp: #111114;
+  --piano-accent: #1f7bff;
+  --piano-accent-soft: #d6e7ff;
+  --piano-accent-deep: #0b3d91;
+  --piano-text: #0b1026;
+  --piano-muted: #7180b0;
+  --piano-hit: #13a06a;
+  --piano-miss: #e5484d;
+  --piano-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  --piano-height: clamp(150px, 26vw, 250px);
+}
+
+/* ---------- Clavier ---------- */
+.piano {
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ligne de frappe des notes qui tombent */
+.piano__hitline {
+  position: relative;
+  height: 6px;
+  background: var(--piano-lane-line);
+}
+.piano__fret {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  transition: background-color 0.06s, box-shadow 0.06s;
+}
+.piano__fret.is-black { z-index: 1; }
+.piano__fret.is-target { background: var(--piano-accent-soft); }
+.piano__fret.is-active { background: var(--piano-accent); box-shadow: 0 0 16px 3px color-mix(in srgb, var(--piano-accent) 60%, transparent); }
+.piano__fret.is-hit { background: var(--piano-hit); box-shadow: 0 0 14px 2px var(--piano-hit); }
+.piano__fret.is-miss { background: var(--piano-miss); }
+
+.piano__keys {
+  position: relative;
+  height: var(--piano-height);
+  touch-action: none;
+}
+
+.piano__key {
+  position: absolute;
+  top: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: box-shadow 0.05s, background 0.05s;
+}
+
+.piano__key.is-white {
+  height: 100%;
+  padding-bottom: 12px;
+  background: linear-gradient(180deg, #f6f7fa 0%, var(--piano-white-key) 10%, var(--piano-white-key) 90%, var(--piano-white-shade) 100%);
+  border-right: 1px solid var(--piano-line);
+  border-radius: 0 0 5px 5px;
+  box-shadow: inset 0 -6px 0 var(--piano-white-shade);
+}
+.piano__key.is-white:last-child { border-right: 0; }
+.piano__key.is-white.is-active {
+  background: linear-gradient(180deg, var(--piano-accent-soft) 0%, #8ab8ff 70%, var(--piano-accent) 100%);
+  box-shadow: inset 0 -2px 0 var(--piano-accent), 0 0 18px color-mix(in srgb, var(--piano-accent) 45%, transparent);
+}
+
+.piano__key.is-black {
+  z-index: 2;
+  height: 62%;
+  padding-bottom: 14px;
+  background: linear-gradient(180deg, #2c2c31 0%, var(--piano-sharp) 70%, #000 100%);
+  border-radius: 0 0 4px 4px;
+  box-shadow: inset 0 -8px 0 #2a2a2f, 0 3px 5px rgba(11, 16, 38, 0.3);
+}
+.piano__key.is-black.is-active {
+  background: linear-gradient(180deg, #1d5fd1 0%, var(--piano-accent-deep) 100%);
+  box-shadow: inset 0 -3px 0 #0a3175, 0 0 18px color-mix(in srgb, var(--piano-accent) 50%, transparent);
+}
+
+/* Retour visuel du jeu, en haut de la touche */
+.piano__key.is-target { box-shadow: inset 0 4px 0 var(--piano-accent); }
+.piano__key.is-hit { box-shadow: inset 0 4px 0 var(--piano-hit); }
+.piano__key.is-miss { box-shadow: inset 0 4px 0 var(--piano-miss); }
+
+.piano__name {
+  font-family: var(--piano-mono);
+  font-size: 0.66rem;
+  color: var(--piano-muted);
+}
+
+.piano__cap {
+  display: grid;
+  place-items: center;
+  width: 1.9em;
+  height: 1.9em;
+  padding: 0;
+  border-radius: 5px;
+  font-family: var(--piano-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.is-white > .piano__cap { color: var(--piano-text); border: 1px solid var(--piano-line); background: #ffffff; }
+.is-black > .piano__cap { color: #d7dbe6; border: 1px solid #3a3a41; font-size: 0.7rem; }
+.piano__key.is-active > .piano__cap { background: var(--piano-accent); border-color: var(--piano-accent); color: #ffffff; }
+.piano__key.is-active > .piano__name { color: var(--piano-accent-deep); }
+
+@media (max-width: 560px) {
+  .piano__name,
+  .is-black > .piano__cap { display: none; }
+  .piano__cap { font-size: 0.66rem; width: 1.6em; height: 1.6em; }
+}
+
+/* ---------- Piste des notes qui tombent ---------- */
+.piano-lanes {
+  position: relative;
+  overflow: hidden;
+  background: var(--piano-bg);
+}
+.piano-lanes__lane {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  box-sizing: border-box;
+  transition: background 0.08s;
+}
+.piano-lanes__lane.is-white { border-right: 1px solid var(--piano-lane-line); }
+.piano-lanes__lane.is-black { z-index: 1; background: #fafbfd; }
+.piano-lanes__lane.is-active {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--piano-accent) 30%, transparent), transparent 70%);
+}
+.piano-lanes__notes {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piano *,
+  .piano-lanes * { transition: none !important; }
+}
+
+/* ---------- Scène : piste + clavier ---------- */
+.piano-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.piano-stage__lanes {
+  flex: 1 1 auto;
+  min-height: 160px;
+  /* les notes arrivent du haut de l'écran : la piste se fond dans le fond de page */
+  mask-image: linear-gradient(180deg, transparent 0, #000 64px);
+}
