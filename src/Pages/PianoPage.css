@@ -231,8 +231,58 @@
 .piano-page__warning { margin: 0; padding: 0 4px; font-size: 0.78rem; line-height: 1.35; }
 
 /* Écran étroit : la colonne passe sous le clavier */
+/* ---------- Adaptation à la taille de l'écran ---------- */
+
+/* Tablette : marges resserrées */
+@media (max-width: 1024px) {
+  .piano-page { padding-inline: 12px; gap: 12px; }
+}
+
+/* Écran d'ordinateur peu haut : on retire les textes d'aide pour que la colonne tienne */
+@media (max-height: 760px) and (min-width: 721px) {
+  .piano-page__status { display: none; }
+  .piano-page__side { gap: 8px; }
+  .piano-page__card { gap: 6px; padding: 10px 12px; }
+}
+
+/* Téléphone ou tablette en portrait : tout passe l'un sous l'autre et la page défile.
+   La piste et le clavier gardent l'essentiel de la hauteur de l'écran. */
 @media (max-width: 720px) {
-  .piano-page { flex-direction: column; }
-  .piano-page__side { width: auto; padding-top: 0; }
-  .piano-page__transport { flex-direction: row; flex-wrap: wrap; }
+  .piano-page {
+    height: auto;
+    min-height: 100svh;
+    flex-direction: column;
+    padding: 0 12px 16px;
+  }
+  .piano-page__play {
+    flex: none;
+    height: 72svh;
+    min-height: 380px;
+    padding-top: 12px;
+  }
+  .piano-page__side {
+    width: auto;
+    padding-top: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px;
+  }
+  .piano-page__side > :not(.piano-page__card):not(.piano-page__points) { grid-column: 1 / -1; }
+  /* barre de commande à l'horizontale, ses réglages passent à la ligne */
+  .piano-page__transport.transport--vertical {
+    width: auto;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 12px 18px;
+  }
+  .piano-page__transport .transport__section { flex: 1 1 150px; max-width: 260px; }
+  .piano-page__transport .transport__main { display: flex; flex: 1 1 100%; max-width: none; }
+}
+
+/* Petit téléphone : la carte du morceau et les points passent l'un sous l'autre */
+@media (max-width: 420px) {
+  .piano-page__side { grid-template-columns: minmax(0, 1fr); }
 }
