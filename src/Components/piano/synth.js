@@ -1,6 +1,14 @@
+import { SUSTAIN_PEDAL, createGMSynth } from './gmSynth.js'
 import { midiToFreq } from './notes.js'
 
-// Petit synthé de piano en Web Audio : quelques partiels, attaque rapide,
+// Piano joué par le joueur. Il utilise le vrai piano à queue de la banque de sons
+// General MIDI (gmSynth) dès qu'elle est chargée ; en attendant (quelques secondes
+// la première fois), un petit synthé de piano prend le relais.
+const PIANO_CHANNEL = 0
+const PIANO_PROGRAM = 0 // General MIDI : piano à queue acoustique
+const PIANO_VELOCITY = 100
+
+// Piano de secours en Web Audio : quelques partiels, attaque rapide,
 // décroissance plus longue dans les graves, étouffoir au relâchement.
 const PARTIALS = [
   // [multiple de la fondamentale, forme d'onde, amplitude, désaccord en cents]
@@ -15,6 +23,7 @@ class PianoSynth {
   ctx = null
   master = null // sortie commune (piano + accompagnement)
   pianoBus = null // voie du piano seul
+  gm = null // vrai piano (banque de sons), une fois chargé
   volume = 0.7 // volume du piano joué par le joueur, de 0 à 1
   sustain = false
   voices = new Map() // midi -> { out, oscs }
@@ -33,6 +42,13 @@ class PianoSynth {
       this.pianoBus = this.ctx.createGain()
       this.pianoBus.gain.value = this.volume
       this.pianoBus.connect(this.master)
+      createGMSynth(this.ctx)
+        .then((synth) => {
+          synth.connect(this.pianoBus)
+          synth.programChange(PIANO_CHANNEL, PIANO_PROGRAM)
+          this.gm = synth
+        })
+        .catch((err) => console.warn('Piano : banque de sons indisponible', err))
     }
     if (this.ctx.state === 'suspended') this.ctx.resume()
   }
@@ -45,6 +61,7 @@ class PianoSynth {
 
   setSustain(on) {
     this.sustain = on
+    this.gm?.controllerChange(PIANO_CHANNEL, SUSTAIN_PEDAL, on ? 127 : 0)
     if (!on) {
       for (const midi of [...this.voices.keys()]) if (!this.held.has(midi)) this.stop(midi, 0.15)
     }
@@ -57,13 +74,25 @@ class PianoSynth {
     // on attend au lieu de jouer dans le vide (sinon les premières notes sont perdues).
     if (this.ctx.state !== 'running') {
       this.ctx.resume().then(() => {
-        this.startVoice(midi)
+        this.play(midi)
         // touche déjà relâchée pendant le démarrage : on joue quand même une note courte
-        if (!this.held.has(midi) && !this.sustain) this.stop(midi, 0.15)
+        if (!this.held.has(midi)) this.release(midi)
       })
       return
     }
-    this.startVoice(midi)
+    this.play(midi)
+  }
+
+  play(midi) {
+    if (this.gm) this.gm.noteOn(PIANO_CHANNEL, midi, PIANO_VELOCITY)
+    else this.startVoice(midi)
+  }
+
+  // Relâchement d'une touche. Avec le vrai piano, la pédale forte est gérée par le
+  // synthétiseur lui-même ; avec le piano de secours, on la gère ici.
+  release(midi) {
+    this.gm?.noteOff(PIANO_CHANNEL, midi)
+    if (!this.sustain) this.stop(midi)
   }
 
   startVoice(midi) {
@@ -108,7 +137,7 @@ class PianoSynth {
 
   noteOff(midi) {
     this.held.delete(midi)
-    if (!this.sustain) this.stop(midi)
+    this.release(midi)
   }
 
   stop(midi, timeConstant = 0.09) {
