@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import MidiUploader from "../components/MiniUploader";
 
 const songs = [
   {
@@ -209,6 +210,7 @@ export default function HomePage({ onPlaySong, onNavigate }) {
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("Tous");
   const [favorites, setFavorites] = useState([]);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   const filteredSongs = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -876,7 +878,16 @@ export default function HomePage({ onPlaySong, onNavigate }) {
               onChange={(e) => setSearch(e.target.value)}
             />
           </label>
+              <button
+      type="button"
+      className="add-music-btn"
+      onClick={() => setIsUploadOpen(true)}
+    >
+      + Ajouter mes musiques
+    </button>
         </section>
+
+
 
         <nav className="filters" aria-label="Filtres">
           {filters.map((filter) => (
@@ -955,6 +966,42 @@ export default function HomePage({ onPlaySong, onNavigate }) {
           )}
         </main>
       </div>
+
+      {isUploadOpen && (
+  <div
+    className="modal-overlay"
+    onClick={() => setIsUploadOpen(false)}
+  >
+    <div
+      className="modal-content"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="modal-close"
+        onClick={() => setIsUploadOpen(false)}
+      >
+        ×
+      </button>
+
+      <div className="modal-header">
+        <h2>Ajouter mes musiques</h2>
+
+        <p>
+          Importez vos fichiers MIDI pour les retrouver dans votre bibliothèque.
+        </p>
+      </div>
+
+      <MidiUploader
+        onSongAdded={(song) => {
+          console.log("Morceau ajouté :", song);
+
+          setIsUploadOpen(false);
+        }}
+      />
+    </div>
+  </div>
+)}
 
       {/* <div className="reachy" aria-hidden="true">
         <div className="reachy-bubble">
