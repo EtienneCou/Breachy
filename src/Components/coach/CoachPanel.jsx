@@ -5,6 +5,13 @@ import ReachyAvatar from './ReachyAvatar.jsx'
 import { DEFAULT_REACHY_URL } from '../../services/reachy/reachyClient.js'
 import './CoachPanel.css'
 
+// Où sort la voix du coach (voir CoachProvider).
+const VOICE_LABELS = {
+  robot: '🔊 Il parle par le haut-parleur du robot.',
+  preview: '🔊 Voix du robot, jouée par l\'ordinateur (la simulation n\'a pas de haut-parleur).',
+  browser: '🔊 Il parle par l\'ordinateur.',
+}
+
 const STATUS_LABELS = {
   off: 'Robot désactivé',
   searching: 'Robot non connecté',
@@ -23,7 +30,7 @@ const STATUS_LABELS = {
 export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton coach', idleText, talkToggle = false, children, className = '' }) {
   const coach = useCoach()
   const [open, setOpen] = useState(false)
-  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation } = coach
+  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput } = coach
   const text = bubble?.text ?? idleText
   const robotOn = robotStatus === 'connected'
 
@@ -108,6 +115,7 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
               <input type="checkbox" checked={settings.voice} onChange={(e) => updateSettings({ voice: e.target.checked })} />
               Voix (accueil et bilan)
             </label>
+            <p className="coach__help">{VOICE_LABELS[voiceOutput]}</p>
             <label className="coach__check">
               <input type="checkbox" checked={settings.talk} onChange={(e) => updateSettings({ talk: e.target.checked })} />
               Encouragements parlés pendant le jeu

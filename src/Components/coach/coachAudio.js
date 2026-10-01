@@ -1,8 +1,10 @@
 import { pianoSynth } from '../piano'
+import { robotVoiceReady, synthesize } from './robotVoice.js'
 
 // Voix et petits sons du coach Reachy.
-// Pendant le jeu : des sons courts façon robot (ils ne couvrent pas la musique).
-// Au bilan et à l'accueil : des phrases dites par la synthèse vocale du navigateur.
+// Petits sons : courts, façon robot (ils ne couvrent pas la musique), joués par l'ordinateur.
+// Voix : sur le haut-parleur du robot quand il est branché (voir robotVoice.js), sinon
+// la synthèse vocale du navigateur.
 
 // Chaque son : une suite de notes [fréquence en Hz, durée en s], jouées d'affilée.
 const SOUNDS = {
@@ -57,26 +59,85 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 
 export const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window
 
+// Phrase en cours : `turn` change à chaque nouvelle phrase (ou silence), ce qui
+// abandonne une phrase du robot encore en préparation.
+let turn = 0
+let pending = 0
+let robotTimer = 0
+let speakingRobot = null // client du robot qui parle, pour le faire taire
+let preview = null // voix du robot écoutée sur l'ordinateur (simulation)
+const uploaded = new Set() // phrases déjà envoyées au robot
+
+/** Oublie les phrases envoyées : à appeler quand le robot (re)démarre. */
+export function forgetRobotSounds() {
+  uploaded.clear()
+}
+
+/**
+ * Dit une phrase à voix haute (coupe la phrase précédente). `onEnd` est appelé à la fin.
+ * - quick   débit un peu plus rapide (voix du navigateur), pour les encouragements en jeu
+ * - robot   où parler avec la voix du robot : { kind: 'robot', client } sur son haut-parleur,
+ *           { kind: 'preview' } sur l'ordinateur (simulation sans haut-parleur), ou null.
+ *           Si cette voix n'est pas prête ou échoue, c'est la voix du navigateur qui parle.
+ */
+export function speak(text, { onEnd, onStart, quick = false, robot = null } = {}) {
+  const interrupting = canSpeak() && (window.speechSynthesis.speaking || window.speechSynthesis.pending)
+  stopSpeaking()
+  const myTurn = turn
+  if (robot && robotVoiceReady()) {
+    speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd }).catch((error) => {
+      console.warn('Voix du robot : repli sur la voix du navigateur.', error.message)
+      if (myTurn === turn) speakInBrowser(text, { onStart, onEnd, quick, interrupting })
+    })
+  } else {
+    speakInBrowser(text, { onStart, onEnd, quick, interrupting })
+  }
+}
+
+async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd }) {
+  const { blob, duration, name } = await synthesize(text)
+  if (myTurn !== turn) return // une autre phrase est arrivée entre-temps
+  if (robot.kind === 'preview') {
+    preview = new Audio(URL.createObjectURL(blob))
+    const audio = preview
+    const end = () => {
+      URL.revokeObjectURL(audio.src)
+      if (myTurn === turn) onEnd?.()
+    }
+    audio.onended = end
+    audio.onerror = end
+    await audio.play()
+    onStart?.()
+    return
+  }
+  const { client } = robot
+  if (!uploaded.has(name)) {
+    await client.uploadSound(blob, name)
+    uploaded.add(name)
+  }
+  if (myTurn !== turn) return
+  await client.playSound(name)
+  speakingRobot = client
+  onStart?.()
+  // Le robot ne prévient pas quand il a fini : on se fie à la durée du fichier.
+  robotTimer = setTimeout(() => {
+    speakingRobot = null
+    if (myTurn === turn) onEnd?.()
+  }, duration * 1000 + 250)
+}
+
 // Chrome peut perdre une phrase : si l'objet de la phrase est libéré avant la fin, `onend`
 // n'arrive jamais ; et une phrase lancée juste après cancel() est parfois ignorée.
 // On garde donc la phrase en cours, on attend un instant après cancel(), et un délai de
 // secours termine la phrase si le navigateur ne le fait pas.
 let current = null
-let pending = 0
 
-/**
- * Dit une phrase à voix haute (coupe la phrase précédente). `onEnd` est appelé à la fin.
- * `quick` : débit un peu plus rapide, pour les encouragements pendant le jeu.
- */
-export function speak(text, { onEnd, onStart, quick = false } = {}) {
+function speakInBrowser(text, { onEnd, onStart, quick, interrupting }) {
   if (!canSpeak()) {
     onEnd?.()
     return
   }
   const synth = window.speechSynthesis
-  clearTimeout(pending)
-  const interrupting = synth.speaking || synth.pending
-  synth.cancel()
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'fr-FR'
   const voice = pickVoice()
@@ -102,7 +163,19 @@ export function speak(text, { onEnd, onStart, quick = false } = {}) {
   pending = setTimeout(() => synth.speak(utterance), interrupting ? 80 : 0)
 }
 
+/** Coupe la phrase en cours, où qu'elle soit dite. */
 export function stopSpeaking() {
+  turn++
   clearTimeout(pending)
+  clearTimeout(robotTimer)
   if (canSpeak()) window.speechSynthesis.cancel()
+  if (preview) {
+    preview.pause()
+    URL.revokeObjectURL(preview.src)
+    preview = null
+  }
+  if (speakingRobot) {
+    speakingRobot.stopSound().catch(() => {})
+    speakingRobot = null
+  }
 }

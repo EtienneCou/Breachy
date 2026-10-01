@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { DEFAULT_REACHY_URL, createReachyClient } from '../../services/reachy/reachyClient.js'
-import { playCoachSound, speak, stopSpeaking } from './coachAudio.js'
+import { forgetRobotSounds, playCoachSound, speak, stopSpeaking } from './coachAudio.js'
+import { prepareLines, prepareRobotVoice } from './robotVoice.js'
+import { LINES } from './coachRules.js'
 import { backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
 import { ROBOT_INTENSITY } from './danceEngine.js'
@@ -51,6 +53,9 @@ export function CoachProvider({ children }) {
   const [bubble, setBubble] = useState(null) // { text, id }
   const [speaking, setSpeaking] = useState(false)
   const [groove, setGroove] = useState(null) // danse en cours : { level 0-3, period (s) } ou null
+  // Où parle le coach : 'robot' (haut-parleur du robot), 'preview' (voix du robot jouée par
+  // l'ordinateur : la simulation n'a pas de haut-parleur) ou 'browser' (voix du navigateur).
+  const [voiceOutput, setVoiceOutput] = useState('browser')
 
   useEffect(() => {
     try {
@@ -63,7 +68,7 @@ export function CoachProvider({ children }) {
   const robotStatus = !settings.robot ? 'off' : connected ? 'connected' : 'searching'
   const live = useRef({})
   useEffect(() => {
-    live.current = { settings, robotStatus }
+    live.current = { settings, robotStatus, voiceOutput }
   })
 
   // ---------- Robot ----------
@@ -85,6 +90,17 @@ export function CoachProvider({ children }) {
       if (isConnected && !wasConnected) {
         client.wakeUp().catch(() => {})
         robot.current.busyUntil = performance.now() + 3000
+        // Sa voix : sur son haut-parleur s'il en a un, sinon (simulation) jouée par l'ordinateur.
+        forgetRobotSounds()
+        const speaker = await client.mediaAvailable()
+        if (cancelled) return
+        if (speaker) client.setWobbling(true).catch(() => {})
+        const output = speaker ? 'robot' : status.simulation_enabled ? 'preview' : 'browser'
+        setVoiceOutput(output)
+        // Voix prête : les encouragements du jeu sont fabriqués à l'avance, pour partir sans délai.
+        if (output !== 'browser') prepareRobotVoice().then(() => prepareLines(Object.values(LINES).flat()))
+      } else if (!isConnected && wasConnected) {
+        setVoiceOutput('browser')
       }
       wasConnected = isConnected
     }
@@ -94,6 +110,7 @@ export function CoachProvider({ children }) {
       cancelled = true
       clearInterval(id)
       setConnected(false)
+      setVoiceOutput('browser')
     }
   }, [settings.robot, client])
 
@@ -157,8 +174,10 @@ export function CoachProvider({ children }) {
     talk.current.id = id
     talk.current.busy = true
     setSpeaking(true)
+    const { voiceOutput: output } = live.current
     speak(text, {
       quick,
+      robot: output === 'robot' ? { kind: 'robot', client } : output === 'preview' ? { kind: 'preview' } : null,
       onStart: () => backingSynth.duck(DUCK),
       onEnd: () => {
         // Une phrase coupée par une nouvelle se termine aussi : on ne touche à rien.
@@ -169,7 +188,7 @@ export function CoachProvider({ children }) {
         if (!keepBubble) setBubble(null)
       },
     })
-  }, [])
+  }, [client])
 
   /**
    * Fait réagir Reachy. `key` identifie le type de réaction pour son temps de repos
@@ -231,9 +250,9 @@ export function CoachProvider({ children }) {
   const value = useMemo(
     () => ({
       settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss,
-      client, groove, setGroove, registerDance, robotBusyUntil, simulation,
+      client, groove, setGroove, registerDance, robotBusyUntil, simulation, voiceOutput,
     }),
-    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation],
+    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput],
   )
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>
 }

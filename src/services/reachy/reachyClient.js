@@ -73,6 +73,33 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
       })
     },
 
+    // ---------- Haut-parleur du robot ----------
+
+    /** Son disponible sur le robot ? (la simulation n'a pas de haut-parleur) */
+    async mediaAvailable() {
+      try {
+        const status = await request('/media/status', { method: 'GET', timeout: STATUS_TIMEOUT_MS })
+        return Boolean(status?.available)
+      } catch {
+        return false
+      }
+    },
+
+    /** Envoie un fichier son au robot (`name` : nom du fichier chez lui, ex. 'phrase.wav'). */
+    async uploadSound(blob, name) {
+      const form = new FormData()
+      form.append('file', blob, name)
+      const response = await fetch(api('/media/sounds/upload'), { method: 'POST', body: form })
+      if (!response.ok) throw new Error(`Reachy : envoi du son → ${response.status}`)
+    },
+
+    /** Joue sur son haut-parleur un son déjà envoyé, et le coupe. */
+    playSound: (name) => request('/media/play_sound', { body: { file: name } }),
+    stopSound: () => request('/media/stop_sound'),
+
+    /** La tête bouge doucement au rythme de ce qu'il dit (ajouté à ses mouvements). */
+    setWobbling: (on) => request(`/media/wobbling/${on ? 'enable' : 'disable'}`),
+
     /** Mouvements en cours (liste d'identifiants). */
     running: () => request('/move/running', { method: 'GET' }),
 
