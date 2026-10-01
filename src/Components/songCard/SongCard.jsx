@@ -109,7 +109,6 @@ export default function SongCard({
                 : 'Pas encore de partition pour ce morceau'
           }
         >
-          <span className="song-tile__icon" aria-hidden="true">🎹</span>
           S'entraîner
         </button>
         <button type="button" className="song-tile__btn song-tile__btn--listen" onClick={onListen} disabled={!onListen}>

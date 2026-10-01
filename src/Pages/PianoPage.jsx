@@ -16,6 +16,7 @@ import { practicePart, splitSong } from '../utils/songParts.js'
 import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
 import { TIMING, computeGameStats } from '../utils/gameStats.js'
 import { saveResult } from '../utils/bestScores.js'
+import songsCatalog from '../resources/catalog'
 import './PianoPage.css'
 
 // Morceau chargé quand l'adresse n'en indique pas : il a un accompagnement,
@@ -48,6 +49,7 @@ export default function PianoPage() {
   const [searchParams] = useSearchParams()
   const musicId = searchParams.get('morceau') ?? TEST_MUSIC_ID
   const { music, notes, status } = useMusic(musicId)
+  const songImage = songsCatalog.find((song) => song.id === musicId)?.image
 
   // Le joueur joue la mélodie au piano, ou, pour un morceau du Studio, sa première piste piano.
   const practiceTrack = music?.practiceTrack
@@ -77,6 +79,7 @@ export default function PianoPage() {
   const songInfo = (
     <SongInfo
       title={music?.label}
+      image={songImage}
       melodyLabel={melodyPart?.label}
       fromStudio={Boolean(melodyPart.fromStudio)}
       noPianoPart={!melodyPart.playable}
@@ -337,8 +340,8 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
               <span className="piano-page__points-value">{score.toLocaleString('fr-FR')}</span> points
             </p>
             <p className="piano-page__score">
-              <span className="piano-page__score-hit">✓ {hitCount} réussie{hitCount > 1 ? 's' : ''}</span>
-              <span className="piano-page__score-miss">✗ {missCount} ratée{missCount > 1 ? 's' : ''}</span>
+              <span className="piano-page__score-hit">{hitCount} réussie{hitCount > 1 ? 's' : ''}</span>
+              <span className="piano-page__score-miss">{missCount} ratée{missCount > 1 ? 's' : ''}</span>
             </p>
           </div>
         )}
@@ -402,17 +405,17 @@ function slotInfo(base) {
 
 const isWhite = (midi) => ![1, 3, 6, 8, 10].includes(midi % 12)
 
-function SongInfo({ title, melodyLabel, fromStudio, noPianoPart, difficult, guided, status }) {
+function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficult, guided, status }) {
   const navigate = useNavigate()
   return (
     <section className="piano-page__card" aria-label="Morceau">
       <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
-        ← Retour à l'accueil
+        Retour
       </button>
 
       <div className="piano-page__song">
-        <span className="piano-page__field-label">Morceau</span>
         <strong className="piano-page__song-title">{title ?? 'Morceau inconnu'}</strong>
+        {image && <img className="piano-page__song-image" src={image} alt="" />}
       </div>
 
       {status === 'ready' && difficult && (
