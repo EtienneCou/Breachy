@@ -116,6 +116,15 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
     stop: (uuid) => request('/move/stop', { body: { uuid } }),
 
     /**
+     * Arrête tous les mouvements en cours. Le daemon les joue en parallèle : un nouveau
+     * mouvement lancé avant la fin d'un autre se dispute la tête avec lui (à-coups).
+     */
+    async stopAll() {
+      const moves = (await request('/move/running', { method: 'GET' })) ?? []
+      await Promise.all(moves.map(({ uuid }) => request('/move/stop', { body: { uuid } }).catch(() => {})))
+    },
+
+    /**
      * Flux continu de positions (WebSocket /api/move/ws/set_target), pour la danse :
      * la doc demande une seule boucle qui envoie les positions à 50 Hz environ.
      * Retourne { send({ head, antennas, body }) en degrés, close(), isOpen() }.

@@ -27,7 +27,13 @@ const BUBBLE_MS = 2600 // durée d'une bulle courte
 // Sommeil : sans personne qui joue, il s'ennuie puis s'endort (en ms).
 const BORED_AFTER = 40000
 const SLEEP_AFTER = 60000
-const FALL_ASLEEP_MS = 4500 // durée de l'émotion « s'endort », avant la position de repos
+// Position de sommeil (degrés) : tête basse, antennes repliées en arrière, comme dans
+// l'émotion « sleep1 » de Pollen. Il y glisse lentement, puis respire doucement.
+// (L'émotion elle-même dure 20 s et se termine par un réveil : on ne s'en sert pas.)
+const SLEEP_POSE = { head: { roll: 0, pitch: 22, yaw: 0 }, antennas: [-140, 140], body: 0 }
+const FALL_ASLEEP_S = 3 // durée de la glissade vers la position de sommeil
+const BREATH_S = 4 // une inspiration ou une expiration
+const BREATH_DEG = 3 // amplitude de la respiration (tête)
 
 // Regard : part du suivi de visage (caméra du robot) mélangée à ses mouvements quand il
 // ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil, le suivi est en pause.
@@ -282,8 +288,20 @@ export function CoachProvider({ children }) {
     r.timers = []
     r.busyUntil = Infinity
     r.priority = Infinity
-    client.playEmotion('sleep1').catch(() => {})
-    i.timer = setTimeout(() => client.goToSleep().catch(() => {}), FALL_ASLEEP_MS)
+    // Il glisse lentement vers sa position de sommeil (après avoir arrêté tout autre
+    // mouvement), puis respire doucement.
+    client.stopAll().catch(() => {}).then(() => {
+      if (i.asleep) client.goto({ ...SLEEP_POSE, duration: FALL_ASLEEP_S }).catch(() => {})
+    })
+    let inhale = true
+    const breathe = () => {
+      const pitch = SLEEP_POSE.head.pitch - (inhale ? BREATH_DEG : 0)
+      // un peu plus court que l'intervalle : deux respirations ne se chevauchent jamais
+      client.goto({ ...SLEEP_POSE, head: { ...SLEEP_POSE.head, pitch }, duration: BREATH_S - 0.3 }).catch(() => {})
+      inhale = !inhale
+      i.timer = setTimeout(breathe, BREATH_S * 1000)
+    }
+    i.timer = setTimeout(breathe, FALL_ASLEEP_S * 1000)
   }, [client])
 
   const wake = useCallback(() => {
@@ -295,7 +313,7 @@ export function CoachProvider({ children }) {
     if (live.current.robotStatus === 'connected') {
       robot.current.busyUntil = performance.now() + 3500 // le temps de se réveiller
       robot.current.priority = 0
-      client.wakeUp().catch(() => {})
+      client.stopAll().catch(() => {}).then(() => client.wakeUp()).catch(() => {})
     }
     react('wake', SLEEP_RULES.wake())
   }, [client, react])
