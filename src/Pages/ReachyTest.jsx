@@ -3,7 +3,7 @@ import React, { useState } from "react"
 import useReachy from "../hooks/useReachy"
 
 import {
-  playBravo,
+  playPositive,
   playEncouragement,
 } from "../Services/audioService"
 
@@ -27,7 +27,7 @@ export default function ReachyTest() {
         "Lecture de Bravo..."
       )
 
-      await playBravo()
+      await playPositive()
 
       setAudioMessage(
         "🔊 Bravo envoyé à Reachy"
@@ -64,7 +64,7 @@ export default function ReachyTest() {
 
 
 const testGoodReaction = () => {
-  playBravo().catch(console.error)
+  playPositive().catch(console.error)
 
   setTimeout(() => {
     correct()
