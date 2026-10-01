@@ -1,13 +1,28 @@
-/* Page Studio : pistes et clavier à gauche, aide et métronome à droite. */
+/* Page Studio : pistes et clavier à gauche, aide et métronome à droite.
+   Thème anthracite / braise, comme l'accueil, l'entraînement et le jeu libre. */
 .studio {
+  --studio-bg: #111214;
+  --studio-surface: #1a1b1f;
+  --studio-raised: #24252a;
+  --studio-border: #34353a;
+  --studio-text: #f7f0e7;
+  --studio-bright: #fff7ed;
+  --studio-muted: #aaa39a;
+  --studio-red: #ef4444;
+  --studio-orange: #f97316;
+  --studio-yellow: #fbbf24;
+  --studio-ink: #21130d; /* texte sur fond orange */
+
   box-sizing: border-box;
   height: 100svh;
   padding: 16px;
   display: flex;
   gap: 16px;
-  color-scheme: light;
-  color: #0b1026;
-  background: #f6f8fc;
+  color-scheme: dark;
+  color: var(--studio-text);
+  background:
+    radial-gradient(circle at 68% 12%, rgba(239, 68, 68, 0.12), transparent 30%),
+    var(--studio-bg);
   font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
 }
 .studio *,
@@ -21,7 +36,16 @@
   flex-direction: column;
   gap: 12px;
 }
-.studio__muted { color: #7180b0; font-size: 0.8rem; }
+.studio__muted { color: var(--studio-muted); font-size: 0.8rem; }
+
+/* Carte commune : barre du haut, clavier, colonne de droite */
+.studio__bar,
+.studio__keyboard,
+.studio__card {
+  border: 1px solid var(--studio-border);
+  background: var(--studio-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
 
 /* Barre du haut : titre, lecture, position, longueur de la boucle */
 .studio__bar {
@@ -30,31 +54,31 @@
   align-items: center;
   gap: 10px 18px;
   padding: 10px 14px;
-  border: 1px solid #e6e9f3;
   border-radius: 14px;
-  background: #ffffff;
 }
-.studio__title { margin: 0; font-size: 1.25rem; font-weight: 800; }
+.studio__title { margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--studio-bright); }
 .studio__transport { display: flex; flex-wrap: wrap; gap: 8px; }
 .studio__btn {
   min-height: 38px;
   padding: 6px 14px;
-  border: 1px solid #e6e9f3;
+  border: 0;
   border-radius: 10px;
-  background: #ffffff;
-  color: #0b1026;
+  background: var(--studio-raised);
+  color: var(--studio-bright);
   font: 700 0.85rem/1 inherit;
   font-family: inherit;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
   cursor: pointer;
 }
-.studio__btn:hover:not(:disabled) { background: #f4f6fb; }
+.studio__btn:hover:not(:disabled) { background: #30251f; box-shadow: 0 9px 20px rgba(249, 115, 22, 0.25); }
 .studio__btn:disabled { opacity: 0.45; cursor: default; }
 .studio__btn:focus-visible,
 .studio__chip:focus-visible,
-.studio__back:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
-.studio__btn--play { border-color: transparent; background: #1f7bff; color: #ffffff; }
-.studio__btn--play:hover:not(:disabled) { background: #0d69ff; }
-.studio__btn--stop { border-color: #fecdd3; background: #fff1f2; color: #e11d48; }
+.studio__back:focus-visible { outline: 2px solid var(--studio-yellow); outline-offset: 2px; }
+.studio__btn--play { background: linear-gradient(135deg, var(--studio-yellow), var(--studio-orange)); color: var(--studio-ink); }
+.studio__btn--play:hover:not(:disabled) { background: linear-gradient(135deg, var(--studio-yellow), var(--studio-orange)); filter: brightness(1.06); }
+.studio__btn--stop { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.studio__btn--stop:hover:not(:disabled) { background: rgba(239, 68, 68, 0.3); }
 
 .studio__position {
   display: flex;
@@ -65,8 +89,9 @@
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
-.studio__rec { color: #e11d48; font-weight: 800; }
-.studio__countdown { color: #f59e0b; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+.studio__position strong { color: var(--studio-bright); }
+.studio__rec { color: var(--studio-red); font-weight: 800; }
+.studio__countdown { color: var(--studio-yellow); font-size: 1.6rem; font-weight: 800; line-height: 1; }
 
 .studio__loop {
   display: flex;
@@ -78,29 +103,28 @@
   min-width: 34px;
   min-height: 30px;
   padding: 4px 8px;
-  border: 1px solid #e6e9f3;
+  border: 0;
   border-radius: 8px;
-  background: #ffffff;
-  color: #0b1026;
+  background: var(--studio-raised);
+  color: var(--studio-bright);
   font: 700 0.8rem/1 inherit;
   font-family: inherit;
   cursor: pointer;
 }
-.studio__chip:hover:not(:disabled) { background: #f4f6fb; }
+.studio__chip:hover:not(:disabled) { background: #30251f; }
 .studio__chip:disabled { opacity: 0.45; cursor: default; }
-.studio__chip.is-active { border-color: transparent; background: #1f7bff; color: #ffffff; }
-.studio__chip kbd { font: inherit; font-size: 0.7rem; color: #7180b0; }
+.studio__chip.is-active { background: var(--studio-orange); color: var(--studio-ink); }
+.studio__chip kbd { font: inherit; font-size: 0.7rem; color: var(--studio-muted); }
 
 .studio__loading,
 .studio__hint {
   margin: 0;
   padding: 8px 12px;
   border-radius: 10px;
-  background: #fff7ed;
-  color: #9a3412;
   font-size: 0.82rem;
 }
-.studio__hint { background: #ffffff; color: #7180b0; text-align: center; }
+.studio__loading { background: rgba(249, 115, 22, 0.14); color: #ffd166; }
+.studio__hint { background: var(--studio-surface); color: var(--studio-muted); text-align: center; }
 
 /* Pistes : elles défilent si elles ne tiennent pas, le clavier reste en bas */
 .studio__tracks {
@@ -108,19 +132,18 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-color: var(--studio-border) transparent;
 }
 
-/* Clavier de la piste sélectionnée */
+/* Clavier de la piste sélectionnée : liseré de la couleur de l'instrument */
 .studio__keyboard {
-  --track-color: #1f7bff;
+  --track-color: var(--studio-orange);
   flex: none;
   display: grid;
   gap: 6px;
   padding: 8px 10px 10px;
-  border: 1px solid #e6e9f3;
   border-top: 4px solid var(--track-color);
   border-radius: 14px;
-  background: #ffffff;
 }
 .studio__keyboard-bar {
   display: flex;
@@ -128,9 +151,13 @@
   align-items: center;
   gap: 8px 16px;
 }
-.studio__keyboard-title { font-weight: 800; font-size: 0.9rem; }
+.studio__keyboard-title { font-weight: 800; font-size: 0.9rem; color: var(--studio-bright); }
 .studio__octave { display: inline-flex; align-items: center; gap: 6px; }
-.studio__piano { --piano-height: clamp(130px, 22vh, 210px); --piano-accent: var(--track-color); }
+.studio__piano {
+  --piano-height: clamp(130px, 22vh, 210px);
+  --piano-accent: var(--track-color);
+  --piano-lane-line: #2a2b30;
+}
 
 /* Colonne de droite */
 .studio__side {
@@ -142,37 +169,77 @@
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
+  scrollbar-color: var(--studio-border) transparent;
 }
 .studio__side > * { flex: none; }
 .studio__card {
   display: grid;
   gap: 10px;
   padding: 12px 14px;
-  border: 1px solid #e6e9f3;
   border-radius: 14px;
-  background: #ffffff;
 }
 .studio__back {
   padding: 8px 10px;
   border: 0;
   border-radius: 10px;
-  background: #eaf3ff;
-  color: #1677ff;
+  background: rgba(249, 115, 22, 0.14);
+  color: #ffd166;
   font: 700 0.85rem/1 inherit;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
 }
-.studio__back:hover { background: #d6e7ff; }
+.studio__back:hover { background: rgba(239, 68, 68, 0.2); }
 .studio__help { margin: 0; line-height: 1.45; }
+.studio__help strong { color: var(--studio-text); }
 .studio__dot {
   display: inline-block;
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: #e11d48;
+  background: var(--studio-red);
   vertical-align: middle;
 }
+
+/* Métronome du Studio : mêmes couleurs que dans le jeu libre */
+.studio .metronome {
+  border-color: var(--studio-border);
+  background: var(--studio-surface);
+  color: var(--studio-text);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+.studio .metronome__title,
+.studio .metronome__muted { color: var(--studio-muted); }
+.studio .metronome__bpm-value { color: var(--studio-bright); }
+.studio .metronome__switch { color: var(--studio-muted); }
+.studio .metronome__switch.is-on { color: var(--studio-yellow); }
+.studio .metronome__switch-track { background: #3b3c42; }
+.studio .metronome__switch.is-on .metronome__switch-track { background: var(--studio-orange); }
+.studio .metronome__switch-track span { background: var(--studio-bright); }
+.studio .metronome__beat { background: #3b3c42; }
+.studio .metronome__beat.is-lit { background: var(--studio-orange); }
+.studio .metronome__beat.is-first.is-lit { background: var(--studio-red); }
+.studio .metronome__step,
+.studio .metronome__sig,
+.studio .metronome__tap,
+.studio .metronome__try {
+  border: 0;
+  background: var(--studio-raised);
+  color: var(--studio-bright);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+}
+.studio .metronome__step:hover:not(:disabled),
+.studio .metronome__sig:hover:not(:disabled),
+.studio .metronome__tap:hover:not(:disabled),
+.studio .metronome__try:hover { background: #30251f; box-shadow: 0 9px 20px rgba(249, 115, 22, 0.25); }
+.studio .metronome__sig.is-active,
+.studio .metronome__try.is-on { background: var(--studio-orange); color: var(--studio-ink); }
+.studio .metronome__more { border-color: var(--studio-border); }
+.studio .metronome__more summary { color: #ffd166; }
+.studio .metronome__slider,
+.studio .metronome__check input { accent-color: var(--studio-orange); }
+.studio .metronome button:focus-visible,
+.studio .metronome summary:focus-visible { outline-color: var(--studio-yellow); }
 
 /* Tablette et téléphone : tout l'un sous l'autre, la page défile */
 @media (max-width: 900px) {

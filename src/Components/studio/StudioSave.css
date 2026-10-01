@@ -1,54 +1,58 @@
-/* Sauvegarde du Studio dans « Mes enregistrements » */
+/* Sauvegarde du Studio dans « Mes enregistrements » (thème anthracite / braise) */
 .studio-save {
   box-sizing: border-box;
   display: grid;
   gap: 8px;
   padding: 12px 14px;
-  border: 1px solid #c7dcff;
+  border: 1px solid rgba(249, 115, 22, 0.45);
   border-radius: 14px;
-  background: #f7faff;
-  color: #0b1026;
+  background: #1a1b1f;
+  color: #f7f0e7;
   font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
 }
 .studio-save *,
 .studio-save *::before,
 .studio-save *::after { box-sizing: border-box; }
 
 .studio-save__form { display: grid; gap: 8px; }
-.studio-save__label { font-size: 0.8rem; font-weight: 700; color: #44507a; }
+.studio-save__label { font-size: 0.8rem; font-weight: 700; color: #aaa39a; }
 .studio-save__input {
   width: 100%;
   max-width: 420px;
   min-height: 38px;
   padding: 6px 10px;
-  border: 1px solid #d9dfeb;
+  border: 1px solid #34353a;
   border-radius: 10px;
-  background: #ffffff;
-  color: #0b1026;
+  background: #24252a;
+  color: #fff7ed;
   font: inherit;
   font-size: 0.9rem;
 }
-.studio-save__input:focus { outline: 2px solid #1f7bff; outline-offset: 1px; border-color: transparent; }
+.studio-save__input:focus { outline: 2px solid #fbbf24; outline-offset: 1px; border-color: transparent; }
 
-.studio-save__text { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #0b3d91; }
-.studio-save__text--warn { color: #9a3412; }
-.studio-save__ok { margin: 0; font-weight: 800; color: #16a34a; }
-.studio-save__error { margin: 0; font-size: 0.8rem; color: #e11d48; }
+.studio-save__text { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #f7f0e7; }
+.studio-save__text strong { color: #ffd166; }
+.studio-save__text--warn { color: #fca5a5; }
+.studio-save__ok { margin: 0; font-weight: 800; color: #fbbf24; }
+.studio-save__error { margin: 0; font-size: 0.8rem; color: #f87171; }
 
 .studio-save__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .studio-save__btn {
   min-height: 36px;
   padding: 6px 14px;
-  border: 1px solid #e6e9f3;
+  border: 0;
   border-radius: 10px;
-  background: #ffffff;
-  color: #0b1026;
+  background: #24252a;
+  color: #fff7ed;
   font: 700 0.85rem/1 inherit;
   font-family: inherit;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
   cursor: pointer;
 }
-.studio-save__btn:hover { background: #f4f6fb; }
-.studio-save__btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
-.studio-save__btn--main { border-color: transparent; background: #1f7bff; color: #ffffff; }
-.studio-save__btn--main:hover { background: #0d69ff; }
-.studio-save__btn--ghost { color: #7180b0; }
+.studio-save__btn:hover { background: #30251f; box-shadow: 0 9px 20px rgba(249, 115, 22, 0.25); }
+.studio-save__btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.studio-save__btn--main { background: linear-gradient(135deg, #fbbf24, #f97316); color: #21130d; }
+.studio-save__btn--main:hover { background: linear-gradient(135deg, #fbbf24, #f97316); filter: brightness(1.06); }
+.studio-save__btn--ghost { background: transparent; color: #aaa39a; box-shadow: none; }
+.studio-save__btn--ghost:hover { background: #24252a; box-shadow: none; }
