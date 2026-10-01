@@ -96,6 +96,13 @@
 .recorder__btn--play:hover { background: #0d69ff; }
 .recorder__btn--stop { color: #0b1026; }
 .recorder__btn--ghost { flex: 0 0 auto; color: #7180b0; }
+.recorder__btn--icon {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+.recorder__btn--icon svg { display: block; }
 
 .recorder__dot {
   width: 9px;
