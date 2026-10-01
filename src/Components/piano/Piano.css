@@ -132,6 +132,18 @@
 .is-black > .piano__cap { color: #d7dbe6; border: 1px solid #3a3a41; font-size: 0.7rem; }
 .piano__key.is-active > .piano__cap { background: var(--piano-accent); border-color: var(--piano-accent); color: #ffffff; }
 .piano__key.is-active > .piano__name { color: var(--piano-accent-deep); }
+/* Noms des sons (percussions) : texte court sur deux lignes au besoin */
+.piano__name--custom {
+  max-width: 100%;
+  padding: 0 2px;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.is-black > .piano__name--custom { color: #e6e9f3; font-size: 0.56rem; }
 
 @media (max-width: 560px) {
   .piano__name,

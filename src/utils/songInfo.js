@@ -1,6 +1,6 @@
 import { loadSongNotes } from '../hooks/useMusic.js'
 import { computeDifficulty } from './difficulty.js'
-import { melodyFor, splitSong } from './songParts.js'
+import { practicePart, splitSong } from './songParts.js'
 
 // Informations calculées à partir des notes d'un morceau, pour les cartes de
 // l'accueil : difficulté, durée exacte, mélodie jouée et nombre de notes.
@@ -10,26 +10,28 @@ const cache = new Map() // id du morceau -> Promise<info | null>
 
 /**
  * Infos d'un morceau (id du catalogue, ou `user:<id>` pour un morceau ajouté) :
- * { difficulty, duration (s), melodyLabel, noteCount }, ou null s'il n'a pas de partition.
+ * { difficulty, duration (s), melodyLabel, noteCount, noPianoPart }, ou null s'il n'a pas de partition.
+ * noPianoPart : morceau du Studio sans piste piano (écoute seulement).
  */
 export function getSongInfo(musicId) {
   if (!cache.has(musicId)) {
     cache.set(
       musicId,
       loadSongNotes(musicId)
-        .then((song) => (song ? describe(musicId, song.notes) : null))
+        .then((song) => (song ? describe(musicId, song.notes, song.practiceTrack) : null))
         .catch(() => null),
     )
   }
   return cache.get(musicId)
 }
 
-function describe(musicId, notes) {
+function describe(musicId, notes, practiceTrack) {
   if (!notes.length) return null
-  const melodyPart = melodyFor(musicId, notes)
+  const melodyPart = practicePart(musicId, notes, practiceTrack)
   const { melody } = splitSong(notes, melodyPart.ids)
   return {
-    difficulty: computeDifficulty(musicId, notes),
+    noPianoPart: !melodyPart.playable,
+    difficulty: computeDifficulty(musicId, practiceTrack ? melody : notes),
     duration: Math.max(...notes.map((n) => n.start + n.duration)),
     melodyLabel: melodyPart.label ?? 'Piano',
     noteCount: melody.length,
