@@ -54,7 +54,7 @@ import {
 } from '../Services/reachyService'
 
 import {
-  playBravo,
+  playPositive,
   playEncouragement,
 } from "../Services/audioService"
 
@@ -707,7 +707,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
         `🤖 Reachy : ${hitCount} bonnes notes`,
       )
 
- playBravo()
+ playPositive()
       correctReaction()
         .catch((error) => {
           console.error(
