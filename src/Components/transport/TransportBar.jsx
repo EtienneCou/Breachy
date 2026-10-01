@@ -155,7 +155,7 @@ function VolumeSlider({ id, label, synth }) {
 
 function Stepper({ title, onDown, onUp, canDown, canUp, downLabel, upLabel, children }) {
   return (
-    <div className="transport__section" role="group" aria-label={title}>
+    <div className={`transport__section transport__section--${title.toLowerCase()}`} role="group" aria-label={title}>
       <span className="transport__heading">{title}</span>
       <div className="transport__stepper">
         <button type="button" className="transport__btn transport__btn--small" onClick={onDown} disabled={!canDown} aria-label={downLabel} title={downLabel}>
