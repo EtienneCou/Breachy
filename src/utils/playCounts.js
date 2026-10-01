@@ -24,3 +24,15 @@ export function recordPlay(key) {
   }
   return counts
 }
+
+/** Réinitialise le compteur d'écoutes d'un morceau et retourne les compteurs à jour. */
+export function resetPlayCount(key) {
+  const counts = getPlayCounts()
+  delete counts[key]
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(counts))
+  } catch {
+    // Le compteur n'est réinitialisé qu'en mémoire si le stockage est indisponible.
+  }
+  return counts
+}

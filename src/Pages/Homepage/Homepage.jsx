@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DifficultyFilter } from "../../Components/difficulty";
 import { SongCard } from "../../Components/songCard";
 import { useSongsInfo } from "../../hooks/useSongsInfo";
-import { getPlayCounts, recordPlay } from "../../utils/playCounts";
+import { getPlayCounts, recordPlay, resetPlayCount } from "../../utils/playCounts";
 
 import songsCatalog from "../../resources/catalog";
 
@@ -83,6 +83,7 @@ export default function SongsPage() {
   // Nombre de lancements de chaque morceau (« Écouter » ou « S'entraîner »)
   const [playCounts, setPlayCounts] = useState(() => getPlayCounts());
   const countPlay = (key) => setPlayCounts(recordPlay(key));
+  const resetListens = (key) => setPlayCounts(resetPlayCount(key));
 
   // Morceaux du catalogue et morceaux ajoutés, sous une même forme pour les cartes.
   // `key` : id pour le jeu, les compteurs et les infos (`user:<id>` pour un morceau ajouté).
@@ -151,7 +152,7 @@ export default function SongsPage() {
     .slice(0, FAVORITES_COUNT);
   const otherItems = catalogItems.filter((item) => !favoriteItems.includes(item));
 
-  const renderCard = (item) => (
+  const renderCard = (item, isFavorite = false) => (
     <SongCard
       key={item.key}
       title={item.title}
@@ -163,6 +164,7 @@ export default function SongsPage() {
       isNew={item.isNew}
       onPractice={() => handleStartPractice(item)}
       onListen={() => handlePlay(item)}
+      onResetListens={isFavorite ? () => resetListens(item.key) : undefined}
     />
   );
 
@@ -1764,7 +1766,24 @@ export default function SongsPage() {
 
         {libraryTab === "catalog" ? (
           <>
-            <DifficultyFilter value={activeDifficulty} onChange={setActiveDifficulty} />
+            <div className="filter-controls">
+              <DifficultyFilter value={activeDifficulty} onChange={setActiveDifficulty} />
+              {isFiltering && (
+                <button
+                  type="button"
+                  className="clear-filters-btn"
+                  aria-label="Effacer tous les filtres"
+                  title="Effacer tous les filtres"
+                  onClick={() => {
+                    setActiveFilter("Tous");
+                    setActiveDifficulty(null);
+                    setSearch("");
+                  }}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              )}
+            </div>
 
             {isFiltering ? (
               // Un filtre ou une recherche est actif : une seule liste, sans titres
@@ -1787,7 +1806,9 @@ export default function SongsPage() {
                       <h2 id="section-favoris" className="library-section__title">Favoris</h2>
                       <p className="library-section__subtitle">Tes {favoriteItems.length} morceaux les plus joués</p>
                     </header>
-                    <div className="songs-grid">{favoriteItems.map(renderCard)}</div>
+                    <div className="songs-grid">
+                      {favoriteItems.map((item) => renderCard(item, true))}
+                    </div>
                   </section>
                 )}
                 <section className="library-section" aria-labelledby="section-tous">

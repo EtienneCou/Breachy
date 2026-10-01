@@ -28,6 +28,7 @@ export default function SongCard({
   onPractice,
   onListen,
   onDelete,
+  onResetListens,
 }) {
   const canPractice = Boolean(musicId) && info !== null
   const level = info?.difficulty?.level
@@ -76,8 +77,14 @@ export default function SongCard({
             )}
           </div>
 
-          {onDelete && (
-            <button type="button" className="song-tile__delete" onClick={onDelete} aria-label={`Supprimer ${title}`} title="Supprimer">
+          {(onDelete || onResetListens) && (
+            <button
+              type="button"
+              className="song-tile__delete"
+              onClick={onResetListens ?? onDelete}
+              aria-label={onResetListens ? `Réinitialiser les écoutes de ${title}` : `Supprimer ${title}`}
+              title={onResetListens ? "Réinitialiser les écoutes" : "Supprimer"}
+            >
               ×
             </button>
           )}
