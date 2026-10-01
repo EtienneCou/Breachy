@@ -1,0 +1,145 @@
+/* Panneau d'enregistrement du jeu libre, dans la colonne de droite. */
+.recorder {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e6e9f3;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #0b1026;
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+}
+.recorder *,
+.recorder *::before,
+.recorder *::after { box-sizing: border-box; }
+
+.recorder__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.recorder__title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #7180b0;
+}
+.recorder__state {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #7180b0;
+}
+.recorder__state--recording { color: #e11d48; }
+.recorder__state--playing { color: #1f7bff; }
+
+.recorder__time {
+  margin: 0;
+  font: 600 1.35rem/1.1 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+.recorder__muted { color: #7180b0; font-size: 0.8rem; font-weight: 500; }
+.recorder__time .recorder__muted { font-family: inherit; }
+.recorder__info { margin: 0; }
+
+.recorder__progress {
+  display: block;
+  height: 5px;
+  background: #eef1f7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.recorder__progress span {
+  display: block;
+  height: 100%;
+  background: #1f7bff;
+  border-radius: inherit;
+  transform-origin: left;
+}
+
+.recorder__buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.recorder__btn {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #e6e9f3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0b1026;
+  font: 700 0.82rem/1.1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.recorder__btn:hover { background: #f4f6fb; }
+.recorder__btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
+.recorder__btn--rec { border-color: #fecdd3; background: #fff1f2; color: #e11d48; }
+.recorder__btn--rec:hover { background: #ffe4e6; }
+.recorder__btn--play { border-color: transparent; background: #1f7bff; color: #ffffff; }
+.recorder__btn--play:hover { background: #0d69ff; }
+.recorder__btn--stop { color: #0b1026; }
+.recorder__btn--ghost { flex: 0 0 auto; color: #7180b0; }
+
+.recorder__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e11d48;
+}
+.recorder__state--recording .recorder__dot { animation: recorder-blink 1s steps(2, start) infinite; }
+@keyframes recorder-blink { to { visibility: hidden; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .recorder__state--recording .recorder__dot { animation: none; }
+}
+
+/* Sauvegarde dans « Mes enregistrements » */
+.recorder__btn--save { border-color: #c7dcff; background: #eaf3ff; color: #1677ff; }
+.recorder__btn--save:hover { background: #d6e7ff; }
+.recorder__save,
+.recorder__saved {
+  display: grid;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #eef1f7;
+}
+.recorder__input {
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid #d9dfeb;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: #0b1026;
+  background: #ffffff;
+}
+.recorder__input:focus { outline: 2px solid #1f7bff; outline-offset: 1px; border-color: transparent; }
+.recorder__saved-text { margin: 0; font-size: 0.82rem; font-weight: 700; color: #16a34a; }
+.recorder__error { margin: 0; font-size: 0.8rem; color: #e11d48; }
+
+/* Décompte et calage sur le métronome */
+.recorder__state--countIn { color: #f59e0b; }
+.recorder__count { color: #f59e0b; font-size: 1.8rem; }
+.recorder__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #44507a;
+}
+.recorder__check input { margin: 1px 0 0; accent-color: #1f7bff; }
+.recorder__hint { display: block; font-weight: 500; color: #7180b0; }

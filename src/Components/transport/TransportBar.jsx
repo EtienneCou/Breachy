@@ -3,7 +3,6 @@ import { backingSynth, pianoSynth } from '../piano'
 import { TRANSPORT_KEYS } from './keys.js'
 import './TransportBar.css'
 
-const speedWord = (speed) => (speed < 1 ? 'Lent' : speed > 1 ? 'Rapide' : 'Normal')
 const percent = (value) => `${Math.round(value * 100)} %`
 
 function formatTime(seconds) {
@@ -15,19 +14,20 @@ function formatTime(seconds) {
  * Barre de commande : jouer / pause, recommencer, vitesse, et si `piano`
  * est fourni, l'octave (en jeu libre) et le volume du piano.
  *
- * - clock          objet renvoyé par useSongClock()
+ * - clock          objet renvoyé par useSongClock() (optionnel : sans morceau,
+ *                  seuls l'octave et le volume sont affichés)
  * - piano          objet renvoyé par usePiano() (optionnel)
  * - accompaniment  affiche le volume de l'accompagnement (quand la page en joue un)
  * - orientation  'vertical' (colonne à côté du piano) ou 'horizontal'
  * - shortcuts    raccourcis clavier : Entrée, Retour arrière, ↓, ↑
  */
 export default function TransportBar({ clock, piano, accompaniment = false, orientation = 'vertical', shortcuts = true, className = '' }) {
-  const { status, time, duration, speed } = clock
+  const { status, time, duration, speed } = clock ?? {}
   const playing = status === 'playing'
   const finite = Number.isFinite(duration) && duration > 0
 
   const handleKey = useEffectEvent((e) => {
-    if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return
+    if (!clock || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return
     // Laisser les champs et boutons gérer leurs propres touches.
     if (e.target instanceof HTMLElement && e.target.closest('input, select, textarea, button, a')) return
     const action = Object.keys(TRANSPORT_KEYS).find((k) => TRANSPORT_KEYS[k] === e.key)
@@ -48,51 +48,58 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
 
   return (
     <div className={`transport transport--${orientation} ${className}`} role="toolbar" aria-label="Commandes de lecture">
-      <div className="transport__section transport__main">
-        <button
-          type="button"
-          className={`transport__btn transport__btn--play${playing ? ' is-playing' : ''}`}
-          onClick={clock.toggle}
-          aria-pressed={playing}
-        >
-          <Icon name={playing ? 'pause' : 'play'} />
-          <span className="transport__label">{playLabel}</span>
-          <kbd>Entrée</kbd>
-        </button>
-        <button type="button" className="transport__btn" onClick={clock.restart} title="Recommencer depuis le début">
-          <Icon name="restart" />
-          <span className="transport__label">Recommencer</span>
-          <kbd>⌫</kbd>
-        </button>
-      </div>
+      {clock && (
+        <>
+          <div className="transport__section transport__main">
+            <button
+              type="button"
+              className={`transport__btn transport__btn--play${playing ? ' is-playing' : ''}`}
+              onClick={clock.toggle}
+              aria-pressed={playing}
+            >
+              <Icon name={playing ? 'pause' : 'play'} />
+              <span className="transport__label">{playLabel}</span>
+              <kbd>Entrée</kbd>
+            </button>
+            <button type="button" className="transport__btn" onClick={clock.restart} title="Recommencer depuis le début">
+              <Icon name="restart" />
+              <span className="transport__label">Recommencer</span>
+              <kbd>⌫</kbd>
+            </button>
+          </div>
 
-      <div className="transport__section">
-        <span className="transport__clock">
-          {playing && time < 0 ? `Départ dans ${Math.ceil(-time)}` : formatTime(time)}
-          {finite && <span className="transport__muted"> / {formatTime(duration)}</span>}
-        </span>
-        {finite && (
-          <span className="transport__progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
-            <span style={{ transform: `scaleX(${progress})` }} />
-          </span>
-        )}
-      </div>
+          <div className="transport__section">
+            <span className="transport__clock">
+              {playing && time < 0 ? `Départ dans ${Math.ceil(-time)}` : formatTime(time)}
+              {finite && <span className="transport__muted"> / {formatTime(duration)}</span>}
+            </span>
+            {finite && (
+              <span className="transport__progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+                <span style={{ transform: `scaleX(${progress})` }} />
+              </span>
+            )}
+          </div>
 
-      <Stepper
-        title="Vitesse"
-        keys={['↓', '↑']}
-        onDown={clock.slower}
-        onUp={clock.faster}
-        canDown={clock.canGoSlower}
-        canUp={clock.canGoFaster}
-        downLabel="Ralentir"
-        upLabel="Accélérer"
-      >
-        <button type="button" className="transport__value" onClick={() => clock.setSpeed(1)} title="Revenir à la vitesse normale">
-          <span className="transport__value-number">{percent(speed)}</span>
-          <span className="transport__value-word">{speedWord(speed)}</span>
-        </button>
-      </Stepper>
+          <label className="transport__section" htmlFor="transport-speed">
+            <span className="transport__heading">
+              Vitesse <span className="transport__muted">{percent(speed)}</span>
+            </span>
+            <input
+              id="transport-speed"
+              className="transport__slider"
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.25"
+              value={speed}
+              onChange={(event) => clock.setSpeed(Number(event.target.value))}
+              onDoubleClick={() => clock.setSpeed(1)}
+              aria-label="Vitesse de lecture"
+              title="Double-cliquer pour revenir à 100 %"
+            />
+          </label>
+        </>
+      )}
 
       {piano?.canShiftOctave && (
         <Stepper
@@ -146,19 +153,17 @@ function VolumeSlider({ id, label, synth }) {
   )
 }
 
-function Stepper({ title, keys, onDown, onUp, canDown, canUp, downLabel, upLabel, children }) {
+function Stepper({ title, onDown, onUp, canDown, canUp, downLabel, upLabel, children }) {
   return (
     <div className="transport__section" role="group" aria-label={title}>
       <span className="transport__heading">{title}</span>
       <div className="transport__stepper">
         <button type="button" className="transport__btn transport__btn--small" onClick={onDown} disabled={!canDown} aria-label={downLabel} title={downLabel}>
           <Icon name="minus" />
-          <kbd>{keys[0]}</kbd>
         </button>
         {children}
         <button type="button" className="transport__btn transport__btn--small" onClick={onUp} disabled={!canUp} aria-label={upLabel} title={upLabel}>
           <Icon name="plus" />
-          <kbd>{keys[1]}</kbd>
         </button>
       </div>
     </div>

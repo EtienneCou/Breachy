@@ -39,24 +39,12 @@ import {
 } from '../hooks/useSongClock.js'
 
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
-
-import {
-  melodyFor,
-  splitSong,
-} from '../utils/songParts.js'
-
-import {
-  planKeyWindows,
-  windowAt,
-} from '../utils/keyWindow.js'
-
-import {
-  TIMING,
-  computeGameStats,
-} from '../utils/gameStats.js'
-
+import { useSongMetronome } from '../hooks/useSongMetronome.js'
+import { melodyFor, splitSong } from '../utils/songParts.js'
+import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
+import { TIMING, computeGameStats } from '../utils/gameStats.js'
 import { saveResult } from '../utils/bestScores.js'
-
+import songsCatalog from '../resources/catalog'
 import './PianoPage.css'
 
 import {
@@ -125,17 +113,9 @@ const KEY_COLORS = [
  */
 export default function PianoPage() {
   const [searchParams] = useSearchParams()
-
-  const musicId =
-    searchParams.get('morceau') ??
-    TEST_MUSIC_ID
-
-  const {
-    music,
-    notes,
-    status,
-  } = useMusic(musicId)
-
+  const musicId = searchParams.get('morceau') ?? TEST_MUSIC_ID
+  const { music, notes, status } = useMusic(musicId)
+  const songImage = songsCatalog.find((song) => song.id === musicId)?.image
 
   // Pour l'instant, le joueur joue toujours
   // la mélodie au piano.
@@ -160,12 +140,14 @@ export default function PianoPage() {
     [notes, melodyPart],
   )
 
+  const difficult = useMemo(() => isDifficult(melody), [melody])
 
-  const difficult = useMemo(
-    () => isDifficult(melody),
-    [melody],
-  )
-
+  // Enregistrement calé sur le métronome : son fichier commence sur un premier temps.
+  // splitSong a pu décaler les notes : la grille du métronome suit ce décalage.
+  const gridOffset = useMemo(() => {
+    const original = melody.length ? notes.find((n) => n.id === melody[0].id) : null
+    return original ? melody[0].start - original.start : 0
+  }, [notes, melody])
 
   // Morceau à une seule partie :
   // l'accompagnement joue la mélodie en guide.
@@ -191,6 +173,7 @@ export default function PianoPage() {
   const songInfo = (
     <SongInfo
       title={music?.label}
+      image={songImage}
       melodyLabel={melodyPart?.label}
       difficult={difficult}
       guided={guided}
@@ -209,19 +192,16 @@ export default function PianoPage() {
       notes={melody}
       backing={accompaniment}
       sidebar={songInfo}
+      tempo={music?.tempo ?? null}
+      gridOffset={gridOffset}
     />
   )
 }
 
-
-function PianoSession({
-  musicId,
-  title,
-  notes,
-  backing,
-  sidebar,
-}) {
+function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffset }) {
   const navigate = useNavigate()
+  // Métronome : seulement pour les morceaux qui ont un tempo, et coupé tant que le joueur ne l'active pas.
+  const [metronomeOn, setMetronomeOn] = useState(false)
 
 
   // Démarre le moteur audio dès la première
@@ -350,55 +330,19 @@ function PianoSession({
   )
 
 
-  // Réussites et fausses notes :
-  // id de note -> moment du morceau.
-  const [hits, setHits] =
-    useState({})
+  // Réussites et fausses notes : id de note -> moment du morceau où elle a été jouée.
+  // Après « Recommencer », le temps repart en arrière : ce qui est situé plus tard
+  // que le temps actuel ne compte plus, sans rien réinitialiser.
+  const [hits, setHits] = useState({})
+  const [wrongs, setWrongs] = useState({})
+  // Éclairs sur les touches : midi -> { kind: 'hit' | 'miss', until: moment de fin }
+  const [flashes, setFlashes] = useState({})
 
-  const [wrongs, setWrongs] =
-    useState({})
-
-
-  // Éclairs sur les touches.
-  const [flashes, setFlashes] =
-    useState({})
-
-
-  const clock =
-    useSongClock(
-      duration,
-      {
-        leadIn:
-          hasSong
-            ? LEAD_IN
-            : 0,
-      },
-    )
-
-
-  useBackingTrack(
-    backing,
-    clock,
-  )
-
-
-  const windowBase =
-    hasSong
-      ? windowAt(
-          plan.segments,
-          clock.time,
-        )
-      : undefined
-
-
-  const done = (
-    record,
-    id,
-    time,
-  ) =>
-    record[id] !== undefined &&
-    record[id] <= time
-
+  const clock = useSongClock(duration, { leadIn: hasSong ? LEAD_IN : 0 })
+  useBackingTrack(backing, clock)
+  useSongMetronome(tempo, clock, { enabled: metronomeOn, offset: gridOffset })
+  const windowBase = hasSong ? windowAt(plan.segments, clock.time) : undefined
+  const done = (record, id, time) => record[id] !== undefined && record[id] <= time
 
   const piano = usePiano({
     windowBase,
@@ -1250,37 +1194,29 @@ playEncouragement()
 
 
             <p className="piano-page__score">
-
-              <span className="piano-page__score-hit">
-                ✓ {hitCount} réussie
-                {hitCount >
-                1
-                  ? 's'
-                  : ''}
-              </span>
-
-
-              <span className="piano-page__score-miss">
-                ✗ {missCount} ratée
-                {missCount >
-                1
-                  ? 's'
-                  : ''}
-              </span>
-
+              <span className="piano-page__score-hit">{hitCount} réussie{hitCount > 1 ? 's' : ''}</span>
+              <span className="piano-page__score-miss">{missCount} ratée{missCount > 1 ? 's' : ''}</span>
             </p>
 
           </div>
         )}
-
-
-        <TransportBar
-          className="piano-page__transport"
-          clock={clock}
-          piano={piano}
-          accompaniment
-        />
-
+        {tempo && (
+          <button
+            type="button"
+            className={`piano-page__metronome${metronomeOn ? ' is-on' : ''}`}
+            onClick={(e) => {
+              setMetronomeOn((on) => !on)
+              e.currentTarget.blur() // Entrée reste le raccourci Jouer / Pause
+            }}
+            aria-pressed={metronomeOn}
+          >
+            <span className="piano-page__metronome-label">Métronome</span>
+            <span className="piano-page__metronome-state">
+              {metronomeOn ? 'Activé' : 'Coupé'} · {tempo.bpm} BPM, {tempo.signature}
+            </span>
+          </button>
+        )}
+        <TransportBar className="piano-page__transport" clock={clock} piano={piano} accompaniment />
       </aside>
 
 
@@ -1407,59 +1343,20 @@ function slotInfo(
   return info
 }
 
+const isWhite = (midi) => ![1, 3, 6, 8, 10].includes(midi % 12)
 
-const isWhite =
-  (midi) =>
-    ![
-      1,
-      3,
-      6,
-      8,
-      10,
-    ].includes(
-      midi % 12,
-    )
-
-
-function SongInfo({
-  title,
-  melodyLabel,
-  difficult,
-  guided,
-  status,
-}) {
-  const navigate =
-    useNavigate()
-
-
+function SongInfo({ title, image, melodyLabel, difficult, guided, status }) {
+  const navigate = useNavigate()
   return (
-    <section
-      className="piano-page__card"
-      aria-label="Morceau"
-    >
-
-      <button
-        type="button"
-        className="piano-page__back"
-        onClick={() =>
-          navigate('/')
-        }
-      >
-        ← Retour à l'accueil
+    <section className="piano-page__card" aria-label="Morceau">
+      <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
+        Retour
       </button>
 
 
       <div className="piano-page__song">
-
-        <span className="piano-page__field-label">
-          Morceau
-        </span>
-
-        <strong className="piano-page__song-title">
-          {title ??
-            'Morceau inconnu'}
-        </strong>
-
+        <strong className="piano-page__song-title">{title ?? 'Morceau inconnu'}</strong>
+        {image && <img className="piano-page__song-image" src={image} alt="" />}
       </div>
 
 

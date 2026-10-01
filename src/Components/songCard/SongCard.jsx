@@ -99,7 +99,6 @@ export default function SongCard({
           disabled={!canPractice || !onPractice}
           title={canPractice ? "S'entraîner au piano sur ce morceau" : 'Pas encore de partition pour ce morceau'}
         >
-          <span className="song-tile__icon" aria-hidden="true">🎹</span>
           S'entraîner
         </button>
         <button type="button" className="song-tile__btn song-tile__btn--listen" onClick={onListen} disabled={!onListen}>
