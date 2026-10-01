@@ -30,11 +30,15 @@ export default function SongCard({
   onDelete,
   onResetListens,
 }) {
-  const canPractice = Boolean(musicId) && info !== null
+  // Morceau du Studio sans piste piano : il s'écoute, mais il n'y a rien à jouer.
+  const noPianoPart = Boolean(info?.noPianoPart)
+  const canPractice = Boolean(musicId) && info !== null && !noPianoPart
   const level = info?.difficulty?.level
   const best = canPractice ? getBestScore(musicId) : null
   const duration = info?.duration ? formatDuration(info.duration) : fallbackDuration
-  const details = !canPractice
+  const details = noPianoPart
+    ? 'Pas de piste piano à jouer : écoute seulement'
+    : !canPractice
     ? 'Pas encore de partition : écoute seulement'
     : info
       ? `Mélodie : ${info.melodyLabel} · ${info.noteCount} notes`
@@ -97,7 +101,13 @@ export default function SongCard({
           className="song-tile__btn song-tile__btn--practice"
           onClick={onPractice}
           disabled={!canPractice || !onPractice}
-          title={canPractice ? "S'entraîner au piano sur ce morceau" : 'Pas encore de partition pour ce morceau'}
+          title={
+            canPractice
+              ? "S'entraîner au piano sur ce morceau"
+              : noPianoPart
+                ? 'Pas de piste piano à jouer : ajoute une piste piano dans le Studio'
+                : 'Pas encore de partition pour ce morceau'
+          }
         >
           <span className="song-tile__icon" aria-hidden="true">🎹</span>
           S'entraîner

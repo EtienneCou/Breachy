@@ -17,8 +17,15 @@ function tempoName(bpm) {
  * mesure, accent du premier temps, volume, et un point allumé par temps.
  * `metronome` est l'objet renvoyé par useMetronome().
  * `locked` : tempo et mesure bloqués (prise calée sur le métronome, en cours ou réécoutée).
+ * `signatureLocked` : seule la mesure est bloquée (Studio : des pistes sont déjà enregistrées).
+ * `hints` : { on, off } textes sous l'interrupteur, selon la page.
  */
-export default function Metronome({ metronome, locked = false, className = '' }) {
+const DEFAULT_HINTS = {
+  on: 'Il se lance avec l\'enregistrement et s\'arrête avec lui.',
+  off: 'L\'enregistrement part sans métronome.',
+}
+
+export default function Metronome({ metronome, locked = false, signatureLocked = false, hints = DEFAULT_HINTS, className = '' }) {
   const m = metronome
   return (
     <section className={`metronome ${className}`} aria-label="Métronome">
@@ -37,7 +44,7 @@ export default function Metronome({ metronome, locked = false, className = '' })
         </button>
       </header>
       <p className="metronome__muted metronome__hint">
-        {m.enabled ? 'Il se lance avec l\'enregistrement et s\'arrête avec lui.' : 'L\'enregistrement part sans métronome.'}
+        {m.enabled ? hints.on : hints.off}
       </p>
 
       {/* Essai : l'entendre pour régler le tempo, hors enregistrement */}
@@ -98,7 +105,8 @@ export default function Metronome({ metronome, locked = false, className = '' })
                 role="radio"
                 aria-checked={m.signature === s}
                 className={`metronome__sig${m.signature === s ? ' is-active' : ''}`}
-                disabled={locked}
+                disabled={locked || signatureLocked}
+                title={signatureLocked ? 'La mesure ne change plus une fois des pistes enregistrées' : undefined}
                 onClick={() => m.setSignature(s)}
               >
                 {s}

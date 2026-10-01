@@ -1,0 +1,183 @@
+/* Page Studio : pistes et clavier à gauche, aide et métronome à droite. */
+.studio {
+  box-sizing: border-box;
+  height: 100svh;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  color-scheme: light;
+  color: #0b1026;
+  background: #f6f8fc;
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+}
+.studio *,
+.studio *::before,
+.studio *::after { box-sizing: border-box; }
+
+.studio__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.studio__muted { color: #7180b0; font-size: 0.8rem; }
+
+/* Barre du haut : titre, lecture, position, longueur de la boucle */
+.studio__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 10px 14px;
+  border: 1px solid #e6e9f3;
+  border-radius: 14px;
+  background: #ffffff;
+}
+.studio__title { margin: 0; font-size: 1.25rem; font-weight: 800; }
+.studio__transport { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio__btn {
+  min-height: 38px;
+  padding: 6px 14px;
+  border: 1px solid #e6e9f3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0b1026;
+  font: 700 0.85rem/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.studio__btn:hover:not(:disabled) { background: #f4f6fb; }
+.studio__btn:disabled { opacity: 0.45; cursor: default; }
+.studio__btn:focus-visible,
+.studio__chip:focus-visible,
+.studio__back:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
+.studio__btn--play { border-color: transparent; background: #1f7bff; color: #ffffff; }
+.studio__btn--play:hover:not(:disabled) { background: #0d69ff; }
+.studio__btn--stop { border-color: #fecdd3; background: #fff1f2; color: #e11d48; }
+
+.studio__position {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 190px;
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+.studio__rec { color: #e11d48; font-weight: 800; }
+.studio__countdown { color: #f59e0b; font-size: 1.6rem; font-weight: 800; line-height: 1; }
+
+.studio__loop {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.studio__chip {
+  min-width: 34px;
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid #e6e9f3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0b1026;
+  font: 700 0.8rem/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.studio__chip:hover:not(:disabled) { background: #f4f6fb; }
+.studio__chip:disabled { opacity: 0.45; cursor: default; }
+.studio__chip.is-active { border-color: transparent; background: #1f7bff; color: #ffffff; }
+.studio__chip kbd { font: inherit; font-size: 0.7rem; color: #7180b0; }
+
+.studio__loading,
+.studio__hint {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+  font-size: 0.82rem;
+}
+.studio__hint { background: #ffffff; color: #7180b0; text-align: center; }
+
+/* Pistes : elles défilent si elles ne tiennent pas, le clavier reste en bas */
+.studio__tracks {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Clavier de la piste sélectionnée */
+.studio__keyboard {
+  --track-color: #1f7bff;
+  flex: none;
+  display: grid;
+  gap: 6px;
+  padding: 8px 10px 10px;
+  border: 1px solid #e6e9f3;
+  border-top: 4px solid var(--track-color);
+  border-radius: 14px;
+  background: #ffffff;
+}
+.studio__keyboard-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+.studio__keyboard-title { font-weight: 800; font-size: 0.9rem; }
+.studio__octave { display: inline-flex; align-items: center; gap: 6px; }
+.studio__piano { --piano-height: clamp(130px, 22vh, 210px); --piano-accent: var(--track-color); }
+
+/* Colonne de droite */
+.studio__side {
+  flex: none;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+.studio__side > * { flex: none; }
+.studio__card {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid #e6e9f3;
+  border-radius: 14px;
+  background: #ffffff;
+}
+.studio__back {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: #eaf3ff;
+  color: #1677ff;
+  font: 700 0.85rem/1 inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.studio__back:hover { background: #d6e7ff; }
+.studio__help { margin: 0; line-height: 1.45; }
+.studio__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #e11d48;
+  vertical-align: middle;
+}
+
+/* Tablette et téléphone : tout l'un sous l'autre, la page défile */
+@media (max-width: 900px) {
+  .studio { height: auto; min-height: 100svh; flex-direction: column; }
+  .studio__side { width: auto; overflow: visible; }
+  .studio__tracks { overflow: visible; }
+  .studio__loop { margin-left: 0; }
+}

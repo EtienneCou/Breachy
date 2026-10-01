@@ -1,0 +1,54 @@
+/* Sauvegarde du Studio dans « Mes enregistrements » */
+.studio-save {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #c7dcff;
+  border-radius: 14px;
+  background: #f7faff;
+  color: #0b1026;
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+}
+.studio-save *,
+.studio-save *::before,
+.studio-save *::after { box-sizing: border-box; }
+
+.studio-save__form { display: grid; gap: 8px; }
+.studio-save__label { font-size: 0.8rem; font-weight: 700; color: #44507a; }
+.studio-save__input {
+  width: 100%;
+  max-width: 420px;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid #d9dfeb;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0b1026;
+  font: inherit;
+  font-size: 0.9rem;
+}
+.studio-save__input:focus { outline: 2px solid #1f7bff; outline-offset: 1px; border-color: transparent; }
+
+.studio-save__text { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #0b3d91; }
+.studio-save__text--warn { color: #9a3412; }
+.studio-save__ok { margin: 0; font-weight: 800; color: #16a34a; }
+.studio-save__error { margin: 0; font-size: 0.8rem; color: #e11d48; }
+
+.studio-save__buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+.studio-save__btn {
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px solid #e6e9f3;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #0b1026;
+  font: 700 0.85rem/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.studio-save__btn:hover { background: #f4f6fb; }
+.studio-save__btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
+.studio-save__btn--main { border-color: transparent; background: #1f7bff; color: #ffffff; }
+.studio-save__btn--main:hover { background: #0d69ff; }
+.studio-save__btn--ghost { color: #7180b0; }
