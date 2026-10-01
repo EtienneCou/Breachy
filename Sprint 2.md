@@ -1,4 +1,4 @@
-# 📋 Rapport de Sprint — Breachy
+# 📋 Rapport de Sprint — Reachy
 
 ## 📌 Sprint 2 : Consolidation, Entraînement & Alignement d'Équipe
 
