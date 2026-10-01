@@ -7,7 +7,8 @@
 //   speech:   phrase dite à voix haute (bilan et accueil)
 //   say:      encouragement parlé pendant le jeu (mots très courts) ; il se tait si le
 //             joueur a coupé les encouragements, et ne parle pas plus d'une fois toutes les 9 s
-//   robot:    { emotion } | { dance } | { gesture } : ce que fait le vrai robot
+//   robot:    { emotion } | { dance } | { gesture } : ce que fait le vrai robot ; pendant le
+//             morceau, seulement des gestes : ils s'ajoutent à sa danse sans l'interrompre
 //   priority: 1 (petit geste) à 3 (moment important) ; une réaction n'en coupe pas une plus importante
 //   cooldown: secondes avant de pouvoir rejouer ce type de réaction
 // }
@@ -90,7 +91,7 @@ export const TRAINING_RULES = {
       mood: streak >= 50 ? 'dance' : 'cheer',
       ...spoken(moment),
       sound: 'cheer',
-      robot: streak >= 50 ? { dance: 'groovy_sway_and_roll' } : streak >= 25 ? { emotion: 'enthusiastic1' } : { dance: 'yeah_nod' },
+      robot: { gesture: 'perk' },
       priority: 3,
     }
   },
@@ -100,7 +101,7 @@ export const TRAINING_RULES = {
     mood: 'sad',
     ...spoken('streakLost'),
     sound: 'oops',
-    robot: { emotion: pick(['oops1', 'oops2']) },
+    robot: { gesture: 'tilt' },
     priority: 2,
     cooldown: 6,
   }),
@@ -110,7 +111,7 @@ export const TRAINING_RULES = {
     mood: 'calm',
     ...spoken('struggle'),
     sound: 'think',
-    robot: { emotion: pick(['understanding1', 'calming1']) },
+    robot: { gesture: 'tilt' },
     priority: 2,
     cooldown: 18,
   }),
@@ -120,7 +121,7 @@ export const TRAINING_RULES = {
     mood: 'proud',
     ...spoken('comeback'),
     sound: 'happy',
-    robot: { emotion: 'proud1' },
+    robot: { gesture: 'perk' },
     priority: 2,
     cooldown: 10,
   }),

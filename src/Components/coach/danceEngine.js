@@ -1,7 +1,7 @@
 // Danse de Reachy pendant l'entraînement, calculée à chaque instant (50 fois par seconde).
-// Elle suit le tempo du morceau et s'améliore avec le jeu du joueur :
-// niveau 0 = danse « nulle » (lente, en retard, tête basse, antennes tombantes),
-// niveau 4 = danse au top (en rythme, balancements, antennes qui battent la mesure).
+// Elle suit le tempo du morceau et s'améliore avec le jeu du joueur, en 4 danses :
+// 0 les antennes seules, 1 + la tête qui se penche lentement sur les côtés,
+// 2 côtés et hochement plus rapides, 3 rock star.
 //
 // Règles de la doc Reachy Mini pour des mouvements doux : une seule boucle envoie les
 // positions, toujours des courbes continues (sinus), des amplitudes loin des limites
@@ -9,18 +9,31 @@
 
 const TAU = Math.PI * 2
 
-// Réglages de chaque niveau (degrés). tempo : fraction du tempo du morceau.
-// lag : retard sur le temps (fraction de temps), wobble : maladresse (dérive irrégulière).
+// Réglages de chaque danse (degrés). Tous sont des nombres : on glisse d'une danse à l'autre.
+// - tempo     fraction du tempo du morceau      - lag      retard sur le temps (fraction de temps)
+// - bob       hochement de tête vers l'avant sur chaque temps, façon concert de rock
+// - accent    hochement plus fort sur le 1er temps de chaque mesure (0 = aucun, 0,3 = +30 %)
+// - droop     tête basse (+) ou relevée (-)
+// - sway      tête penchée d'un côté puis de l'autre
+// - swayFast  0 = très lentement (un aller-retour sur 8 temps), 1 = plus vite (sur 2 temps)
+// - look      regarde à gauche et à droite, sur 4 temps        - body   rotation du corps, sur 4 temps
+// - antennas  battement des antennes            - antennaDroop  antennes tombantes (+) ou levées (-)
+// - antFast   0 = un battement tous les 2 temps, 1 = un battement par temps
+// - antSync   0 = antennes en miroir, 1 = ensemble (les « bras en l'air »)
+// - wobble    maladresse (dérive irrégulière)
 export const DANCE_LEVELS = [
-  { tempo: 0.5, lag: 0.3, bob: 2.5, droop: 9, sway: 2, look: 0, body: 0, antennas: 6, antennaDroop: 30, wobble: 1 },
-  { tempo: 1, lag: 0.12, bob: 4, droop: 3, sway: 2, look: 0, body: 0, antennas: 10, antennaDroop: 10, wobble: 0.4 },
-  { tempo: 1, lag: 0, bob: 5.5, droop: 0, sway: 5, look: 3, body: 3, antennas: 18, antennaDroop: 0, wobble: 0 },
-  { tempo: 1, lag: 0, bob: 7, droop: -2, sway: 8, look: 6, body: 6, antennas: 24, antennaDroop: 0, wobble: 0 },
-  { tempo: 1, lag: 0, bob: 8, droop: -3, sway: 11, look: 9, body: 9, antennas: 28, antennaDroop: 0, wobble: 0 },
+  // 0 · Les antennes seules : la tête ne bouge pas
+  { tempo: 1, lag: 0, bob: 0, accent: 0, droop: 0, sway: 0, swayFast: 0, look: 0, body: 0, antennas: 16, antennaDroop: 0, antFast: 0, antSync: 0, wobble: 0 },
+  // 1 · Antennes + la tête qui se penche sur les côtés, très lentement
+  { tempo: 1, lag: 0, bob: 0, accent: 0, droop: 0, sway: 12, swayFast: 0, look: 0, body: 0, antennas: 20, antennaDroop: 0, antFast: 0, antSync: 0, wobble: 0 },
+  // 2 · Côtés et hochement vers l'avant, plus rapides
+  { tempo: 1, lag: 0, bob: 16, accent: 0.1, droop: 0, sway: 12, swayFast: 1, look: 3, body: 5, antennas: 24, antennaDroop: 0, antFast: 0, antSync: 0, wobble: 0 },
+  // 3 · Rock star : gros headbang marqué sur la mesure, antennes ensemble en l'air, corps qui tourne
+  { tempo: 1, lag: 0, bob: 30, accent: 0.3, droop: -4, sway: 7, swayFast: 1, look: 12, body: 14, antennas: 34, antennaDroop: -12, antFast: 1, antSync: 1, wobble: 0 },
 ]
 
 // Respiration au repos : à peine visible, pour qu'il reste « vivant ».
-const IDLE = { tempo: 1, lag: 0, bob: 0, droop: 0, sway: 0, look: 0, body: 0, antennas: 0, antennaDroop: 0, wobble: 0 }
+const IDLE = { tempo: 1, lag: 0, bob: 0, accent: 0, droop: 0, sway: 0, swayFast: 0, look: 0, body: 0, antennas: 0, antennaDroop: 0, antFast: 0, antSync: 0, wobble: 0 }
 
 // Petites réactions ajoutées à la danse : une bosse douce (sin²) sur `length` secondes.
 const IMPULSES = {
@@ -57,13 +70,21 @@ export function dancePose(t, { phase = 0, p, envelope = 1, impulses = [] }) {
   const wobbleRoll = p.wobble * 3 * Math.sin(TAU * 0.37 * t)
   const wobbleYaw = p.wobble * 4 * Math.sin(TAU * 0.23 * t + 1)
 
-  let pitch = p.droop + p.bob * (0.5 - 0.5 * Math.cos(TAU * phase)) + breathe // hoche la tête sur les temps
-  let roll = p.sway * Math.sin(Math.PI * phase) + wobbleRoll // balance d'un côté à l'autre tous les 2 temps
+  // Hoche la tête sur chaque temps : en bas pile sur le temps, coup vers le bas plus franc
+  // que la remontée (courbe au carré, toujours continue). Plus fort sur le 1er temps de la mesure.
+  const bang = ((1 + Math.cos(TAU * phase)) / 2) ** 2
+  const downbeat = ((1 + Math.cos((TAU * phase) / 4)) / 2) ** 4
+  let pitch = p.droop + p.bob * bang * (1 + p.accent * downbeat) + breathe
+  // Tête penchée d'un côté puis de l'autre : mélange du lent (8 temps) et du rapide (2 temps).
+  const side = (1 - p.swayFast) * Math.sin((Math.PI * phase) / 4) + p.swayFast * Math.sin(Math.PI * phase)
+  let roll = p.sway * side + wobbleRoll
   let yaw = p.look * Math.sin((Math.PI * phase) / 2) + wobbleYaw // regarde autour de lui sur 4 temps
   const body = p.body * Math.sin((Math.PI * phase) / 2)
-  const swing = p.antennas * Math.sin(Math.PI * phase) // antennes : un battement tous les 2 temps
+  // Antennes : mélange d'un battement tous les 2 temps et d'un battement par temps (sans saut
+  // quand on change de danse), en miroir ou ensemble.
+  const swing = p.antennas * ((1 - p.antFast) * Math.sin(Math.PI * phase) + p.antFast * Math.sin(TAU * phase))
   let right = swing + p.antennaDroop
-  let left = -swing - p.antennaDroop
+  let left = -swing * (1 - 2 * p.antSync) - p.antennaDroop
 
   for (const { name, start } of impulses) {
     const imp = IMPULSES[name]
@@ -77,13 +98,28 @@ export function dancePose(t, { phase = 0, p, envelope = 1, impulses = [] }) {
 
   const e = envelope
   return {
-    head: { roll: clamp(roll * e, 15), pitch: clamp(pitch * e, 15), yaw: clamp(yaw * e, 15) },
+    head: { roll: clamp(roll * e, 15), pitch: clamp(pitch * e, 38), yaw: clamp(yaw * e, 15) }, // tête : ±40° max (doc)
     antennas: [clamp(right * e, 45), clamp(left * e, 45)],
-    body: clamp(body * e, 12),
+    body: clamp(body * e, 15),
   }
 }
 
 const clamp = (v, max) => Math.max(-max, Math.min(max, v))
+
+// Intensité des mouvements du vrai robot (danse et petits gestes), réglée par l'équipe
+// pendant les tests sur le Reachy Mini (pas par le joueur) : 1 = amplitudes ci-dessus,
+// en dessous tout est réduit d'autant. Les niveaux de danse gardent leurs écarts entre eux.
+// Prudente pour les premiers essais (0,3 au départ) ; on l'ajuste au vu des mouvements.
+export const ROBOT_INTENSITY = 0.5
+
+/** Position réduite à l'intensité `k` (0-1), autour de la position neutre. */
+export function scalePose({ head, antennas, body }, k) {
+  return {
+    head: { roll: head.roll * k, pitch: head.pitch * k, yaw: head.yaw * k },
+    antennas: antennas.map((a) => a * k),
+    body: body * k,
+  }
+}
 
 const MAX_CORRECTION = 0.25 // temps par seconde : recalage maximal sur le rythme du morceau
 

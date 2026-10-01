@@ -90,31 +90,27 @@
 
 /* Danse pendant le morceau, au tempo (--beat) et selon le niveau du joueur */
 .reachy--groove { --beat: 0.6s; }
-/* 0 : danse « nulle » — tête basse, lente, à contretemps, antennes tombantes */
-.reachy--groove-0 .reachy__head { animation: reachy-groove-lazy calc(var(--beat) * 2) ease-in-out infinite; }
-.reachy--groove-0 .reachy__antenna--left { transform: rotate(-50deg); }
-.reachy--groove-0 .reachy__antenna--right { transform: rotate(50deg); }
-.reachy--groove-0 .reachy__pupil { fill: #8fa3d6; }
-/* 1 : il se met en rythme — petit hochement */
-.reachy--groove-1 .reachy__head { animation: reachy-groove-bob var(--beat) ease-in-out infinite; }
-/* 2 : il danse — hochement et antennes */
-.reachy--groove-2 .reachy__head { animation: reachy-groove-bob var(--beat) ease-in-out infinite; }
+/* 0 : les antennes seules */
+.reachy--groove-0 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-0 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
+/* 1 : antennes + tête penchée sur les côtés, très lentement */
+.reachy--groove-1 .reachy__head { animation: reachy-groove-tilt calc(var(--beat) * 8) ease-in-out infinite; }
+.reachy--groove-1 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-1 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
+/* 2 : côtés et hochement, plus rapides */
+.reachy--groove-2 .reachy__head { animation: reachy-groove-sway calc(var(--beat) * 2) ease-in-out infinite; }
 .reachy--groove-2 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
 .reachy--groove-2 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
-/* 3 : il danse bien — balancement */
-.reachy--groove-3 .reachy__head { animation: reachy-groove-sway calc(var(--beat) * 2) ease-in-out infinite; }
-.reachy--groove-3 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
-.reachy--groove-3 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
-.reachy--groove-3 .reachy__pupil { fill: #7ee3a6; }
-/* 4 : il danse à fond — tête, corps et antennes */
-.reachy--groove-4 .reachy__head { animation: reachy-groove-sway calc(var(--beat) * 2) ease-in-out infinite; }
-.reachy--groove-4 .reachy__body { animation: reachy-dance-body calc(var(--beat) * 4) ease-in-out infinite; }
-.reachy--groove-4 .reachy__antenna--left { animation: reachy-wiggle-left var(--beat) ease-in-out infinite; }
-.reachy--groove-4 .reachy__antenna--right { animation: reachy-wiggle-right var(--beat) ease-in-out infinite; }
-.reachy--groove-4 .reachy__pupil { fill: #ff8fd1; }
+.reachy--groove-2 .reachy__pupil { fill: #7ee3a6; }
+/* 3 : rock star — headbang, corps et antennes à fond */
+.reachy--groove-3 .reachy__head { animation: reachy-groove-bang var(--beat) cubic-bezier(0.5, 0, 0.3, 1) infinite; }
+.reachy--groove-3 .reachy__body { animation: reachy-dance-body calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) / 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) / 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__pupil { fill: #ffd166; }
 
-@keyframes reachy-groove-lazy { 0%, 100% { transform: translateY(6px) rotate(-3deg); } 50% { transform: translateY(8px) rotate(4deg); } }
-@keyframes reachy-groove-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+@keyframes reachy-groove-tilt { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes reachy-groove-bang { 0%, 100% { transform: translateY(0) rotate(0); } 20% { transform: translateY(8px) rotate(3deg); } 60% { transform: translateY(-1px) rotate(-1deg); } }
 @keyframes reachy-groove-sway { 0%, 100% { transform: rotate(-8deg) translateY(0); } 25%, 75% { transform: rotate(0deg) translateY(4px); } 50% { transform: rotate(8deg) translateY(0); } }
 
 @keyframes reachy-breathe { 50% { transform: translateY(-2px); } }

@@ -57,6 +57,13 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 
 export const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window
 
+// Chrome peut perdre une phrase : si l'objet de la phrase est libéré avant la fin, `onend`
+// n'arrive jamais ; et une phrase lancée juste après cancel() est parfois ignorée.
+// On garde donc la phrase en cours, on attend un instant après cancel(), et un délai de
+// secours termine la phrase si le navigateur ne le fait pas.
+let current = null
+let pending = 0
+
 /**
  * Dit une phrase à voix haute (coupe la phrase précédente). `onEnd` est appelé à la fin.
  * `quick` : débit un peu plus rapide, pour les encouragements pendant le jeu.
@@ -67,6 +74,8 @@ export function speak(text, { onEnd, onStart, quick = false } = {}) {
     return
   }
   const synth = window.speechSynthesis
+  clearTimeout(pending)
+  const interrupting = synth.speaking || synth.pending
   synth.cancel()
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = 'fr-FR'
@@ -74,12 +83,26 @@ export function speak(text, { onEnd, onStart, quick = false } = {}) {
   if (voice) utterance.voice = voice
   utterance.rate = quick ? 1.15 : 1.05
   utterance.pitch = 1.25 // voix un peu plus aiguë : un petit robot sympathique
+
+  let ended = false
+  let rescue = 0
+  const end = () => {
+    if (ended) return
+    ended = true
+    clearTimeout(rescue)
+    if (current === utterance) current = null
+    onEnd?.()
+  }
   utterance.onstart = () => onStart?.()
-  utterance.onend = () => onEnd?.()
-  utterance.onerror = () => onEnd?.()
-  synth.speak(utterance)
+  utterance.onend = end
+  utterance.onerror = end
+  current = utterance
+  // Secours : environ 90 ms par lettre, plus une marge.
+  rescue = setTimeout(end, 2000 + (text.length * 90) / utterance.rate)
+  pending = setTimeout(() => synth.speak(utterance), interrupting ? 80 : 0)
 }
 
 export function stopSpeaking() {
+  clearTimeout(pending)
   if (canSpeak()) window.speechSynthesis.cancel()
 }

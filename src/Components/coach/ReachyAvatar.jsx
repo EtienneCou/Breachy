@@ -4,8 +4,8 @@ import './ReachyAvatar.css'
  * Reachy Mini dessiné : tête et grands yeux, deux antennes, socle.
  * `mood` l'anime ('idle', 'happy', 'cheer', 'dance', 'sad', 'think', 'attentive',
  * 'calm', 'proud', 'surprised') ; `speaking` le fait « parler » (antennes et tête qui vibrent).
- * `groove` ({ level 0-4, period }) : il danse en rythme pendant le morceau, de la danse
- * « nulle » (niveau 0) à la danse au top (niveau 4) ; une humeur passagère prend le dessus.
+ * `groove` ({ level 0-3, period }) : il danse en rythme pendant le morceau, des antennes
+ * seules (niveau 0) au rock star (niveau 3) ; une humeur passagère prend le dessus.
  */
 export default function ReachyAvatar({ mood = 'idle', speaking = false, groove = null, size = 96, className = '' }) {
   const dancing = groove && mood === 'idle'
@@ -55,7 +55,7 @@ export default function ReachyAvatar({ mood = 'idle', speaking = false, groove =
   )
 }
 
-const GROOVE_LABELS = ['il danse mollement', 'il se met en rythme', 'il danse', 'il danse bien', 'il danse à fond']
+const GROOVE_LABELS = ['il bouge les antennes', 'il se balance doucement', 'il danse', 'il danse comme une rock star']
 
 const MOOD_LABELS = {
   idle: 'calme',

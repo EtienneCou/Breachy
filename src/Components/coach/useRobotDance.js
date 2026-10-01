@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useCoach } from './CoachProvider.jsx'
-import { advancePhase, blendParams, dancePose, levelParams, liveImpulses } from './danceEngine.js'
+import { advancePhase, blendParams, dancePose, levelParams, liveImpulses, scalePose, ROBOT_INTENSITY } from './danceEngine.js'
 
 const LOOP_MS = 20 // 50 Hz : la fréquence conseillée par la doc pour un mouvement continu
 const NEUTRAL = { head: { roll: 0, pitch: 0, yaw: 0 }, antennas: [0, 0], body: 0 }
@@ -12,7 +12,7 @@ const RAMP = 1.5 // secondes de montée progressive de la danse
  * une seule boucle envoie les positions (50 Hz), en continu, avec des courbes douces.
  * - beatRef    ref d'une fonction qui renvoie { time, period } quand le morceau joue
  *              (temps du morceau), null sinon : au repos, Reachy respire simplement
- * - danceRef   ref de { level } : niveau de danse 0-4, lu à chaque instant
+ * - danceRef   ref de { level } : niveau de danse 0-3, lu à chaque instant
  *              (les changements de niveau sont progressifs)
  * Les petits gestes du coach (hochement, antennes…) s'ajoutent à la danse. Pendant une
  * émotion ou une danse enregistrée, la boucle se met en retrait, puis reprend en douceur.
@@ -66,7 +66,7 @@ export function useRobotDance({ beatRef, danceRef }) {
       params = blendParams(params, levelParams(beat ? danceRef.current.level : null), dt)
       rhythm = advancePhase(rhythm, beat, params, dt)
       impulses = liveImpulses(impulses, t)
-      stream.send(dancePose(t, { phase: rhythm?.phase ?? 0, p: params, envelope, impulses }))
+      stream.send(scalePose(dancePose(t, { phase: rhythm?.phase ?? 0, p: params, envelope, impulses }), ROBOT_INTENSITY))
     }
     const id = setInterval(tick, LOOP_MS)
 

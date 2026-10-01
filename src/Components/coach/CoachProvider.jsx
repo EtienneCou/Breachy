@@ -3,6 +3,7 @@ import { DEFAULT_REACHY_URL, createReachyClient } from '../../services/reachy/re
 import { playCoachSound, speak, stopSpeaking } from './coachAudio.js'
 import { backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
+import { ROBOT_INTENSITY } from './danceEngine.js'
 
 // Le coach Reachy, partagé par toute l'application : l'avatar à l'écran (humeur +
 // bulle), la voix, les petits sons, et le vrai robot quand il est connecté
@@ -49,7 +50,7 @@ export function CoachProvider({ children }) {
   const [mood, setMood] = useState('idle')
   const [bubble, setBubble] = useState(null) // { text, id }
   const [speaking, setSpeaking] = useState(false)
-  const [groove, setGroove] = useState(null) // danse en cours : { level 0-4, period (s) } ou null
+  const [groove, setGroove] = useState(null) // danse en cours : { level 0-3, period (s) } ou null
 
   useEffect(() => {
     try {
@@ -131,9 +132,13 @@ export function CoachProvider({ children }) {
     if (action.emotion) client.playEmotion(action.emotion).then(remember, fail)
     else if (action.dance) client.playDance(action.dance).then(remember, fail)
     else {
+      // Petits gestes réduits comme la danse ; les émotions et danses enregistrées restent telles quelles.
+      const k = ROBOT_INTENSITY
       let delay = 0
       for (const step of GESTURES[action.gesture] ?? []) {
-        r.timers.push(setTimeout(() => client.goto({ head: step.head, antennas: step.antennas, duration: step.t }).then(remember, fail), delay))
+        const head = step.head && { roll: (step.head.roll ?? 0) * k, pitch: (step.head.pitch ?? 0) * k, yaw: (step.head.yaw ?? 0) * k }
+        const antennas = step.antennas?.map((a) => a * k)
+        r.timers.push(setTimeout(() => client.goto({ head, antennas, duration: step.t }).then(remember, fail), delay))
         delay += step.t * 1000
       }
     }
@@ -148,12 +153,16 @@ export function CoachProvider({ children }) {
 
   // Dit une phrase : l'accompagnement baisse le temps de la phrase.
   const say = useCallback((text, { quick, keepBubble }) => {
+    const id = (talk.current.id ?? 0) + 1
+    talk.current.id = id
     talk.current.busy = true
     setSpeaking(true)
     speak(text, {
       quick,
       onStart: () => backingSynth.duck(DUCK),
       onEnd: () => {
+        // Une phrase coupée par une nouvelle se termine aussi : on ne touche à rien.
+        if (talk.current.id !== id) return
         talk.current.busy = false
         backingSynth.duck(1)
         setSpeaking(false)
@@ -184,9 +193,13 @@ export function CoachProvider({ children }) {
       clearTimeout(timers.current.mood)
       timers.current.mood = setTimeout(() => setMood('idle'), Math.max(MOOD_MS, reaction.holdMs ?? 0))
     }
-    if (reaction.bubble) {
+    // Encouragement pendant le jeu : jamais par-dessus une phrase, jamais trop souvent.
+    const sayNow = Boolean(reaction.say) && !(reaction.speech && s.voice) && s.talk && !talk.current.busy && now >= talk.current.next
+    // Une parole sautée n'apparaît pas non plus dans la bulle : pas de texte sans voix.
+    const bubbleText = reaction.say && s.talk && !sayNow && reaction.bubble === reaction.say ? null : reaction.bubble
+    if (bubbleText) {
       const id = now
-      setBubble({ text: reaction.bubble, id })
+      setBubble({ text: bubbleText, id })
       clearTimeout(timers.current.bubble)
       if (hold) timers.current.bubble = setTimeout(() => setBubble((b) => (b?.id === id ? null : b)), hold)
     }
@@ -194,8 +207,7 @@ export function CoachProvider({ children }) {
     if (reaction.speech && s.voice) {
       talk.current.next = now + talkGapMs(s.talkAmount)
       say(reaction.speech, { keepBubble: Boolean(reaction.holdMs) })
-    } else if (reaction.say && s.talk && !talk.current.busy && now >= talk.current.next) {
-      // Encouragement pendant le jeu : jamais par-dessus une phrase, jamais trop souvent.
+    } else if (sayNow) {
       talk.current.next = now + talkGapMs(s.talkAmount)
       say(reaction.say, { quick: true, keepBubble: true })
     }
