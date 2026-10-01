@@ -11,7 +11,10 @@ export const USER_SONG_PREFIX = 'user:'
  * - un morceau du catalogue de l'accueil (resources/catalog.js) qui a une partition (`musicItem`)
  * - un morceau de data/musicData.js
  * - `user:<id>` : un fichier MIDI ajouté par l'utilisateur (Services/MidiDatabase)
- * Retourne { music: { id, label }, notes, status: 'loading' | 'ready' | 'error' | 'unknown' }.
+ * Retourne { music: { id, label, tempo }, notes, status: 'loading' | 'ready' | 'error' | 'unknown' }.
+ * `tempo` : { bpm, signature } pour un enregistrement calé sur le métronome, sinon null.
+ * `practiceTrack` : partie à jouer d'un morceau du Studio ({ track, label }, ou null s'il
+ * n'a pas de piste piano), undefined pour les autres morceaux (voir utils/songParts.js).
  */
 export function useMusic(musicId) {
   const [loaded, setLoaded] = useState({ id: null, music: null, notes: [], status: 'loading' })
@@ -25,7 +28,11 @@ export function useMusic(musicId) {
         if (!found) return finish({ music: null, notes: [], status: 'unknown' })
         try {
           const notes = await loadMusic(found.item)
-          finish({ music: { id: musicId, label: found.label }, notes, status: 'ready' })
+          finish({
+            music: { id: musicId, label: found.label, tempo: found.tempo ?? null, practiceTrack: found.practiceTrack },
+            notes,
+            status: 'ready',
+          })
         } catch {
           finish({ music: { id: musicId, label: found.label }, notes: [], status: 'error' })
         } finally {
@@ -45,19 +52,19 @@ export function useMusic(musicId) {
 
 /**
  * Charge les notes d'un morceau à partir de son id (mêmes sources que useMusic).
- * Retourne { label, notes } ou null si le morceau est inconnu ou sans partition.
+ * Retourne { label, notes, practiceTrack } ou null si le morceau est inconnu ou sans partition.
  */
 export async function loadSongNotes(musicId) {
   const found = await resolveMusic(musicId)
   if (!found) return null
   try {
-    return { label: found.label, notes: await loadMusic(found.item) }
+    return { label: found.label, notes: await loadMusic(found.item), practiceTrack: found.practiceTrack }
   } finally {
     found.cleanup?.()
   }
 }
 
-// Trouve de quoi charger le morceau : { item (format loadMusic), label, cleanup? } ou null.
+// Trouve de quoi charger le morceau : { item (format loadMusic), label, tempo?, practiceTrack?, cleanup? } ou null.
 async function resolveMusic(id) {
   if (!id) return null
 
@@ -68,6 +75,8 @@ async function resolveMusic(id) {
     return {
       item: { id, label: song.title, type: 'midi', url },
       label: song.title,
+      tempo: song.tempo, // enregistrements calés sur le métronome
+      practiceTrack: song.practiceTrack, // morceaux du Studio : partie à jouer (ou null)
       cleanup: () => URL.revokeObjectURL(url),
     }
   }

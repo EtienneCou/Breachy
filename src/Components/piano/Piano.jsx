@@ -15,6 +15,8 @@ const NO_HINTS = {}
  * - labels          { midi: 'Q' } caractère du clavier d'ordinateur à afficher
  * - hints           { midi: 'target' | 'hit' | 'miss' } retour visuel pour le jeu
  * - showNoteNames   affiche Do4, Ré4… sur les touches blanches
+ * - names           { midi: 'Caisse claire' } nom à afficher à la place de la note
+ *                   (sur toutes les touches, noires comprises : percussions du Studio)
  * - onNoteOn(midi), onNoteOff(midi)   appuis souris / tactiles (glissando compris)
  */
 export default function Piano({
@@ -24,6 +26,7 @@ export default function Piano({
   labels = NO_LABELS,
   hints = NO_HINTS,
   showNoteNames = true,
+  names,
   onNoteOn,
   onNoteOff,
   className = '',
@@ -86,12 +89,14 @@ export default function Piano({
             key={k.midi}
             data-midi={k.midi}
             role="button"
-            aria-label={noteName(k.midi)}
+            aria-label={names?.[k.midi] ?? noteName(k.midi)}
             aria-pressed={activeNotes.has(k.midi)}
             className={keyClass('piano__key', k, activeNotes, hints)}
             style={{ left: `${k.left}%`, width: `${k.width}%` }}
           >
-            {showNoteNames && !k.black && <span className="piano__name">{noteName(k.midi)}</span>}
+            {names
+              ? names[k.midi] && <span className="piano__name piano__name--custom">{names[k.midi]}</span>
+              : showNoteNames && !k.black && <span className="piano__name">{noteName(k.midi)}</span>}
             {labels[k.midi] && <kbd className="piano__cap">{labels[k.midi]}</kbd>}
           </div>
         ))}

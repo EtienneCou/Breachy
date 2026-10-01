@@ -1,12 +1,16 @@
-import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { DifficultyBadge } from "../../Components/difficulty";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { DifficultyFilter } from "../../Components/difficulty";
+import { SongCard } from "../../Components/songCard";
+import { useSongsInfo } from "../../hooks/useSongsInfo";
+import { getPlayCounts, recordPlay, resetPlayCount } from "../../utils/playCounts";
 
 import songsCatalog from "../../resources/catalog";
 
 import PracticePlayer from "../../Components/Practice/PracticePlayer";
 
 import useSongPlayer from "../../hooks/useSongPlayer";
+import audioPlayer from "../../services/audioPlayer";
 import "./Homepage-style.css";
 
 
@@ -44,12 +48,16 @@ const filters = [
   "Enfants",
 
   "Noël",
+  "Les plus joués",
 
   // "Mes favoris",
 
 ];
 
 
+
+const MOST_PLAYED = "Les plus joués"; // filtre : morceaux déjà joués, du plus joué au moins joué
+const FAVORITES_COUNT = 5; // taille de la section « Favoris »
 
 export default function SongsPage() {
 
@@ -59,98 +67,121 @@ export default function SongsPage() {
 
   const [activeFilter, setActiveFilter] = useState("Tous");
 
-  const [favorites, setFavorites] = useState([]);
 
   const [isPracticeActive, setIsPracticeActive] = useState(false);
   const [userSongsRefresh, setUserSongsRefresh] = useState(0);
 
   const { playSong } = useSongPlayer();
 
+  // En quittant l'accueil (jeu, jeu libre…), l'écoute en cours s'arrête.
+  useEffect(() => () => {
+    if (audioPlayer.currentSong) audioPlayer.stop();
+  }, []);
+
   const navigate = useNavigate();
 
+  const [activeDifficulty, setActiveDifficulty] = useState(null);
 
+  // Onglet de la bibliothèque : "catalog" (tous les morceaux), "mine" (mes morceaux)
+  // ou "recordings" (mes enregistrements du jeu libre, ouvert par /?onglet=enregistrements)
+  const [searchParams] = useSearchParams();
+  const [libraryTab, setLibraryTab] = useState(() =>
+    searchParams.get("onglet") === "enregistrements" ? "recordings" : "catalog"
+  );
+  const [userSongs, setUserSongs] = useState([]); // morceaux ajoutés (fournis par UserSongs)
+  const [recordings, setRecordings] = useState([]); // enregistrements sauvegardés depuis le jeu libre
+
+  // Nombre de lancements de chaque morceau (« Écouter » ou « S'entraîner »)
+  const [playCounts, setPlayCounts] = useState(() => getPlayCounts());
+  const countPlay = (key) => setPlayCounts(recordPlay(key));
+  const resetListens = (key) => setPlayCounts(resetPlayCount(key));
+
+  // Morceaux du catalogue et morceaux ajoutés, sous une même forme pour les cartes.
+  // `key` : id pour le jeu, les compteurs et les infos (`user:<id>` pour un morceau ajouté).
+  const catalogItems = songs.map((song) => ({
+    key: song.id,
+    song,
+    title: song.title,
+    subtitle: song.artist,
+    image: song.image,
+    genre: song.level,
+    playable: Boolean(song.musicItem),
+    fallbackDuration: song.duration,
+  }));
+  // Morceaux ajoutés et enregistrements : tous deux rangés dans la base du navigateur.
+  const userItems = [...userSongs, ...recordings].map((song) => ({
+    key: `user:${song.id}`,
+    song,
+    title: song.title,
+    subtitle: song.origin === "studio" ? "Studio" : song.source === "recording" ? "Mon enregistrement" : "Ma musique",
+    playable: true,
+    isNew: song.isNew,
+  }));
+
+  // Difficulté, durée exacte et mélodie de chaque morceau jouable (calculées à partir des notes)
+  const songInfos = useSongsInfo(
+    [...catalogItems, ...userItems].map((item) => (item.playable ? item.key : null))
+  );
 
   // « S'entraîner » ouvre le jeu (piano + notes qui tombent) avec ce morceau.
-  // Seuls les morceaux qui ont une partition (`musicItem`) peuvent être joués.
-  const handleStartPractice = (song) => {
-
-    navigate(`/piano?morceau=${encodeURIComponent(song.id)}`);
-
+  const handleStartPractice = (item) => {
+    countPlay(item.key);
+    navigate(`/piano?morceau=${encodeURIComponent(item.key)}`);
   };
 
-
-
-  const handlePlay = (song) => {
-
-    playSong(song);
-
+  const handlePlay = (item) => {
+    countPlay(item.key);
+    playSong(item.song);
     setIsPracticeActive(true);
-
   };
 
+  // Filtres : recherche, genre (ou « Les plus joués ») et difficulté.
+  const query = search.trim().toLowerCase();
+  const isFiltering = activeFilter !== "Tous" || Boolean(activeDifficulty) || Boolean(query);
+  const byPlays = (a, b) => (playCounts[b.key] ?? 0) - (playCounts[a.key] ?? 0);
 
-
-  const filteredSongs = useMemo(() => {
-
-    const q = search.trim().toLowerCase();
-
-
-
-    return songs.filter((song) => {
-
-      const matchesSearch =
-
-        !q ||
-
-        song.title?.toLowerCase().includes(q) ||
-
-        song.artist?.toLowerCase().includes(q) ||
-
-        song.category?.toLowerCase().includes(q) ||
-
-        song.level?.toLowerCase().includes(q);
-
-
-
-      const matchesFilter =
-
-        activeFilter === "Tous" ||
-
-        activeFilter === "Mes favoris"
-
-          ? true
-
-          : (song.category === activeFilter || song.level === activeFilter);
-
-
-
-      const matchesFavorite =
-
-        activeFilter !== "Mes favoris" || favorites.includes(song.title);
-
-
-
-      return matchesSearch && matchesFilter && matchesFavorite;
-
-    });
-
-  }, [search, activeFilter, favorites]);
-
-
-
-  const toggleFavorite = (title) => {
-
-    setFavorites((current) =>
-
-      current.includes(title)
-
-        ? current.filter((item) => item !== title)
-
-        : [...current, title]
-
-    );
-
+  const matches = (item) => {
+    const matchesSearch =
+      !query ||
+      [item.title, item.subtitle, item.genre].some((text) => text?.toLowerCase().includes(query));
+    const matchesGenre =
+      activeFilter === "Tous" || activeFilter === MOST_PLAYED || item.genre === activeFilter;
+    const matchesDifficulty =
+      !activeDifficulty || songInfos[item.key]?.difficulty?.level.id === activeDifficulty;
+    return matchesSearch && matchesGenre && matchesDifficulty;
   };
+
+  // Avec un filtre : une seule liste. « Les plus joués » inclut les morceaux ajoutés.
+  const filteredItems =
+    activeFilter === MOST_PLAYED
+      ? [...catalogItems, ...userItems].filter((item) => playCounts[item.key] > 0 && matches(item)).sort(byPlays)
+      : catalogItems.filter(matches);
+
+  // Sans filtre : « Favoris » (les 5 plus joués, morceaux ajoutés compris), puis tous les autres.
+  const favoriteItems = [...catalogItems, ...userItems]
+    .filter((item) => playCounts[item.key] > 0)
+    .sort(byPlays)
+    .slice(0, FAVORITES_COUNT);
+  const otherItems = catalogItems.filter((item) => !favoriteItems.includes(item));
+
+  const renderCard = (item, isFavorite = false) => (
+    <SongCard
+      key={item.key}
+      title={item.title}
+      subtitle={item.subtitle}
+      image={item.image}
+      musicId={item.playable ? item.key : null}
+      info={item.playable ? songInfos[item.key] : null}
+      fallbackDuration={item.fallbackDuration}
+      isNew={item.isNew}
+      onPractice={() => handleStartPractice(item)}
+      onListen={() => handlePlay(item)}
+      onResetListens={isFavorite ? () => resetListens(item.key) : undefined}
+    />
+  );
+
+
+
 
 
 
@@ -1634,37 +1665,59 @@ export default function SongsPage() {
 
       <div className="container">
 
-        <header className="brand">
+        <header className="home-header">
+          <div className="brand">
+            <div className="brand-mark" aria-hidden="true">
 
-          <div className="brand-mark" aria-hidden="true">
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+            </div>
 
+            <span>Reachy band</span>
           </div>
 
-          <span>Reachy band</span>
+          <div className="home-header__actions">
+            <button type="button" className="free-play-btn" onClick={() => navigate("/jeu-libre")}>
+              Jeu libre
+            </button>
+            {/* Studio : pistes en boucle, plusieurs instruments */}
+            <button type="button" className="free-play-btn" onClick={() => navigate("/studio")}>
+              Studio
+            </button>
+            <button type="button" className="add-music-btn" onClick={() => setIsUploadOpen(true)}>
+              + Ajouter mes musiques
+            </button>
+          </div>
+
+          <label className="search-box home-header__search">
+            <span className="search-icon" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher un morceau, un artiste ou un style..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
 
         </header>
-
-
 
         <section className="top-row">
 
           <div>
 
-            <h1>Tous les morceaux disponibles</h1>
+            <h1>Tu joues quoi aujourd’hui&nbsp;?</h1>
 
             <p className="subtitle">
 
-              Découvrez notre bibliothèque et apprenez vos morceaux préférés pas à pas.
+              Choisis un morceau, écoute-le ou lance une partie quand tu es prêt.
 
             </p>
 
@@ -1672,240 +1725,157 @@ export default function SongsPage() {
 
 
 
-          <label className="search-box">
-
-            <span className="search-icon" aria-hidden="true" />
-
-            <input
-
-              type="search"
-
-              placeholder="Rechercher un morceau, un artiste ou un style..."
-
-              value={search}
-
-              onChange={(e) => setSearch(e.target.value)}
-
-            />
-
-          </label>
-
         </section>
 
 
 
-        <nav className="filters" aria-label="Filtres">
-
-          {filters.map((filter) => (
-
-            <button
-
-              key={filter}
-
-              type="button"
-
-              className={`filter-btn ${activeFilter === filter ? "active" : ""}`}
-
-              onClick={() => setActiveFilter(filter)}
-
-            >
-
-              {filter}
-
-            </button>
-
-          ))}
-
-        </nav>
-
-
-
-         <button
-
-    type="button"
-
-    className="add-music-btn"
-
-    onClick={() => setIsUploadOpen(true)}
-
-  >
-
-    + Ajouter mes musiques
-
-  </button>
-
-
-
-  <UserSongs
-          refreshKey={userSongsRefresh}
-          onPlay={(song) => {
-            playSong(song);
-            setIsPracticeActive(true);
-          }}
-          onPractice={(song) => navigate(`/piano?morceau=${encodeURIComponent(`user:${song.id}`)}`)}
-        />
-
-
-
-        <main className="songs-grid">
-
-          {filteredSongs.length > 0 ? (
-
-            filteredSongs.map((song) => {
-
-              const isFavorite = favorites.includes(song.title);
-
-              const levelClass =
-
-                song.level === "Débutant"
-
-                  ? "beginner"
-
-                  : song.level === "Classique"
-
-                  ? "classical"
-
-                  : "intermediate";
-
-
-
-              return (
-
-                <article className="song-card" key={song.title}>
-
-                  <img
-
-                    className="song-cover"
-
-                    src={song.image}
-
-                    alt=""
-
-                    loading="lazy"
-
-                  />
-
-
-
-                  <div className="song-main">
-
-                    <h2 className="song-title">{song.title}</h2>
-
-                    <p className="artist">{song.artist}</p>
-
-
-
-                    <div className="song-meta">
-
-                      {/* <span className={`badge ${levelClass}`}>{song.level}</span> */}
-
-                      <span className="duration">
-
-                        <span className="clock" aria-hidden="true" />
-
-                        {song.duration}
-
-                      </span>
-
-                    </div>
-
-                  </div>
-
-
-
-                  <div className="song-actions">
-
-                   {/* <button
-
-                      type="button"
-
-                      className={`favorite-btn ${isFavorite ? "active" : ""}`}
-
-                      onClick={() => toggleFavorite(song.title)}
-
-                      aria-label={
-
-                        isFavorite
-
-                          ? `Retirer ${song.title} des favoris`
-
-                          : `Ajouter ${song.title} aux favoris`
-
-                      }
-
-                    >
-
-                      {isFavorite ? "♥" : "♡"}
-
-                    </button> */}
-
-
-
-                    <div className="action-buttons-group">
-
-                      <button
-
-                        type="button"
-
-                        className="practice-btn-card"
-
-                        onClick={() => handleStartPractice(song)}
-
-                        disabled={!song.musicItem}
-
-                        title={song.musicItem ? "S'entraîner au piano sur ce morceau" : "Pas encore de partition pour ce morceau"}
-
-                      >
-
-                        🎹 S'entraîner
-
-                      </button>
-
-
-
-                      <button
-
-                        type="button"
-
-                        className="play-btn"
-
-                        onClick={() => handlePlay(song)}
-
-                      >
-
-                        <span className="play-triangle" aria-hidden="true" />
-
-                        Jouer
-
-                      </button>
-
-                    </div>
-
-                  </div>
-
-                </article>
-
-              );
-
-            })
-
+        {/* Onglets : le catalogue, ou les morceaux ajoutés par l'utilisateur */}
+        <div className="library-tabs" role="tablist" aria-label="Bibliothèque">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={libraryTab === "catalog"}
+            className={`library-tab${libraryTab === "catalog" ? " is-active" : ""}`}
+            onClick={() => setLibraryTab("catalog")}
+          >
+            {/* libellé court sur téléphone (voir .library-tab__short) */}
+            <span className="library-tab__long">Tous les morceaux</span>
+            <span className="library-tab__short">Tous</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={libraryTab === "mine"}
+            className={`library-tab${libraryTab === "mine" ? " is-active" : ""}`}
+            onClick={() => setLibraryTab("mine")}
+          >
+            <span className="library-tab__long">Mes morceaux</span>
+            <span className="library-tab__short">Morceaux</span>
+            {userSongs.length > 0 && <span className="library-tab__count">{userSongs.length}</span>}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={libraryTab === "recordings"}
+            className={`library-tab${libraryTab === "recordings" ? " is-active" : ""}`}
+            onClick={() => setLibraryTab("recordings")}
+          >
+            <span className="library-tab__long">Mes enregistrements</span>
+            <span className="library-tab__short">Enregistrements</span>
+            {recordings.length > 0 && <span className="library-tab__count">{recordings.length}</span>}
+          </button>
+        </div>
+
+        {/* Filtres et bouton d'ajout sur la même rangée */}
+        <div className="library-toolbar">
+          {libraryTab === "catalog" ? (
+            <nav className="filters" aria-label="Filtres">
+              {filters.map((filter) => (
+                <button
+                  key={filter}
+                  type="button"
+                  className={`filter-btn ${activeFilter === filter ? "active" : ""}`}
+                  onClick={() => setActiveFilter(filter)}
+                >
+                  {filter}
+                </button>
+              ))}
+            </nav>
+          ) : libraryTab === "mine" ? (
+            <p className="library-toolbar__hint">Les fichiers MIDI que tu as ajoutés, prêts à écouter ou à t'entraîner.</p>
           ) : (
-
-            <div className="empty">Aucun morceau ne correspond à votre recherche.</div>
-
+            <p className="library-toolbar__hint">Les sessions que tu as sauvegardées depuis le jeu libre, prêtes à écouter ou à t'entraîner.</p>
           )}
 
-        </main>
+          {libraryTab === "catalog" && (
+            <div className="library-toolbar__difficulty">
+              <DifficultyFilter value={activeDifficulty} onChange={setActiveDifficulty} />
+            </div>
+          )}
+
+        </div>
+
+        {libraryTab === "catalog" ? (
+          <>
+            <div className="filter-controls">
+              {isFiltering && (
+                <button
+                  type="button"
+                  className="clear-filters-btn"
+                  aria-label="Effacer tous les filtres"
+                  title="Effacer tous les filtres"
+                  onClick={() => {
+                    setActiveFilter("Tous");
+                    setActiveDifficulty(null);
+                    setSearch("");
+                  }}
+                >
+                  <span aria-hidden="true">×</span>
+                </button>
+              )}
+            </div>
+
+            {isFiltering ? (
+              // Un filtre ou une recherche est actif : une seule liste, sans titres
+              <main className="songs-grid">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map(renderCard)
+                ) : (
+                  <div className="empty">
+                    {activeFilter === MOST_PLAYED && !Object.keys(playCounts).length
+                      ? "Tu n'as encore joué aucun morceau : lance-en un avec « Écouter » ou « S'entraîner »."
+                      : "Aucun morceau ne correspond à votre recherche."}
+                  </div>
+                )}
+              </main>
+            ) : (
+              <>
+                {favoriteItems.length > 0 && (
+                  <section className="library-section" aria-labelledby="section-favoris">
+                    <header className="library-section__head">
+                      <h2 id="section-favoris" className="library-section__title">Favoris</h2>
+                      <p className="library-section__subtitle">Tes {favoriteItems.length} morceaux les plus joués</p>
+                    </header>
+                    <div className="songs-grid">
+                      {favoriteItems.map((item) => renderCard(item, true))}
+                    </div>
+                  </section>
+                )}
+                <section className="library-section" aria-labelledby="section-tous">
+                  <header className="library-section__head">
+                  </header>
+                  <main className="songs-grid">{otherItems.map(renderCard)}</main>
+                </section>
+              </>
+            )}
+          </>
+        ) : null}
+
+        {/* Toujours monté (même caché) pour connaître le nombre de morceaux ajoutés */}
+        <div hidden={libraryTab !== "mine"}>
+          <UserSongs
+            refreshKey={userSongsRefresh}
+            onSongsChange={setUserSongs}
+            showHeader={false}
+            onPlay={(song) => handlePlay({ key: `user:${song.id}`, song })}
+            onPractice={(song) => handleStartPractice({ key: `user:${song.id}` })}
+          />
+        </div>
+        <div hidden={libraryTab !== "recordings"}>
+          <UserSongs
+            source="recording"
+            refreshKey={userSongsRefresh}
+            onSongsChange={setRecordings}
+            showHeader={false}
+            onPlay={(song) => handlePlay({ key: `user:${song.id}`, song })}
+            onPractice={(song) => handleStartPractice({ key: `user:${song.id}` })}
+          />
+        </div>
 
       </div>
 
 
 
-          {isPracticeActive && (
-
-        <PracticePlayer onClose={() => setIsPracticeActive(false)} />
-
-      )}
 
 
 
@@ -1970,6 +1940,7 @@ export default function SongsPage() {
                   console.log("Morceau ajouté :", song);
 
                   setUserSongsRefresh((current) => current + 1);
+                  setLibraryTab("mine"); // on montre le morceau qui vient d'être ajouté
 
                   setIsUploadOpen(false);
 

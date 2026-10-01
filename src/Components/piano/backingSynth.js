@@ -9,8 +9,6 @@ import { pianoSynth } from './synth.js'
 // (quelques secondes la première fois), des instruments de secours (instruments.js)
 // prennent le relais pour ne jamais laisser de silence.
 
-const DRUM_CHANNEL = 9
-
 // Le curseur suit l'oreille (petits volumes réglables finement).
 const volumeCurve = (v) => v * v * 1.2
 
@@ -64,13 +62,12 @@ class BackingSynth {
       return
     }
     const channel = note.channel ?? 0
-    // instrument de la piste (la batterie, canal 10, n'en a pas besoin)
-    if (channel !== DRUM_CHANNEL) {
-      const program = note.program ?? 0
-      if (this.programs.get(channel) !== program) {
-        this.gm.programChange(channel, program, { time: when })
-        this.programs.set(channel, program)
-      }
+    // instrument de la piste ; sur le canal de la batterie, le numéro choisit le kit
+    // (0 : kit standard, 25 : boîte à rythme TR-808 du Studio…)
+    const program = note.program ?? 0
+    if (this.programs.get(channel) !== program) {
+      this.gm.programChange(channel, program, { time: when })
+      this.programs.set(channel, program)
     }
     const velocity = Math.round(Math.min(1, Math.max(0.05, note.velocity ?? 0.7)) * 127)
     this.gm.noteOn(channel, midi, velocity, { time: when })
