@@ -181,3 +181,42 @@
 .coach__amount-btn:hover { color: #1d4ed8; }
 .coach__amount-btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 1px; }
 .coach__amount-btn.is-active { background: #ffffff; color: #1d4ed8; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1); }
+
+/* ---------- Thème anthracite / braise (accueil et entraînement, nouveau design) ---------- */
+.songs-page .coach,
+.piano-page .coach {
+  border-color: #34353a;
+  background: #1a1b1f;
+  color: #f7f0e7;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+:is(.songs-page, .piano-page) .coach__title { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__status { border-color: #34353a; background: #222327; color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__status:hover { background: #2a2b30; }
+:is(.songs-page, .piano-page) .coach__status--connected { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); }
+:is(.songs-page, .piano-page) .coach__status--connected .coach__status-dot { background: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); }
+:is(.songs-page, .piano-page) .coach__bubble {
+  border-color: rgba(249, 115, 22, 0.45);
+  background: #222327;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+:is(.songs-page, .piano-page) .coach__bubble::before { border-right-color: rgba(249, 115, 22, 0.45); }
+:is(.songs-page, .piano-page) .coach__bubble::after { border-right-color: #222327; }
+:is(.songs-page, .piano-page) .coach__text { color: #fff7ed; }
+:is(.songs-page, .piano-page) .coach__talk { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__talk.is-on { color: #fbbf24; }
+:is(.songs-page, .piano-page) .coach__talk-track { background: #3a3b40; }
+:is(.songs-page, .piano-page) .coach__talk.is-on .coach__talk-track { background: #f97316; }
+:is(.songs-page, .piano-page) .coach__amount { background: #222327; }
+:is(.songs-page, .piano-page) .coach__amount-btn { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__amount-btn:hover { color: #fbbf24; }
+:is(.songs-page, .piano-page) .coach__amount-btn.is-active { background: #34353a; color: #fbbf24; box-shadow: none; }
+:is(.songs-page, .piano-page) .coach__settings { border-color: #34353a; background: #222327; color: #f7f0e7; }
+:is(.songs-page, .piano-page) .coach__field,
+:is(.songs-page, .piano-page) .coach__help { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__field input { border-color: #34353a; background: #1a1b1f; color: #f7f0e7; }
+:is(.songs-page, .piano-page) .coach__help code { background: #1a1b1f; color: #ffd166; }
+:is(.songs-page, .piano-page) .coach__check input { accent-color: #f97316; }
+:is(.songs-page, .piano-page) .coach__status:focus-visible,
+:is(.songs-page, .piano-page) .coach__talk:focus-visible,
+:is(.songs-page, .piano-page) .coach__amount-btn:focus-visible { outline-color: #fbbf24; }
