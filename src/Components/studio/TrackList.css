@@ -1,0 +1,210 @@
+/* Pistes du Studio (thème anthracite / braise) */
+.tracks {
+  box-sizing: border-box;
+  display: grid;
+  gap: 8px;
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+  color: #f7f0e7;
+}
+.tracks *,
+.tracks *::before,
+.tracks *::after { box-sizing: border-box; }
+
+.tracks__list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tracks__empty { margin: 0; color: #aaa39a; font-size: 0.85rem; }
+
+.track {
+  --track-color: #1f7bff;
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #34353a;
+  border-left: 4px solid var(--track-color);
+  border-radius: 12px;
+  background: #1a1b1f;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+.track.is-selected {
+  border-color: color-mix(in srgb, var(--track-color) 60%, #1a1b1f);
+  border-left-color: var(--track-color);
+  background: color-mix(in srgb, var(--track-color) 10%, #1a1b1f);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--track-color) 22%, transparent);
+}
+.track.is-recording { border-color: rgba(239, 68, 68, 0.7); box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3); }
+.track.is-silent .track__roll { opacity: 0.4; }
+
+.track__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.track__icon { font-size: 1.3rem; }
+.track__names { display: grid; gap: 2px; min-width: 0; }
+.track__title {
+  overflow: hidden;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fff7ed;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.track__muted { color: #aaa39a; font-size: 0.75rem; }
+.track__variant {
+  max-width: 100%;
+  padding: 2px 4px;
+  border: 1px solid #34353a;
+  border-radius: 6px;
+  background: #24252a;
+  color: #f7f0e7;
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+/* Aperçu des notes : une case par mesure en fond */
+.track__roll {
+  position: relative;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / var(--measures) - 1px), #34353a calc(100% / var(--measures) - 1px), #34353a calc(100% / var(--measures))),
+    #151619;
+}
+.track__note {
+  position: absolute;
+  min-width: 3px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--track-color);
+}
+.track__roll-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #7d766e;
+  font-size: 0.72rem;
+}
+.track__playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+
+.track__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.track__btn {
+  display: grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 8px;
+  background: #24252a;
+  color: #f7f0e7;
+  font: 700 0.78rem/1 inherit;
+  font-family: inherit;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+.track__btn:hover:not(:disabled) { background: #30251f; }
+.track__btn:disabled { opacity: 0.4; cursor: default; }
+.track__btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.track__btn.is-on { background: #aaa39a; color: #111214; }
+.track__btn--solo.is-on { background: #fbbf24; color: #21130d; }
+.track__btn--rec { background: rgba(239, 68, 68, 0.2); }
+.track__dot { width: 11px; height: 11px; border-radius: 50%; background: #ef4444; }
+.track.is-recording .track__dot { animation: track-blink 1s steps(2, start) infinite; }
+@keyframes track-blink { to { visibility: hidden; } }
+.track__btn--delete { font-size: 1.1rem; color: #aaa39a; }
+.track__btn--delete:hover:not(:disabled) { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.track__volume { width: 70px; accent-color: var(--track-color); }
+
+/* Ajout d'une piste */
+.tracks__add {
+  justify-self: start;
+  min-height: 36px;
+  padding: 6px 14px;
+  border: 1px dashed rgba(249, 115, 22, 0.55);
+  border-radius: 10px;
+  background: rgba(249, 115, 22, 0.08);
+  color: #ffd166;
+  font: 700 0.85rem/1 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.tracks__add:hover:not(:disabled) { background: rgba(249, 115, 22, 0.16); }
+.tracks__add:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.tracks__add:disabled { opacity: 0.5; cursor: default; }
+.tracks__picker {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px dashed rgba(249, 115, 22, 0.55);
+  border-radius: 12px;
+  background: #1a1b1f;
+}
+.tracks__instruments {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px;
+}
+.tracks__instrument {
+  --track-color: #1f7bff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 6px 10px;
+  border: 1px solid #34353a;
+  border-left: 4px solid var(--track-color);
+  border-radius: 10px;
+  background: #24252a;
+  color: #f7f0e7;
+  font: 700 0.82rem/1.1 inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tracks__instrument:hover { background: color-mix(in srgb, var(--track-color) 16%, #24252a); }
+.tracks__instrument:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
+.tracks__cancel { justify-self: start; }
+
+@media (max-width: 760px) {
+  .track { grid-template-columns: minmax(0, 1fr) auto; }
+  .track__roll { grid-column: 1 / -1; grid-row: 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track.is-recording .track__dot { animation: none; }
+}
+
+/* Piste jouée à l'entraînement : la première piste piano qui a des notes */
+.track__practice {
+  justify-self: start;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.16);
+  color: #ffd166;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}

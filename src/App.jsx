@@ -3,6 +3,7 @@ import Homepage from "./Pages/Homepage/Homepage";
 import PianoPage from "./Pages/PianoPage";
 import ReachyTest from "./Pages/ReachyTest";
 import FreePlayPage from "./Pages/FreePlayPage";
+import StudioPage from "./Pages/StudioPage";
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
       <Route path="/reachy-test" element={<ReachyTest />}
 />
       <Route path="/jeu-libre" element={<FreePlayPage />} />
+      <Route path="/studio" element={<StudioPage />} />
     </Routes>
   );
 }
