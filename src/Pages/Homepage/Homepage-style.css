@@ -767,6 +767,10 @@
           gap: 10px;
           margin-left: auto;
         }
+        .library-toolbar__difficulty {
+          margin-left: auto;
+          flex: 0 0 auto;
+        }
         .library-toolbar__hint {
           flex: 1 1 auto;
           align-self: center;
@@ -786,6 +790,7 @@
           .library-toolbar { flex-direction: column; align-items: stretch; }
           .library-toolbar__actions { margin-left: 0; }
           .library-toolbar__actions > button { flex: 1 1 0; }
+          .library-toolbar__difficulty { margin-left: 0; align-self: flex-start; }
         }
 
         /* ---------- Sections « Favoris » et « Tous les morceaux » ---------- */
@@ -1405,3 +1410,214 @@
 }
 .home-coach__play:hover { background: #0d6ce8; }
 .home-coach__play:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
+
+
+/* ---------- Prototype thème anthracite / braise : Homepage uniquement ---------- */
+body:has(.songs-page) {
+  background: #111214;
+  color: #f5efe6;
+}
+
+.songs-page {
+  --home-bg: #111214;
+  --home-surface: #1a1b1f;
+  --home-surface-raised: #222327;
+  --home-border: #34353a;
+  --home-text: #f7f0e7;
+  --home-muted: #aaa39a;
+  --home-red: #ef4444;
+  --home-orange: #f97316;
+  --home-amber: #fbbf24;
+  color: var(--home-text);
+  background:
+    radial-gradient(circle at 82% 8%, rgba(239, 68, 68, 0.13), transparent 28%),
+    radial-gradient(circle at 12% 35%, rgba(249, 115, 22, 0.08), transparent 30%),
+    var(--home-bg);
+}
+
+.songs-page .brand { color: var(--home-text); }
+.songs-page .home-header {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(280px, 520px) minmax(300px, 1fr);
+  grid-template-areas: 'brand search actions';
+  align-items: center;
+  gap: 24px;
+  margin-bottom: clamp(72px, 8vw, 96px);
+}
+.songs-page .home-header .brand { grid-area: brand; margin-bottom: 0; }
+.songs-page .home-header__search { grid-area: search; width: 100%; }
+.songs-page .home-header__actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.songs-page .home-header__actions .free-play-btn,
+.songs-page .home-header__actions .add-music-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.songs-page .container { position: relative; }
+.songs-page .container > .library-tabs {
+  position: absolute;
+  top: 160px;
+  right: 0;
+  z-index: 2;
+  margin-bottom: 0;
+}
+.songs-page .home-kicker {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--home-orange);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.songs-page .top-row > div:first-child { text-align: left; }
+.songs-page .brand-mark span { background: var(--home-orange); }
+.songs-page h1,
+.songs-page .library-section__title { color: var(--home-text); }
+.songs-page .subtitle,
+.songs-page .library-section__subtitle,
+.songs-page .library-toolbar__hint { color: var(--home-muted); }
+
+.songs-page .search-box {
+  border-color: var(--home-border);
+  background: rgba(26, 27, 31, 0.92);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+}
+.songs-page .search-box input { color: var(--home-text); }
+.songs-page .search-box input::placeholder { color: #817a72; }
+.songs-page .search-icon { border-color: var(--home-amber); }
+.songs-page .search-icon::after { background: var(--home-amber); }
+
+.songs-page .library-tabs,
+.songs-page .filter-btn,
+.songs-page .free-play-btn,
+.songs-page .add-music-btn,
+.songs-page .clear-filters-btn {
+  border-color: var(--home-border);
+  background: var(--home-surface);
+  color: var(--home-text);
+}
+.songs-page .library-tab.is-active,
+.songs-page .filter-btn.active {
+  border-color: rgba(251, 191, 36, 0.55);
+  background: rgba(251, 191, 36, 0.14);
+  color: #ffd166;
+}
+.songs-page .difficulty-filter__label { color: var(--home-muted); }
+.songs-page .difficulty-filter__select {
+  color: var(--home-text);
+  background: var(--home-surface);
+  border-color: var(--home-border);
+}
+.songs-page .difficulty-filter__select:hover { border-color: var(--home-orange); }
+.songs-page .filter-btn:hover,
+.songs-page .library-tab:hover { border-color: var(--home-orange); }
+.songs-page .free-play-btn { color: #ffb347; }
+.songs-page .add-music-btn { color: #ff8a65; }
+
+@media (max-width: 700px) {
+  .songs-page .home-header {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: 'brand actions' 'search search';
+    align-items: start;
+  }
+  .songs-page .home-header__search { margin-top: 10px; }
+  .songs-page .container > .library-tabs { position: static; margin-bottom: 18px; }
+  .songs-page .home-header__actions { flex-direction: column; align-items: stretch; gap: 6px; }
+  .songs-page .home-header__actions .free-play-btn,
+  .songs-page .home-header__actions .add-music-btn { min-height: 34px; padding: 0 10px; font-size: 11px; }
+}
+
+.songs-page .song-tile {
+  --tile-accent: var(--home-orange);
+  --tile-accent-soft: #3a2119;
+  --tile-blue: var(--home-orange);
+  --tile-blue-dark: var(--home-red);
+  --tile-navy: var(--home-text);
+  border-color: var(--home-border);
+  background: var(--home-surface);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+}
+.songs-page .song-tile:hover { box-shadow: 0 18px 36px rgba(239, 68, 68, 0.18); }
+.songs-page .song-tile:nth-child(4n + 1) .song-tile__art::before { background: #ef4444; }
+.songs-page .song-tile:nth-child(4n + 2) .song-tile__art::before { background: #f97316; }
+.songs-page .song-tile:nth-child(4n + 3) .song-tile__art::before { background: #fbbf24; }
+.songs-page .song-tile:nth-child(4n + 4) .song-tile__art::before { background: #dc2626; }
+.songs-page .song-tile__cover { box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); }
+.songs-page .song-tile__caption {
+  color: var(--home-text);
+  background: linear-gradient(to top, rgba(17, 18, 20, 0.96), rgba(17, 18, 20, 0.58), transparent);
+}
+.songs-page .song-tile__title { color: var(--home-text); }
+.songs-page .song-tile__subtitle { color: #c0b7ad; }
+.songs-page .song-tile__pill { color: #ffe0b2; background: rgba(17, 18, 20, 0.82); }
+.songs-page .song-tile .difficulty-badge {
+  color: #ffd166 !important;
+  background: rgba(120, 53, 15, 0.8) !important;
+}
+.songs-page .song-tile .difficulty-badge__dot { background: #f97316 !important; }
+.songs-page .song-tile__btn--practice {
+  color: #22140c;
+  background: linear-gradient(135deg, #fbbf24, #f97316);
+}
+.songs-page .song-tile__btn--practice:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffd166, #ef4444);
+}
+.songs-page .song-tile__btn--listen {
+  color: #ffd166;
+  background: #2a1c18;
+  border-color: #693321;
+}
+.songs-page .song-tile__btn--listen:hover:not(:disabled) { border-color: #f97316; }
+
+.songs-page .modal-overlay { background: rgba(0, 0, 0, 0.72); }
+.songs-page .modal-content { border-color: var(--home-border); background: var(--home-surface); color: var(--home-text); }
+
+.songs-page .empty-user-songs {
+  align-items: flex-start;
+  border: 1px solid #34353a;
+  border-radius: 14px;
+  background: #1a1b1f;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.24);
+  color: var(--home-text);
+  text-align: left;
+}
+.songs-page .empty-user-songs > span {
+  background: rgba(249, 115, 22, 0.16);
+  color: #fbbf24;
+}
+.songs-page .empty-user-songs strong { color: #fff7ed; }
+.songs-page .empty-user-songs p { color: #aaa39a; }
+.songs-page .user-songs-loading { color: #aaa39a; text-align: left; }
+
+.songs-page button {
+  border: 0 !important;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+.songs-page button:hover:not(:disabled) {
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.28), 0 5px 14px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+.songs-page button:focus-visible {
+  outline: 3px solid rgba(251, 191, 36, 0.72);
+  outline-offset: 3px;
+}
+.songs-page button:disabled { box-shadow: none; }
+.songs-page .library-tabs,
+.songs-page .library-tab,
+.songs-page .library-tab.is-active {
+  box-shadow: none !important;
+}
+.songs-page .library-tab:hover {
+  color: #ffb347;
+  box-shadow: none !important;
+  transform: none;
+}

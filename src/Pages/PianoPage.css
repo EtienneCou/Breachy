@@ -321,3 +321,207 @@
 @media (max-width: 720px) {
   .piano-page__coach { grid-column: 1 / -1; }
 }
+
+/* ---------- Thème anthracite / braise partagé par l'entraînement et le jeu libre ---------- */
+.piano-page {
+  --warm-red: #ef4444;
+  --warm-orange: #f97316;
+  --warm-yellow: #fbbf24;
+  color-scheme: dark;
+  color: #f7f0e7;
+  background:
+    radial-gradient(circle at 68% 12%, rgba(239, 68, 68, 0.12), transparent 30%),
+    #111214;
+}
+
+.piano-page__stage .piano-lanes {
+  --piano-bg: #151619;
+  --piano-lane-line: #2a2b30;
+  --piano-accent: var(--warm-orange);
+  --piano-accent-soft: rgba(249, 115, 22, 0.25);
+  --piano-accent-deep: #9a3412;
+  background: linear-gradient(180deg, #151619 0%, #191a1e 72%, #241713 100%) !important;
+  box-shadow: inset 0 -90px 120px -60px rgba(249, 115, 22, 0.22);
+}
+
+.piano-page__stage .piano-lanes__lane.is-white { border-color: #282a2f; }
+.piano-page__stage .piano-lanes__lane.is-black { background: #1b1c20; }
+.piano-page__stage .piano-lanes__lane.is-active {
+  background: linear-gradient(0deg, rgba(249, 115, 22, 0.25), transparent 70%);
+}
+
+.piano-page__progress { background: #2d2e33; }
+.piano-page__progress span { background: linear-gradient(90deg, var(--warm-red), var(--warm-orange), var(--warm-yellow)); }
+
+.piano-page__card,
+.piano-page__transport,
+.piano-page__points,
+.piano-page__metronome {
+  border-color: #34353a;
+  background: #1a1b1f;
+  color: #f7f0e7;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.piano-page__back {
+  color: #ffd166;
+  background: rgba(249, 115, 22, 0.14);
+  justify-self: start;
+  text-align: left;
+}
+.piano-page__back:hover { background: rgba(239, 68, 68, 0.2); }
+.piano-page__field-label,
+.piano-page__status,
+.piano-page__metronome-state { color: #aaa39a; }
+.piano-page__song-title,
+.piano-page__points-value { color: #fff7ed; }
+.piano-page__song-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  margin-top: 8px;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+.piano-page__points-line { color: #c9bfb4; }
+.piano-page__score-hit { color: #fbbf24; }
+.piano-page__score-miss { color: #f87171; }
+.piano-page__score {
+  margin-top: 10px;
+}
+.piano-page__score-hit,
+.piano-page__score-miss {
+  flex: 1 1 0;
+  padding: 8px 6px;
+  border-radius: 10px;
+  background: #24252a;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  font-size: 0.72rem;
+}
+.piano-page__badge { color: #ffd166; background: rgba(249, 115, 22, 0.16); border-color: rgba(249, 115, 22, 0.4); }
+.piano-page__metronome:hover { background: #24252a; }
+.piano-page__metronome:focus-visible { outline-color: var(--warm-yellow); }
+.piano-page__metronome.is-on { background: var(--warm-orange); color: #21130d; }
+.piano-page__metronome.is-on .piano-page__metronome-state { color: #3b1b0d; }
+
+.piano-page__scroller.note-scroller {
+  --ns-bg: transparent;
+  --ns-note: var(--warm-orange);
+  --ns-note-active: var(--warm-yellow);
+  --ns-note-hit: #fbbf24;
+  --ns-note-missed: var(--warm-red);
+}
+.piano-page__scroller .note {
+  background: linear-gradient(180deg, #ffb347 0%, #f97316 65%, #c2410c 100%);
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.32), 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+.piano-page__scroller .note::before {
+  background: linear-gradient(to top, rgba(251, 191, 36, 0.5), transparent);
+}
+.piano-page__scroller .note__label { color: #34150b; background: #ffd166; }
+.piano-page__scroller .note--hit { background: linear-gradient(180deg, #fde68a, #f59e0b 65%, #b45309); }
+.piano-page__scroller :is(.note--missed, .note--wrong) { background: linear-gradient(180deg, #fca5a5, #ef4444); }
+
+.piano-page__transport {
+  --transport-bg: #1a1b1f;
+  --transport-surface: #24252a;
+  --transport-line: #3b3c42;
+  --transport-text: #fff7ed;
+  --transport-muted: #aaa39a;
+  --transport-accent: #f97316;
+  --transport-accent-hover: #ef4444;
+  --transport-accent-soft: rgba(249, 115, 22, 0.18);
+  --transport-accent-ink: #21130d;
+  border-color: #34353a;
+  background: #1a1b1f;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+.piano-page__transport .transport__btn { border-color: #3b3c42; box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24); }
+.piano-page__transport .transport__btn:hover:not(:disabled) { border-color: #fbbf24; box-shadow: 0 8px 18px rgba(249, 115, 22, 0.3); }
+.piano-page__transport .transport__btn--play { border-color: transparent; }
+.piano-page__transport .transport__btn,
+.piano-page__transport .transport__value {
+  border: 0 !important;
+  background: #24252a !important;
+  color: #fff7ed;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+}
+.piano-page__transport .transport__btn--play {
+  background: linear-gradient(135deg, #fbbf24, #f97316) !important;
+  color: #21130d;
+}
+.piano-page__transport .transport__btn:hover:not(:disabled),
+.piano-page__transport .transport__value:hover {
+  border: 0 !important;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.3);
+}
+.piano-page .piano-page__transport { width: 200px; }
+.piano-page__transport .transport__heading,
+.piano-page__transport .transport__clock {
+  align-self: flex-start;
+  text-align: left;
+}
+.piano-page__transport .transport__slider { width: 100%; }
+
+.piano-page .metronome,
+.piano-page .recorder {
+  border-color: #34353a;
+  background: #1a1b1f;
+  color: #f7f0e7;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+.piano-page .metronome__title,
+.piano-page .metronome__muted,
+.piano-page .recorder__title,
+.piano-page .recorder__state,
+.piano-page .recorder__muted,
+.piano-page .recorder__hint { color: #aaa39a; }
+.piano-page .metronome__switch.is-on,
+.piano-page .recorder__state--playing { color: #fbbf24; }
+.piano-page .metronome__switch-track { background: #3b3c42; }
+.piano-page .metronome__switch.is-on .metronome__switch-track { background: #f97316; }
+.piano-page .metronome__switch-track span { background: #fff7ed; }
+.piano-page .metronome__beat { background: #3b3c42; }
+.piano-page .metronome__beat.is-lit { background: #f97316; }
+.piano-page .metronome__beat.is-first.is-lit { background: #ef4444; }
+.piano-page .metronome__step,
+.piano-page .metronome__sig,
+.piano-page .metronome__tap,
+.piano-page .metronome__try,
+.piano-page .recorder__btn,
+.piano-page .recorder__input {
+  border: 0;
+  background: #24252a;
+  color: #fff7ed;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+}
+.piano-page .metronome__step:hover,
+.piano-page .metronome__sig:hover,
+.piano-page .metronome__tap:hover,
+.piano-page .metronome__try:hover,
+.piano-page .recorder__btn:hover { background: #30251f; box-shadow: 0 9px 20px rgba(249, 115, 22, 0.25); }
+.piano-page .metronome__sig.is-active,
+.piano-page .metronome__try.is-on,
+.piano-page .recorder__btn--play { background: #f97316; color: #21130d; }
+.piano-page .recorder__btn--rec { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+.piano-page .recorder__btn--save { background: rgba(249, 115, 22, 0.16); color: #ffd166; }
+.piano-page .metronome__more,
+.piano-page .recorder__save,
+.piano-page .recorder__saved { border-color: #34353a; }
+.piano-page .metronome__slider,
+.piano-page .recorder__check input { accent-color: #f97316; }
+.piano-page .recorder__progress { background: #34353a; }
+.piano-page .recorder__progress span { background: linear-gradient(90deg, #fbbf24, #f97316, #ef4444); }
+.piano-page .recorder__time { color: #fff7ed; }
+.piano-page .recorder__saved-text { color: #fbbf24; }
+.piano-page .recorder__error { color: #f87171; }
+
+.piano-page__side > .piano-page__points,
+.piano-page__side > .piano-page__card,
+.piano-page__side > .piano-page__metronome,
+.piano-page__side > .piano-page__transport {
+  background: #1a1b1f;
+  color: #f7f0e7;
+}
