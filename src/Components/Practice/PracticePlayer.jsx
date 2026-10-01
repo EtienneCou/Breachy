@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import useSongPlayer from "../../hooks/useSongPlayer";
 import "./PracticePlayer.css";
 
@@ -29,16 +29,28 @@ export default function PracticePlayer({ onClose }) {
     stop,
   } = useSongPlayer();
 
+  const handleClose = () => {
+    stop();
+    if (onClose) onClose();
+  };
+
+  // Clic à côté du lecteur : on arrête l'écoute et on le ferme.
+  // (Un clic sur « Écouter » d'un autre morceau relance ensuite ce morceau.)
+  const barRef = useRef(null);
+  const closeFromOutside = useEffectEvent((e) => {
+    if (barRef.current && !barRef.current.contains(e.target)) handleClose();
+  });
+  useEffect(() => {
+    const onPointerDown = (e) => closeFromOutside(e);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
   if (!currentSong) {
     return null;
   }
 
   const speeds = [0.5, 0.75, 1.0, 1.25];
-
-  const handleClose = () => {
-    stop();
-    if (onClose) onClose();
-  };
 
   const handleTimelineChange = (e) => {
     const newTime = parseFloat(e.target.value);
@@ -50,7 +62,7 @@ export default function PracticePlayer({ onClose }) {
   };
 
   return (
-    <aside className="practice-player-bar" aria-label="Lecteur d'entraînement audio en arrière-plan">
+    <aside ref={barRef} className="practice-player-bar" aria-label="Lecteur d'entraînement audio en arrière-plan">
       {error && (
         <div className="practice-error-banner" role="alert">
           <span>⚠️ {error}</span>

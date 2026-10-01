@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { DifficultyFilter } from "../../Components/difficulty";
 import { SongCard } from "../../Components/songCard";
 import { useSongsInfo } from "../../hooks/useSongsInfo";
@@ -10,6 +10,7 @@ import songsCatalog from "../../resources/catalog";
 import PracticePlayer from "../../Components/Practice/PracticePlayer";
 
 import useSongPlayer from "../../hooks/useSongPlayer";
+import audioPlayer from "../../services/audioPlayer";
 import "./Homepage-style.css";
 
 
@@ -72,13 +73,23 @@ export default function SongsPage() {
 
   const { playSong } = useSongPlayer();
 
+  // En quittant l'accueil (jeu, jeu libre…), l'écoute en cours s'arrête.
+  useEffect(() => () => {
+    if (audioPlayer.currentSong) audioPlayer.stop();
+  }, []);
+
   const navigate = useNavigate();
 
   const [activeDifficulty, setActiveDifficulty] = useState(null);
 
-  // Onglet de la bibliothèque : "catalog" (tous les morceaux) ou "mine" (mes morceaux)
-  const [libraryTab, setLibraryTab] = useState("catalog");
+  // Onglet de la bibliothèque : "catalog" (tous les morceaux), "mine" (mes morceaux)
+  // ou "recordings" (mes enregistrements du jeu libre, ouvert par /?onglet=enregistrements)
+  const [searchParams] = useSearchParams();
+  const [libraryTab, setLibraryTab] = useState(() =>
+    searchParams.get("onglet") === "enregistrements" ? "recordings" : "catalog"
+  );
   const [userSongs, setUserSongs] = useState([]); // morceaux ajoutés (fournis par UserSongs)
+  const [recordings, setRecordings] = useState([]); // enregistrements sauvegardés depuis le jeu libre
 
   // Nombre de lancements de chaque morceau (« Écouter » ou « S'entraîner »)
   const [playCounts, setPlayCounts] = useState(() => getPlayCounts());
@@ -97,11 +108,12 @@ export default function SongsPage() {
     playable: Boolean(song.musicItem),
     fallbackDuration: song.duration,
   }));
-  const userItems = userSongs.map((song) => ({
+  // Morceaux ajoutés et enregistrements : tous deux rangés dans la base du navigateur.
+  const userItems = [...userSongs, ...recordings].map((song) => ({
     key: `user:${song.id}`,
     song,
     title: song.title,
-    subtitle: "Ma musique",
+    subtitle: song.source === "recording" ? "Mon enregistrement" : "Ma musique",
     playable: true,
     isNew: song.isNew,
   }));
@@ -1722,7 +1734,9 @@ export default function SongsPage() {
             className={`library-tab${libraryTab === "catalog" ? " is-active" : ""}`}
             onClick={() => setLibraryTab("catalog")}
           >
-            Tous les morceaux
+            {/* libellé court sur téléphone (voir .library-tab__short) */}
+            <span className="library-tab__long">Tous les morceaux</span>
+            <span className="library-tab__short">Tous</span>
           </button>
           <button
             type="button"
@@ -1731,8 +1745,20 @@ export default function SongsPage() {
             className={`library-tab${libraryTab === "mine" ? " is-active" : ""}`}
             onClick={() => setLibraryTab("mine")}
           >
-            Mes morceaux
+            <span className="library-tab__long">Mes morceaux</span>
+            <span className="library-tab__short">Morceaux</span>
             {userSongs.length > 0 && <span className="library-tab__count">{userSongs.length}</span>}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={libraryTab === "recordings"}
+            className={`library-tab${libraryTab === "recordings" ? " is-active" : ""}`}
+            onClick={() => setLibraryTab("recordings")}
+          >
+            <span className="library-tab__long">Mes enregistrements</span>
+            <span className="library-tab__short">Enregistrements</span>
+            {recordings.length > 0 && <span className="library-tab__count">{recordings.length}</span>}
           </button>
         </div>
 
@@ -1751,17 +1777,29 @@ export default function SongsPage() {
                 </button>
               ))}
             </nav>
-          ) : (
+          ) : libraryTab === "mine" ? (
             <p className="library-toolbar__hint">Les fichiers MIDI que tu as ajoutés, prêts à écouter ou à t'entraîner.</p>
+          ) : (
+            <p className="library-toolbar__hint">Les sessions que tu as sauvegardées depuis le jeu libre, prêtes à écouter ou à t'entraîner.</p>
           )}
 
-          <button
-            type="button"
-            className="add-music-btn"
-            onClick={() => setIsUploadOpen(true)}
-          >
-            + Ajouter mes musiques
-          </button>
+          <div className="library-toolbar__actions">
+            {/* Piano sans morceau : juste le clavier, pour jouer librement */}
+            <button
+              type="button"
+              className="free-play-btn"
+              onClick={() => navigate("/jeu-libre")}
+            >
+              🎹 Jeu libre
+            </button>
+            <button
+              type="button"
+              className="add-music-btn"
+              onClick={() => setIsUploadOpen(true)}
+            >
+              + Ajouter mes musiques
+            </button>
+          </div>
         </div>
 
         {libraryTab === "catalog" ? (
@@ -1832,16 +1870,21 @@ export default function SongsPage() {
             onPractice={(song) => handleStartPractice({ key: `user:${song.id}` })}
           />
         </div>
+        <div hidden={libraryTab !== "recordings"}>
+          <UserSongs
+            source="recording"
+            refreshKey={userSongsRefresh}
+            onSongsChange={setRecordings}
+            showHeader={false}
+            onPlay={(song) => handlePlay({ key: `user:${song.id}`, song })}
+            onPractice={(song) => handleStartPractice({ key: `user:${song.id}` })}
+          />
+        </div>
 
       </div>
 
 
 
-          {isPracticeActive && (
-
-        <PracticePlayer onClose={() => setIsPracticeActive(false)} />
-
-      )}
 
 
 

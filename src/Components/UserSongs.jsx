@@ -16,7 +16,9 @@ export default function UserSongs({
   onPractice, // ouvre le jeu (piano + notes qui tombent) avec ce morceau
   onSongsChange, // (morceaux) prévient la page de la liste des morceaux ajoutés
   showHeader = true, // titre « Mes musiques » (inutile dans l'onglet « Mes morceaux »)
+  source = "user", // "user" : fichiers MIDI importés ; "recording" : enregistrements du jeu libre
 }) {
+  const isRecordings = source === "recording";
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userSongsRefresh, setUserSongsRefresh] =
@@ -29,15 +31,17 @@ export default function UserSongs({
   // Difficulté, durée et mélodie de chaque morceau ajouté (calculées à partir du fichier)
   const songInfos = useSongsInfo(songs.map((song) => `user:${song.id}`));
 
-  const loadSongs = async () => {
+  const loadSongs = async (recordings) => {
     try {
       setLoading(true);
 
       const storedSongs =
         await getAllMidiSongs();
 
-      // Les plus récents en premier
-      const sortedSongs = [...storedSongs].sort(
+      // Les plus récents en premier (les morceaux sans `source` sont des imports)
+      const sortedSongs = storedSongs
+        .filter((song) => (song.source === "recording") === recordings)
+        .sort(
         (a, b) =>
           new Date(b.createdAt) -
           new Date(a.createdAt)
@@ -62,13 +66,13 @@ export default function UserSongs({
   };
 
   useEffect(() => {
-    loadSongs();
-  }, [refreshKey]);
+    loadSongs(isRecordings);
+  }, [refreshKey, isRecordings]);
 
   const handleDelete = async (id) => {
     const confirmDelete =
       window.confirm(
-        "Supprimer ce morceau ?"
+        isRecordings ? "Supprimer cet enregistrement ?" : "Supprimer ce morceau ?"
       );
 
     if (!confirmDelete) return;
@@ -104,13 +108,13 @@ export default function UserSongs({
 
           <div>
             <strong>
-              Aucune musique ajoutée
+              {isRecordings ? "Aucun enregistrement" : "Aucune musique ajoutée"}
             </strong>
 
             <p>
-              Utilisez le bouton
-              « Ajouter mes musiques »
-              pour importer un fichier MIDI.
+              {isRecordings
+                ? "Ouvre le « Jeu libre », enregistre ta session puis sauvegarde-la pour la retrouver ici."
+                : "Utilisez le bouton « Ajouter mes musiques » pour importer un fichier MIDI."}
             </p>
           </div>
         </div>
@@ -145,7 +149,11 @@ export default function UserSongs({
           <SongCard
             key={song.id}
             title={song.title}
-            subtitle="Ma musique"
+            subtitle={
+              isRecordings
+                ? `Mon enregistrement${song.tempo ? ` · ${song.tempo.bpm} BPM` : ""}`
+                : "Ma musique"
+            }
             musicId={`user:${song.id}`}
             info={songInfos[`user:${song.id}`]}
             isNew={song.isNew}
