@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Homepage from "./Pages/Homepage/Homepage";
 import PianoPage from "./Pages/PianoPage";
+import ReachyTest from "./Pages/ReachyTest";
 import FreePlayPage from "./Pages/FreePlayPage";
 import StudioPage from "./Pages/StudioPage";
 
@@ -9,6 +10,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Homepage />} />
       <Route path="/piano" element={<PianoPage />} />
+      <Route path="/reachy-test" element={<ReachyTest />}
+/>
       <Route path="/jeu-libre" element={<FreePlayPage />} />
       <Route path="/studio" element={<StudioPage />} />
     </Routes>
