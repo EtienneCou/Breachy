@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # 📋 Rapport de Sprint — Reachy
+=======
+# 📋 Rapport de Sprint — Breachy
+>>>>>>> sound
 
 ## 📌 Sprint 2 : Consolidation, Entraînement & Alignement d'Équipe
 
@@ -17,9 +21,16 @@ L'objectif central de ce deuxième sprint était de présenter au client l'état
 
 | Fonctionnalité | Description | Statut |
 | :--- | :--- | :---: |
+<<<<<<< HEAD
 | **Mode « Extrait »** | Barre de contrôle d'entraînement en fond sonore avec gestion de vitesse (0.5x, 0.75x, 1x), boucle et timeline | ✅ Validé |
 | **Moteur audio hybride** | Synthèse des partitions `.txt` et fichiers `.mid` en notes réelles au piano + support des enregistrements audio | ✅ Validé |
 | **Bibliothèque étendue (32 morceaux)** | Intégration complète de morceaux variés classés par styles musicaux | ✅ Validé |
+=======
+| **Mode « S'entraîner »** | Barre de contrôle d'entraînement en fond sonore avec gestion de vitesse (0.5x, 0.75x, 1x), boucle et timeline | ✅ Validé |
+| **Moteur audio hybride** | Synthèse des partitions `.txt` et fichiers `.mid` en notes réelles au piano + support des enregistrements audio | ✅ Validé |
+| **Bibliothèque étendue (32 morceaux)** | Intégration complète de morceaux variés classés par styles musicaux | ✅ Validé |
+| **Système de filtres par genre** | Filtrage instantané des morceaux par onglet (Pop, Variété, Classique, Films, Enfants, Noël) et barre de recherche | ✅ Validé |
+>>>>>>> sound
 | **Upload de morceaux utilisateur** | Module d'import de fichiers MIDI dans la base locale IndexedDB | ✅ Validé |
 
 ---
@@ -48,7 +59,11 @@ L'objectif central de ce deuxième sprint était de présenter au client l'état
 
 ### 5. 🏆 Résultats & Démonstration Client
 
+<<<<<<< HEAD
 * **Objectifs atteints :** La démonstration présentée au client a confirmé l'intégration réussie de la fonctionnalité majeure d'entraînement et la jouabilité réelle des morceaux.
+=======
+* **Objectifs atteints à 100% :** La démonstration présentée au client a confirmé l'intégration réussie de la fonctionnalité majeure d'entraînement et la jouabilité réelle des morceaux.
+>>>>>>> sound
 * **Validation client :** Le client a pu constater la prise en compte directe de ses retours du Sprint 1, notamment sur l'écoute de véritables morceaux et la richesse du catalogue.
 * **Amélioration de la fluidité d'équipe :** L'alignement renforcé entre les développeurs sur les tâches liées a permis de stabiliser le code et d'assurer une meilleure cohésion technique.
 
