@@ -228,3 +228,34 @@
 @media (prefers-reduced-motion: reduce) {
   .gr-details * { transition: none !important; }
 }
+
+/* ---------- Thème anthracite / braise ---------- */
+.gr-details {
+  --gr-perfect: #fbbf24;
+  --gr-good: #f97316;
+  --gr-offbeat: #fb923c;
+  --gr-wrong: #ef4444;
+  --gr-missed: #78716c;
+  --gr-hatch: repeating-linear-gradient(135deg, #3b3c42 0 4px, #292a2e 4px 8px);
+  --gr-text: #fff7ed;
+  --gr-muted: #aaa39a;
+  --gr-faint: #78716c;
+  --gr-line: #3b3c42;
+  --gr-card: #24252a;
+  --gr-primary: #f97316;
+  --gr-primary-hover: #ef4444;
+}
+.gr-card { border: 0; background: var(--gr-card); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.24); }
+.gr-note { color: #d6cec4; }
+.gr-legend--compact .gr-legend__label { color: #f7f0e7; }
+.gr-zone { fill: #2a211b; }
+.gr-grid { stroke: #34353a; }
+.gr-baseline { stroke: #57534e; }
+.gr-axis--strong { fill: #f7f0e7; }
+.gr-trouble__item { border: 0; background: #1f2024; }
+.gr-trouble__ratio { color: #aaa39a; }
+.gr-trouble__ratio strong { color: #fff7ed; }
+.gr-pill { color: #f7f0e7; background: #2a2b30; border: 0; }
+.gr-tip { color: #ffd166; background: rgba(249, 115, 22, 0.12); border: 0; }
+.gr-tip__who { color: #fbbf24; }
+.gr-tooltip { color: #fff7ed; background: #111214; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }

@@ -1665,61 +1665,61 @@ export default function SongsPage() {
 
       <div className="container">
 
-        <header className="brand">
+        <header className="home-header">
+          <div className="brand">
+            <div className="brand-mark" aria-hidden="true">
 
-          <div className="brand-mark" aria-hidden="true">
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+              <span />
 
-            <span />
+            </div>
 
+            <span>Reachy band</span>
           </div>
 
-          <span>Reachy band</span>
+          <div className="home-header__actions">
+            <button type="button" className="free-play-btn" onClick={() => navigate("/jeu-libre")}>
+              Jeu libre
+            </button>
+            <button type="button" className="add-music-btn" onClick={() => setIsUploadOpen(true)}>
+              + Ajouter mes musiques
+            </button>
+          </div>
+
+          <label className="search-box home-header__search">
+            <span className="search-icon" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher un morceau, un artiste ou un style..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
 
         </header>
-
-
 
         <section className="top-row">
 
           <div>
 
-            <h1>Tous les morceaux disponibles</h1>
+            <h1>Tu joues quoi aujourd’hui&nbsp;?</h1>
 
             <p className="subtitle">
 
-              Découvrez notre bibliothèque et apprenez vos morceaux préférés pas à pas.
+              Choisis un morceau, écoute-le ou lance une partie quand tu es prêt.
 
             </p>
 
           </div>
 
 
-
-          <label className="search-box">
-
-            <span className="search-icon" aria-hidden="true" />
-
-            <input
-
-              type="search"
-
-              placeholder="Rechercher un morceau, un artiste ou un style..."
-
-              value={search}
-
-              onChange={(e) => setSearch(e.target.value)}
-
-            />
-
-          </label>
 
         </section>
 
@@ -1783,29 +1783,17 @@ export default function SongsPage() {
             <p className="library-toolbar__hint">Les sessions que tu as sauvegardées depuis le jeu libre, prêtes à écouter ou à t'entraîner.</p>
           )}
 
-          <div className="library-toolbar__actions">
-            {/* Piano sans morceau : juste le clavier, pour jouer librement */}
-            <button
-              type="button"
-              className="free-play-btn"
-              onClick={() => navigate("/jeu-libre")}
-            >
-              🎹 Jeu libre
-            </button>
-            <button
-              type="button"
-              className="add-music-btn"
-              onClick={() => setIsUploadOpen(true)}
-            >
-              + Ajouter mes musiques
-            </button>
-          </div>
+          {libraryTab === "catalog" && (
+            <div className="library-toolbar__difficulty">
+              <DifficultyFilter value={activeDifficulty} onChange={setActiveDifficulty} />
+            </div>
+          )}
+
         </div>
 
         {libraryTab === "catalog" ? (
           <>
             <div className="filter-controls">
-              <DifficultyFilter value={activeDifficulty} onChange={setActiveDifficulty} />
               {isFiltering && (
                 <button
                   type="button"
@@ -1851,7 +1839,6 @@ export default function SongsPage() {
                 )}
                 <section className="library-section" aria-labelledby="section-tous">
                   <header className="library-section__head">
-                    <h2 id="section-tous" className="library-section__title">Tous les morceaux</h2>
                   </header>
                   <main className="songs-grid">{otherItems.map(renderCard)}</main>
                 </section>

@@ -3,7 +3,6 @@ import { backingSynth, pianoSynth } from '../piano'
 import { TRANSPORT_KEYS } from './keys.js'
 import './TransportBar.css'
 
-const speedWord = (speed) => (speed < 1 ? 'Lent' : speed > 1 ? 'Rapide' : 'Normal')
 const percent = (value) => `${Math.round(value * 100)} %`
 
 function formatTime(seconds) {
@@ -81,21 +80,24 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
             )}
           </div>
 
-          <Stepper
-            title="Vitesse"
-            keys={['↓', '↑']}
-            onDown={clock.slower}
-            onUp={clock.faster}
-            canDown={clock.canGoSlower}
-            canUp={clock.canGoFaster}
-            downLabel="Ralentir"
-            upLabel="Accélérer"
-          >
-            <button type="button" className="transport__value" onClick={() => clock.setSpeed(1)} title="Revenir à la vitesse normale">
-              <span className="transport__value-number">{percent(speed)}</span>
-              <span className="transport__value-word">{speedWord(speed)}</span>
-            </button>
-          </Stepper>
+          <label className="transport__section" htmlFor="transport-speed">
+            <span className="transport__heading">
+              Vitesse <span className="transport__muted">{percent(speed)}</span>
+            </span>
+            <input
+              id="transport-speed"
+              className="transport__slider"
+              type="range"
+              min="0.5"
+              max="1.5"
+              step="0.25"
+              value={speed}
+              onChange={(event) => clock.setSpeed(Number(event.target.value))}
+              onDoubleClick={() => clock.setSpeed(1)}
+              aria-label="Vitesse de lecture"
+              title="Double-cliquer pour revenir à 100 %"
+            />
+          </label>
         </>
       )}
 
@@ -151,19 +153,17 @@ function VolumeSlider({ id, label, synth }) {
   )
 }
 
-function Stepper({ title, keys, onDown, onUp, canDown, canUp, downLabel, upLabel, children }) {
+function Stepper({ title, onDown, onUp, canDown, canUp, downLabel, upLabel, children }) {
   return (
     <div className="transport__section" role="group" aria-label={title}>
       <span className="transport__heading">{title}</span>
       <div className="transport__stepper">
         <button type="button" className="transport__btn transport__btn--small" onClick={onDown} disabled={!canDown} aria-label={downLabel} title={downLabel}>
           <Icon name="minus" />
-          <kbd>{keys[0]}</kbd>
         </button>
         {children}
         <button type="button" className="transport__btn transport__btn--small" onClick={onUp} disabled={!canUp} aria-label={upLabel} title={upLabel}>
           <Icon name="plus" />
-          <kbd>{keys[1]}</kbd>
         </button>
       </div>
     </div>
