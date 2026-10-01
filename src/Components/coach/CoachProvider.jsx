@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_REACHY_URL, createReachyClient } from '../../services/reachy/reachyClient.js'
 import { forgetRobotSounds, playCoachSound, speak, stopSpeaking } from './coachAudio.js'
 import { prepareLines, prepareRobotVoice } from './robotVoice.js'
-import { LINES } from './coachRules.js'
-import { backingSynth } from '../piano'
+import { LINES, SLEEP_RULES } from './coachRules.js'
+import { PLAYER_ACTIVITY, backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
 import { ROBOT_INTENSITY } from './danceEngine.js'
 
@@ -23,6 +23,15 @@ const DUCK = 0.55 // l'accompagnement baisse à 55 % pendant que Reachy parle
 const POLL_MS = 4000
 const MOOD_MS = 1600 // durée d'une humeur passagère, avant de revenir au calme
 const BUBBLE_MS = 2600 // durée d'une bulle courte
+
+// Sommeil : sans personne qui joue, il s'ennuie puis s'endort (en ms).
+const BORED_AFTER = 40000
+const SLEEP_AFTER = 60000
+const FALL_ASLEEP_MS = 4500 // durée de l'émotion « s'endort », avant la position de repos
+
+// Regard : part du suivi de visage (caméra du robot) mélangée à ses mouvements quand il
+// ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil, le suivi est en pause.
+const TRACKING_WEIGHT = 0.7
 
 // Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus.
 const ROBOT_BUSY = { gesture: 1.3, emotion: 3.5, dance: 4.5 }
@@ -60,6 +69,9 @@ export function CoachProvider({ children }) {
   // Où parle le coach : 'robot' (haut-parleur du robot), 'preview' (voix du robot jouée par
   // l'ordinateur : la simulation n'a pas de haut-parleur) ou 'browser' (voix du navigateur).
   const [voiceOutput, setVoiceOutput] = useState('browser')
+  const [media, setMedia] = useState(false) // le robot a sa caméra et son haut-parleur (pas la simulation)
+  const [asleep, setAsleep] = useState(false)
+  const [dancing, setDancing] = useState(false) // une boucle de danse suit un rythme (morceau, métronome)
 
   useEffect(() => {
     try {
@@ -98,6 +110,7 @@ export function CoachProvider({ children }) {
         forgetRobotSounds()
         const speaker = await client.mediaAvailable()
         if (cancelled) return
+        setMedia(speaker)
         if (speaker) client.setWobbling(true).catch(() => {})
         const output = speaker ? 'robot' : status.simulation_enabled ? 'preview' : 'browser'
         setVoiceOutput(output)
@@ -105,6 +118,7 @@ export function CoachProvider({ children }) {
         if (output !== 'browser') prepareRobotVoice().then(() => prepareLines(Object.values(LINES).flat()))
       } else if (!isConnected && wasConnected) {
         setVoiceOutput('browser')
+        setMedia(false)
       }
       wasConnected = isConnected
     }
@@ -115,6 +129,7 @@ export function CoachProvider({ children }) {
       clearInterval(id)
       setConnected(false)
       setVoiceOutput('browser')
+      setMedia(false)
     }
   }, [settings.robot, client])
 
@@ -249,14 +264,112 @@ export function CoachProvider({ children }) {
 
   useEffect(() => () => stopSpeaking(), [])
 
+  // ---------- Sommeil ----------
+  // Personne ne joue (ni touche, ni souris, ni note, ni musique en cours) : au bout de
+  // BORED_AFTER il s'ennuie, au bout de SLEEP_AFTER il s'endort. Le premier appui le réveille.
+
+  const idle = useRef({ last: 0, bored: false, asleep: false, holds: 0, timer: 0 })
+
+  const fallAsleep = useCallback(() => {
+    const i = idle.current
+    i.asleep = true
+    setAsleep(true)
+    stopSpeaking()
+    if (live.current.robotStatus !== 'connected') return
+    // Le robot lui appartient : la danse se met en retrait jusqu'au réveil.
+    const r = robot.current
+    for (const t of r.timers) clearTimeout(t)
+    r.timers = []
+    r.busyUntil = Infinity
+    r.priority = Infinity
+    client.playEmotion('sleep1').catch(() => {})
+    i.timer = setTimeout(() => client.goToSleep().catch(() => {}), FALL_ASLEEP_MS)
+  }, [client])
+
+  const wake = useCallback(() => {
+    const i = idle.current
+    i.asleep = false
+    i.bored = false
+    clearTimeout(i.timer)
+    setAsleep(false)
+    if (live.current.robotStatus === 'connected') {
+      robot.current.busyUntil = performance.now() + 3500 // le temps de se réveiller
+      robot.current.priority = 0
+      client.wakeUp().catch(() => {})
+    }
+    react('wake', SLEEP_RULES.wake())
+  }, [client, react])
+
+  // Quelqu'un joue : il reste éveillé, ou se réveille.
+  const wakeRef = useRef(wake)
+  useEffect(() => {
+    wakeRef.current = wake
+  })
+  useEffect(() => {
+    const i = idle.current
+    i.last = performance.now()
+    const onActivity = () => {
+      i.last = performance.now()
+      i.bored = false
+      if (i.asleep) wakeRef.current()
+    }
+    const events = ['keydown', 'pointerdown', PLAYER_ACTIVITY]
+    for (const e of events) window.addEventListener(e, onActivity)
+    const id = setInterval(() => {
+      const now = performance.now()
+      if (i.holds > 0) i.last = now // de la musique joue : personne ne s'endort
+      const quiet = now - i.last
+      if (!i.asleep && quiet >= SLEEP_AFTER) fallAsleep()
+      else if (!i.asleep && !i.bored && quiet >= BORED_AFTER) {
+        i.bored = true
+        react('bored', SLEEP_RULES.bored())
+      }
+    }, 1000)
+    return () => {
+      for (const e of events) window.removeEventListener(e, onActivity)
+      clearInterval(id)
+      clearTimeout(i.timer)
+    }
+  }, [fallAsleep, react])
+
+  /** Une page garde Reachy éveillé tant que de la musique joue (voir useCoachAwake). */
+  const holdAwake = useCallback(() => {
+    idle.current.holds++
+    idle.current.last = performance.now()
+    return () => {
+      idle.current.holds--
+      idle.current.last = performance.now()
+    }
+  }, [])
+
+  // ---------- Regard ----------
+  // Avec la caméra du vrai robot : il te suit du regard quand il ne danse pas.
+  const robotOn = robotStatus === 'connected' && media
+  useEffect(() => {
+    if (!robotOn) return
+    client.setTracking(asleep || dancing ? 0 : TRACKING_WEIGHT).catch(() => {})
+  }, [robotOn, asleep, dancing, client])
+  useEffect(() => {
+    if (!robotOn) return
+    return () => {
+      client.setTracking(null).catch(() => {})
+    }
+  }, [robotOn, client])
+
   const updateSettings = useCallback((patch) => setSettings((s) => ({ ...s, ...patch })), [])
 
   const value = useMemo(
     () => ({
-      settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss,
+      settings, updateSettings, robotStatus, speaking, react, dismiss,
       client, groove, setGroove, registerDance, robotBusyUntil, simulation, voiceOutput,
+      // Endormi : il ferme les yeux et rêve, quoi qu'il se passe.
+      asleep,
+      mood: asleep ? 'asleep' : mood,
+      bubble: asleep ? { text: 'Zzz…', id: 'sleep' } : bubble,
+      holdAwake,
+      setDancing,
     }),
-    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput],
+    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput, asleep, holdAwake],
   )
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>
 }

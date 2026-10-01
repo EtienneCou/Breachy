@@ -84,6 +84,20 @@
 .reachy--surprised .reachy__pupil { r: 8; }
 .reachy--surprised .reachy__head { transform: translateY(-5px); }
 
+/* Il s'ennuie : yeux mi-clos, tête penchée */
+.reachy--sleepy .reachy__head { transform: translateY(3px) rotate(-6deg); }
+.reachy--sleepy .reachy__eye { animation: none; transform: scaleY(0.45); }
+.reachy--sleepy .reachy__antenna--left { transform: rotate(-30deg); }
+.reachy--sleepy .reachy__antenna--right { transform: rotate(30deg); }
+
+/* Il dort : yeux fermés, tête basse, respiration lente */
+.reachy--asleep .reachy__head { animation: reachy-sleep 4s ease-in-out infinite; }
+.reachy--asleep .reachy__eye { animation: none; transform: scaleY(0.08); }
+.reachy--asleep .reachy__antenna--left { transform: rotate(-60deg); }
+.reachy--asleep .reachy__antenna--right { transform: rotate(60deg); }
+.reachy--asleep .reachy__pupil { fill: #8fa3d6; }
+@keyframes reachy-sleep { 0%, 100% { transform: translateY(8px) rotate(-4deg); } 50% { transform: translateY(10px) rotate(-3deg); } }
+
 /* Il parle : petites vibrations */
 .reachy.is-speaking .reachy__antenna--left { animation: reachy-talk-left 0.35s ease-in-out infinite; }
 .reachy.is-speaking .reachy__antenna--right { animation: reachy-talk-right 0.35s ease-in-out infinite; }

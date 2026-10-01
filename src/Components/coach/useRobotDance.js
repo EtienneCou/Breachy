@@ -18,7 +18,7 @@ const RAMP = 1.5 // secondes de montée progressive de la danse
  * émotion ou une danse enregistrée, la boucle se met en retrait, puis reprend en douceur.
  */
 export function useRobotDance({ beatRef, danceRef }) {
-  const { client, robotStatus, settings, registerDance, robotBusyUntil } = useCoach()
+  const { client, robotStatus, settings, registerDance, robotBusyUntil, setDancing } = useCoach()
 
   useEffect(() => {
     if (robotStatus !== 'connected' || !settings.robot) return
@@ -32,6 +32,7 @@ export function useRobotDance({ beatRef, danceRef }) {
     let last = performance.now()
     let resumeAt = 0
     let waiting = false
+    let dancing = false // il suit un rythme : le coach met alors son regard en pause
 
     // Retour doux au neutre (goto avec interpolation du robot), puis la danse repart de zéro.
     const glideToNeutral = () => {
@@ -62,6 +63,10 @@ export function useRobotDance({ beatRef, danceRef }) {
       if (now < resumeAt) return
       const t = clock()
       const beat = beatRef.current()
+      if (Boolean(beat) !== dancing) {
+        dancing = Boolean(beat)
+        setDancing(dancing)
+      }
       envelope = Math.min(1, envelope + dt / RAMP)
       params = blendParams(params, levelParams(beat ? danceRef.current.level : null), dt)
       rhythm = advancePhase(rhythm, beat, params, dt)
@@ -72,9 +77,10 @@ export function useRobotDance({ beatRef, danceRef }) {
 
     return () => {
       clearInterval(id)
+      setDancing(false)
       unregister()
       stream.close()
       client.goto({ ...NEUTRAL, duration: 0.8 }).catch(() => {})
     }
-  }, [robotStatus, settings.robot, client, registerDance, robotBusyUntil, beatRef, danceRef])
+  }, [robotStatus, settings.robot, client, registerDance, robotBusyUntil, setDancing, beatRef, danceRef])
 }

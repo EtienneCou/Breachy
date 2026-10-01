@@ -3,7 +3,7 @@ import './ReachyAvatar.css'
 /**
  * Reachy Mini dessiné : tête et grands yeux, deux antennes, socle.
  * `mood` l'anime ('idle', 'happy', 'cheer', 'dance', 'sad', 'think', 'attentive',
- * 'calm', 'proud', 'surprised') ; `speaking` le fait « parler » (antennes et tête qui vibrent).
+ * 'calm', 'proud', 'surprised', 'sleepy', 'asleep') ; `speaking` le fait « parler » (antennes et tête qui vibrent).
  * `groove` ({ level 0-3, period }) : il danse en rythme pendant le morceau, des antennes
  * seules (niveau 0) au rock star (niveau 3) ; une humeur passagère prend le dessus.
  */
@@ -68,4 +68,6 @@ const MOOD_LABELS = {
   calm: 'rassurant',
   proud: 'fier de toi',
   surprised: 'surpris',
+  sleepy: 'il s\'ennuie',
+  asleep: 'il dort',
 }

@@ -1,7 +1,7 @@
 // Le « caractère » du coach : comment Reachy réagit à chaque événement de la séance.
 // Une réaction décrit tout ce qu'il fait en même temps :
 // {
-//   mood:     humeur de l'avatar ('happy', 'cheer', 'sad', 'think', 'attentive', 'surprised', 'dance', 'proud', 'calm', 'idle')
+//   mood:     humeur de l'avatar ('happy', 'cheer', 'sad', 'think', 'attentive', 'surprised', 'dance', 'proud', 'calm', 'sleepy', 'idle')
 //   bubble:   texte de la bulle (mot ou phrase très courte pendant le jeu)
 //   sound:    petit son ('happy', 'cheer', 'oops', 'go', 'think', 'hello')
 //   speech:   phrase dite à voix haute (bilan et accueil)
@@ -35,6 +35,8 @@ export const LINES = {
   start: ['C\'est parti !', 'Allez, à toi !', 'On y va !', 'Go, je te suis !', 'Montre-moi ce que tu sais faire !', 'En avant la musique !'],
   // Décompte avant le morceau (dans l'ordre : 3, 2, 1)
   count: ['Trois !', 'Deux !', 'Un !'],
+  // Réveil, quand on rejoue après l'avoir laissé s'endormir
+  wake: ['Oh ! Je m\'étais endormi… On joue ?', 'Hein ? Ah, te revoilà ! On joue ?', 'Oups, je somnolais ! C\'est reparti ?'],
   resume: ['On reprend !', 'C\'est reparti !', 'Allez, on continue !', 'Je t\'attendais !', 'Prêt ? On y retourne !'],
   milestone10: ['10 d\'affilée !', 'Et de 10 !', '10, bravo !', 'Belle série !'],
   milestone25: ['25 ! Trop fort !', '25 d\'affilée, waouh !', 'Quelle série !', 'Tu es lancé !'],
@@ -253,4 +255,23 @@ export function welcomeReaction({ suggestion, firstVisitToday, day = 0 }) {
     priority: 3,
     holdMs: 6000,
   }
+}
+
+// ---------- Sommeil ----------
+
+// Quand personne ne joue : il s'ennuie, puis s'endort ; il se réveille au premier appui.
+export const SLEEP_RULES = {
+  bored: () => ({
+    mood: 'sleepy',
+    bubble: pick(['Tu es là ? On joue ?', 'Je m\'ennuie un peu…', 'Une petite chanson ?']),
+    sound: 'think',
+    robot: { emotion: pick(['boredom1', 'boredom2']) },
+    priority: 2,
+    holdMs: 5000,
+  }),
+
+  wake: () => {
+    const text = line('wake', LINES.wake)
+    return { mood: 'surprised', bubble: text, speech: text, sound: 'hello', priority: 3, holdMs: 4000 }
+  },
 }

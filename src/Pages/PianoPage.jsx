@@ -8,7 +8,7 @@ import { NoteScroller, getSongDuration } from '../Components/Notes_scroller'
 import GameOverlay from '../Components/game/GameOverlay.jsx'
 import { NOTE_POINTS, heatLevel, multiplierFor } from '../Components/game/streakTiers.js'
 import { ResultsModal } from '../Components/results'
-import { CoachPanel, TRAINING_RULES, useCoach } from '../Components/coach'
+import { CoachPanel, TRAINING_RULES, useCoach, useCoachAwake } from '../Components/coach'
 import { useTrainingCoach } from '../Components/coach/useTrainingCoach.js'
 import { useMusic } from '../hooks/useMusic.js'
 import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
@@ -296,6 +296,9 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     const { successPercent, stars } = computeGameStats(results)
     saveResult(musicId, { successPercent, stars, score: results.score })
   }, [results, musicId])
+
+  // Reachy reste éveillé tant que le morceau joue.
+  useCoachAwake(clock.status === 'playing')
 
   // Reachy, le coach : départ, pauses, séries, passages difficiles et bilan.
   const { finish } = useTrainingCoach({

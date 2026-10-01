@@ -100,6 +100,15 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
     /** La tête bouge doucement au rythme de ce qu'il dit (ajouté à ses mouvements). */
     setWobbling: (on) => request(`/media/wobbling/${on ? 'enable' : 'disable'}`),
 
+    // ---------- Caméra ----------
+
+    /**
+     * Il suit du regard le visage qu'il voit. `weight` (0 à 1) : part du regard mélangée
+     * à ses mouvements (0 = suivi en pause) ; null : suivi arrêté.
+     */
+    setTracking: (weight) =>
+      weight == null ? request('/media/tracking/disable') : request('/media/tracking/enable', { body: { weight } }),
+
     /** Mouvements en cours (liste d'identifiants). */
     running: () => request('/move/running', { method: 'GET' }),
 
