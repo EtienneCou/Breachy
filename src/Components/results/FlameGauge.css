@@ -21,9 +21,9 @@
 .flame-gauge[data-tier='warm'] { --fg-fill: linear-gradient(90deg, #f59e0b, #f97316); --fg-glow: rgba(249, 115, 22, 0.5); --fg-tier: #fdba74; }
 .flame-gauge[data-tier='fire'] { --fg-fill: linear-gradient(90deg, #f97316, #ef4444); --fg-glow: rgba(239, 68, 68, 0.55); --fg-tier: #fca5a5; }
 .flame-gauge[data-tier='blue'] {
-  --fg-fill: linear-gradient(90deg, #38bdf8, #2563eb 60%, #6366f1);
-  --fg-glow: rgba(56, 189, 248, 0.7);
-  --fg-tier: #7dd3fc;
+  --fg-fill: linear-gradient(90deg, #f97316, #ef4444 60%, #fbbf24);
+  --fg-glow: rgba(249, 115, 22, 0.7);
+  --fg-tier: #ffd166;
 }
 
 .flame-gauge__head {
