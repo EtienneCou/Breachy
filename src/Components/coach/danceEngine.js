@@ -32,15 +32,28 @@ export const DANCE_LEVELS = [
   { tempo: 1, lag: 0, bob: 30, accent: 0.3, droop: -4, sway: 7, swayFast: 1, look: 12, body: 14, antennas: 34, antennaDroop: -12, antFast: 1, antSync: 1, wobble: 0 },
 ]
 
+// Autres façons de bouger en rythme, hors entraînement :
+// metronome  il bat la mesure (jeu libre, Studio) : la tête hoche sur chaque temps,
+//            les antennes battent, rien d'autre ne bouge.
+export const DANCE_STYLES = {
+  metronome: { tempo: 1, lag: 0, bob: 14, accent: 0, droop: 0, sway: 0, swayFast: 0, look: 0, body: 0, antennas: 16, antennaDroop: 0, antFast: 1, antSync: 0, wobble: 0 },
+}
+
 // Respiration au repos : à peine visible, pour qu'il reste « vivant ».
 const IDLE = { tempo: 1, lag: 0, bob: 0, accent: 0, droop: 0, sway: 0, swayFast: 0, look: 0, body: 0, antennas: 0, antennaDroop: 0, antFast: 0, antSync: 0, wobble: 0 }
 
 // Petites réactions ajoutées à la danse : une bosse douce (sin²) sur `length` secondes.
+// antennas : les deux antennes ; rightAntenna / leftAntenna : une seule (négatif = levée).
 const IMPULSES = {
   nod: { length: 0.55, pitch: 7 },
   tilt: { length: 0.8, roll: 10, pitch: 3 },
   antennaFlick: { length: 0.6, antennas: 22 },
   perk: { length: 0.8, pitch: -5, antennas: -20 },
+  // Décompte « 3, 2, 1, c'est parti ! » : une antenne, l'autre, les deux, puis un hochement.
+  count3: { length: 0.8, rightAntenna: -32 },
+  count2: { length: 0.8, leftAntenna: -32 },
+  count1: { length: 0.8, antennas: -32, pitch: -5 },
+  go: { length: 0.7, antennas: -26, pitch: 9 },
 }
 export const impulseNames = Object.keys(IMPULSES)
 
@@ -55,7 +68,12 @@ export function blendParams(current, target, dt, seconds = 1.5) {
   return next
 }
 
-export const levelParams = (level) => (level == null ? IDLE : DANCE_LEVELS[Math.max(0, Math.min(DANCE_LEVELS.length - 1, level))])
+/** Réglages d'une danse : niveau 0-3 de l'entraînement, style de DANCE_STYLES, ou null (repos). */
+export function levelParams(level) {
+  if (level == null) return IDLE
+  if (typeof level === 'string') return DANCE_STYLES[level] ?? IDLE
+  return DANCE_LEVELS[Math.max(0, Math.min(DANCE_LEVELS.length - 1, level))]
+}
 
 /**
  * Position de Reachy (degrés) à l'instant `t` (secondes, horloge continue).
@@ -92,8 +110,8 @@ export function dancePose(t, { phase = 0, p, envelope = 1, impulses = [] }) {
     const b = bump((t - start) / imp.length)
     pitch += (imp.pitch ?? 0) * b
     roll += (imp.roll ?? 0) * b
-    right += (imp.antennas ?? 0) * b
-    left -= (imp.antennas ?? 0) * b
+    right += ((imp.antennas ?? 0) + (imp.rightAntenna ?? 0)) * b
+    left -= ((imp.antennas ?? 0) + (imp.leftAntenna ?? 0)) * b
   }
 
   const e = envelope

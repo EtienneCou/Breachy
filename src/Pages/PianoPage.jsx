@@ -302,6 +302,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     title,
     hasSong,
     status: clock.status,
+    time: clock.time,
     streak,
     hitCount,
     missCount,

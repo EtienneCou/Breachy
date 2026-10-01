@@ -113,7 +113,7 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
             )}
             <label className="coach__check">
               <input type="checkbox" checked={settings.voice} onChange={(e) => updateSettings({ voice: e.target.checked })} />
-              Voix (accueil et bilan)
+              Voix (accueil, décompte et bilan)
             </label>
             <p className="coach__help">{VOICE_LABELS[voiceOutput]}</p>
             <label className="coach__check">

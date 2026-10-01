@@ -33,6 +33,8 @@ function line(moment, choices) {
 // Ce que Reachy dit pendant le jeu : des mots courts, qui ne couvrent pas la musique.
 export const LINES = {
   start: ['C\'est parti !', 'Allez, à toi !', 'On y va !', 'Go, je te suis !', 'Montre-moi ce que tu sais faire !', 'En avant la musique !'],
+  // Décompte avant le morceau (dans l'ordre : 3, 2, 1)
+  count: ['Trois !', 'Deux !', 'Un !'],
   resume: ['On reprend !', 'C\'est reparti !', 'Allez, on continue !', 'Je t\'attendais !', 'Prêt ? On y retourne !'],
   milestone10: ['10 d\'affilée !', 'Et de 10 !', '10, bravo !', 'Belle série !'],
   milestone25: ['25 ! Trop fort !', '25 d\'affilée, waouh !', 'Quelle série !', 'Tu es lancé !'],
@@ -68,6 +70,24 @@ export const TRAINING_RULES = {
     robot: { gesture: 'perk' },
     priority: 2,
   }),
+
+  // Décompte avant le morceau : « Trois ! Deux ! Un ! » avec une antenne, l'autre, les deux.
+  // Toujours dit à voix haute (sauf voix coupée), même juste après une autre phrase.
+  count: ({ n }) => ({
+    mood: 'attentive',
+    bubble: String(n),
+    speech: LINES.count[3 - n],
+    quick: true,
+    robot: { gesture: `count${n}` },
+    priority: 3,
+    holdMs: 900,
+  }),
+
+  // Fin du décompte : « C'est parti ! » et un hochement.
+  go: () => {
+    const text = line('start', LINES.start)
+    return { mood: 'happy', bubble: text, speech: text, quick: true, sound: 'go', robot: { gesture: 'go' }, priority: 3, holdMs: 1200 }
+  },
 
   // Une note réussie : petit geste ajouté à sa danse, pour sentir qu'il suit.
   // Pas d'humeur ni de parole : c'est la danse elle-même qui montre si le joueur joue bien.

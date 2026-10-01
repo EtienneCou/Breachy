@@ -35,6 +35,10 @@ const GESTURES = {
   tilt: [{ head: { roll: 12, pitch: 4 }, t: 0.6 }, { head: { roll: 0, pitch: 0 }, t: 0.6 }],
   antennaFlick: [{ antennas: [30, -30], t: 0.5 }, { antennas: [0, 0], t: 0.5 }],
   perk: [{ antennas: [-25, 25], head: { pitch: -5 }, t: 0.6 }, { antennas: [0, 0], head: { pitch: 0 }, t: 0.6 }],
+  count3: [{ antennas: [-30, 0], t: 0.5 }, { antennas: [0, 0], t: 0.4 }],
+  count2: [{ antennas: [0, 30], t: 0.5 }, { antennas: [0, 0], t: 0.4 }],
+  count1: [{ antennas: [-30, 30], head: { pitch: -5 }, t: 0.5 }, { antennas: [0, 0], head: { pitch: 0 }, t: 0.4 }],
+  go: [{ antennas: [-25, 25], head: { pitch: 8 }, t: 0.5 }, { antennas: [0, 0], head: { pitch: 0 }, t: 0.5 }],
 }
 
 function loadSettings() {
@@ -225,7 +229,7 @@ export function CoachProvider({ children }) {
     if (reaction.sound && s.sounds) playCoachSound(reaction.sound)
     if (reaction.speech && s.voice) {
       talk.current.next = now + talkGapMs(s.talkAmount)
-      say(reaction.speech, { keepBubble: Boolean(reaction.holdMs) })
+      say(reaction.speech, { quick: reaction.quick, keepBubble: Boolean(reaction.holdMs) })
     } else if (sayNow) {
       talk.current.next = now + talkGapMs(s.talkAmount)
       say(reaction.say, { quick: true, keepBubble: true })

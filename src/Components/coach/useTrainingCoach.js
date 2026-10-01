@@ -32,6 +32,7 @@ function danceLevel(recent) {
  * - notes        notes de la mélodie (pour trouver le tempo de la danse)
  * - bpm          tempo connu du morceau (enregistrements calés), sinon estimé
  * - getSongTime  temps actuel du morceau (horloge du jeu)
+ * - time         temps du morceau à l'affichage (négatif pendant le décompte « 3, 2, 1 »)
  * - musicId      pour comparer au meilleur score dans le bilan
  *
  * Les touches frappées (note réussie, fausse note) sont signalées directement par la
@@ -39,7 +40,7 @@ function danceLevel(recent) {
  *
  * Retourne { finish } : la réaction du bilan (texte en `bubble`), ou null avant la fin.
  */
-export function useTrainingCoach({ title, hasSong, status, streak, hitCount, missCount, results, notes = [], bpm, getSongTime, musicId }) {
+export function useTrainingCoach({ title, hasSong, status, time = 0, streak, hitCount, missCount, results, notes = [], bpm, getSongTime, musicId }) {
   const { react, dismiss, setGroove } = useCoach()
 
   // ---------- Danse ----------
@@ -69,14 +70,29 @@ export function useTrainingCoach({ title, hasSong, status, streak, hitCount, mis
     if (hasSong) react('ready', TRAINING_RULES.ready({ title }))
   }, [hasSong, title, react])
 
-  // Départ, pause, reprise.
+  // Décompte « 3, 2, 1 » (temps négatif du morceau), puis « C'est parti ! » au premier temps.
+  // countdown : 3, 2, 1 pendant le décompte, 0 une fois le morceau lancé, null hors lecture.
+  const countdown = hasSong && status === 'playing' ? (time < 0 ? Math.min(3, Math.ceil(-time)) : 0) : null
+  const prevCount = useRef(null)
+  useEffect(() => {
+    const prev = prevCount.current
+    prevCount.current = countdown
+    if (countdown === prev || countdown == null) return
+    if (countdown > 0) react(`count${countdown}`, TRAINING_RULES.count({ n: countdown }))
+    else if (prev > 0) react('go', TRAINING_RULES.go())
+  }, [countdown, react])
+
+  // Départ (sans décompte), pause, reprise.
   const prevStatus = useRef(status)
   useEffect(() => {
     const prev = prevStatus.current
     prevStatus.current = status
     if (!hasSong || prev === status) return
-    if (status === 'playing') react(prev === 'paused' ? 'resume' : 'start', TRAINING_RULES[prev === 'paused' ? 'resume' : 'start']())
+    if (status === 'playing' && prev === 'paused') react('resume', TRAINING_RULES.resume())
+    else if (status === 'playing' && time >= 0) react('start', TRAINING_RULES.start())
     else if (status === 'paused') react('pause', TRAINING_RULES.pause())
+    // `time` est lu au changement d'état seulement
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, hasSong, react])
 
   // Séries, notes oubliées, passages difficiles et retours en forme.
