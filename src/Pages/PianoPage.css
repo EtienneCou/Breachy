@@ -312,3 +312,12 @@
 .piano-page__metronome-state { font-size: 0.75rem; color: #7180b0; }
 .piano-page__metronome.is-on { border-color: transparent; background: #1f7bff; color: #ffffff; }
 .piano-page__metronome.is-on .piano-page__metronome-state { color: #dbeafe; }
+
+/* Reachy, le coach, dans la colonne de droite */
+.piano-page__coach { flex: none; }
+@media (max-height: 760px) and (min-width: 721px) {
+  .piano-page__coach .reachy { width: 52px; height: auto; }
+}
+@media (max-width: 720px) {
+  .piano-page__coach { grid-column: 1 / -1; }
+}

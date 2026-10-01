@@ -16,6 +16,7 @@ const volumeCurve = (v) => v * v * 1.2
 
 class BackingSynth {
   volume = 0.5 // position du curseur Accompagnement, de 0 à 1
+  ducking = 1 // baisse passagère (Reachy qui parle), 1 = aucune
   bus = null // volume de l'accompagnement
   gm = null // synthétiseur aux vrais instruments, une fois chargé
   fallback = null // instruments de secours pendant le chargement
@@ -27,7 +28,7 @@ class BackingSynth {
     const { ctx } = pianoSynth
     if (!this.bus) {
       this.bus = ctx.createGain()
-      this.bus.gain.value = volumeCurve(this.volume)
+      this.bus.gain.value = volumeCurve(this.volume) * this.ducking
       this.bus.connect(pianoSynth.master)
       this.fallback = createInstrumentPlayer(ctx, this.bus)
       createGMSynth(ctx)
@@ -42,7 +43,18 @@ class BackingSynth {
 
   setVolume(v) {
     this.volume = v
-    if (this.bus) this.bus.gain.value = volumeCurve(v)
+    if (this.bus) this.bus.gain.value = volumeCurve(v) * this.ducking
+  }
+
+  /**
+   * Baisse l'accompagnement le temps que Reachy parle (factor < 1), ou le remet (1).
+   * Le changement est progressif, et le réglage du curseur n'est pas modifié.
+   */
+  duck(factor) {
+    this.ducking = factor
+    if (!this.bus) return
+    const { ctx } = pianoSynth
+    this.bus.gain.setTargetAtTime(volumeCurve(this.volume) * factor, ctx.currentTime, 0.12)
   }
 
   get currentTime() {

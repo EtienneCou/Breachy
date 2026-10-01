@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DifficultyFilter } from "../../Components/difficulty";
 import { SongCard } from "../../Components/songCard";
+import { CoachPanel, suggestSong, useCoach, welcomeReaction } from "../../Components/coach";
 import { useSongsInfo } from "../../hooks/useSongsInfo";
 import { getPlayCounts, recordPlay, resetPlayCount } from "../../utils/playCounts";
 
@@ -128,6 +129,38 @@ export default function SongsPage() {
     countPlay(item.key);
     navigate(`/piano?morceau=${encodeURIComponent(item.key)}`);
   };
+
+  // Reachy, le coach : il dit bonjour et propose un morceau adapté au niveau du joueur
+  // (le choix change chaque jour).
+  const { react } = useCoach();
+  const [day] = useState(() => Math.floor(Date.now() / 86400000));
+  const suggestion = useMemo(
+    () =>
+      suggestSong(
+        songs.filter((song) => song.musicItem).map((song) => ({ key: song.id, title: song.title, info: songInfos[song.id] })),
+        day
+      ),
+    [songInfos, day]
+  );
+  const [firstVisitToday] = useState(isFirstVisitToday);
+  useEffect(() => rememberVisitToday(), []);
+  // Message de la bulle : bonjour + morceau conseillé ; il reste affiché.
+  const welcome = useMemo(
+    () => welcomeReaction({ suggestion, firstVisitToday, day }),
+    [suggestion, firstVisitToday, day]
+  );
+  const welcomed = useRef(false);
+  useEffect(() => {
+    const greet = (offer) => {
+      if (welcomed.current) return;
+      welcomed.current = true;
+      react("welcome", welcomeReaction({ suggestion: offer, firstVisitToday, day }));
+    };
+    if (suggestion) greet(suggestion);
+    // Les difficultés des morceaux se calculent en arrière-plan : on n'attend pas indéfiniment.
+    const timer = setTimeout(() => greet(null), 2500);
+    return () => clearTimeout(timer);
+  }, [suggestion, firstVisitToday, day, react]);
 
   const handlePlay = (item) => {
     countPlay(item.key);
@@ -1723,7 +1756,17 @@ export default function SongsPage() {
 
         </section>
 
-
+        <CoachPanel layout="wide" className="home-coach" idleText={welcome.text}>
+          {suggestion && (
+            <button
+              type="button"
+              className="home-coach__play"
+              onClick={() => handleStartPractice({ key: suggestion.key })}
+            >
+              🎹 S'entraîner sur « {suggestion.title} »
+            </button>
+          )}
+        </CoachPanel>
 
         {/* Onglets : le catalogue, ou les morceaux ajoutés par l'utilisateur */}
         <div className="library-tabs" role="tablist" aria-label="Bibliothèque">
@@ -1985,4 +2028,23 @@ export default function SongsPage() {
       )}
     </div>
   );
+}
+
+// Première visite de l'accueil aujourd'hui ? (Reachy ne parle à voix haute qu'à ce moment-là.)
+const LAST_VISIT_KEY = "breachy.coach.lastVisit";
+
+function isFirstVisitToday() {
+  try {
+    return localStorage.getItem(LAST_VISIT_KEY) !== new Date().toDateString();
+  } catch {
+    return false;
+  }
+}
+
+function rememberVisitToday() {
+  try {
+    localStorage.setItem(LAST_VISIT_KEY, new Date().toDateString());
+  } catch {
+    // stockage indisponible : Reachy reparlera à la prochaine visite
+  }
 }

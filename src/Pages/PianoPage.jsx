@@ -8,6 +8,8 @@ import { NoteScroller, getSongDuration } from '../Components/Notes_scroller'
 import GameOverlay from '../Components/game/GameOverlay.jsx'
 import { NOTE_POINTS, heatLevel, multiplierFor } from '../Components/game/streakTiers.js'
 import { ResultsModal } from '../Components/results'
+import { CoachPanel, TRAINING_RULES, useCoach } from '../Components/coach'
+import { useTrainingCoach } from '../Components/coach/useTrainingCoach.js'
 import { useMusic } from '../hooks/useMusic.js'
 import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
@@ -158,6 +160,8 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
   const windowBase = hasSong ? windowAt(plan.segments, clock.time) : undefined
   const done = (record, id, time) => record[id] !== undefined && record[id] <= time
 
+  const { react } = useCoach()
+
   const piano = usePiano({
     windowBase,
     onNoteOn: (midi, { time }) => {
@@ -177,6 +181,9 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
       }
       if (note) setHits((h) => ({ ...h, [note.id]: songTime }))
       else if (nearest && !done(wrongs, nearest.id, songTime)) setWrongs((w) => ({ ...w, [nearest.id]: songTime }))
+      // Reachy réagit tout de suite à la touche frappée.
+      if (note) react('hit', TRAINING_RULES.hit({ precision: precision((songTime - note.start) * 1000) }))
+      else react('miss', TRAINING_RULES.miss())
       setFlashes((f) => ({ ...f, [midi]: { kind: note ? 'hit' : 'miss', until: songTime + FLASH } }))
     },
   })
@@ -284,6 +291,21 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     saveResult(musicId, { successPercent, stars, score: results.score })
   }, [results, musicId])
 
+  // Reachy, le coach : départ, pauses, séries, passages difficiles et bilan.
+  const { finish } = useTrainingCoach({
+    title,
+    hasSong,
+    status: clock.status,
+    streak,
+    hitCount,
+    missCount,
+    results,
+    notes,
+    bpm: tempo?.bpm,
+    getSongTime: () => clock.toSongTime(performance.now()),
+    musicId,
+  })
+
   // Vitesse juste en dessous de l'actuelle, proposée à la fin si le morceau était trop dur.
   const slowerSpeed = [...SPEEDS].reverse().find((s) => s < clock.speed) ?? null
 
@@ -328,6 +350,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
 
       <aside className="piano-page__side">
         {sidebar}
+        <CoachPanel className="piano-page__coach" talkToggle idleText={hasSong ? null : 'Choisis un morceau sur l\'accueil, je t\'accompagne.'} />
         {hasSong && (
           <div className="piano-page__points" aria-live="polite">
             <p className="piano-page__points-line">
@@ -361,6 +384,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
       {results && (
         <ResultsModal
           results={results}
+          coach={<CoachPanel title="Le bilan de Reachy" idleText={finish?.bubble} />}
           onRestart={clock.restart}
           onQuit={() => navigate('/')}
           slowerSpeed={slowerSpeed}

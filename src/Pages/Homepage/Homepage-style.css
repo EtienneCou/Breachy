@@ -1390,3 +1390,18 @@
           }
 
         }
+/* Reachy, le coach, sous le titre de l'accueil */
+.home-coach { margin-bottom: 18px; }
+.home-coach__play {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  background: #1677ff;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.home-coach__play:hover { background: #0d6ce8; }
+.home-coach__play:focus-visible { outline: 3px solid #93c5fd; outline-offset: 2px; }
