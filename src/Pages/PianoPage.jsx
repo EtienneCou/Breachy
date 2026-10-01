@@ -11,6 +11,7 @@ import { ResultsModal } from '../Components/results'
 import { useMusic } from '../hooks/useMusic.js'
 import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
+import { useSongMetronome } from '../hooks/useSongMetronome.js'
 import { melodyFor, splitSong } from '../utils/songParts.js'
 import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
 import { TIMING, computeGameStats } from '../utils/gameStats.js'
@@ -57,6 +58,13 @@ export default function PianoPage() {
 
   const difficult = useMemo(() => isDifficult(melody), [melody])
 
+  // Enregistrement calé sur le métronome : son fichier commence sur un premier temps.
+  // splitSong a pu décaler les notes : la grille du métronome suit ce décalage.
+  const gridOffset = useMemo(() => {
+    const original = melody.length ? notes.find((n) => n.id === melody[0].id) : null
+    return original ? melody[0].start - original.start : 0
+  }, [notes, melody])
+
   // Morceau à une seule partie (ex. Mario, Pirates) : il n'y a pas d'autres instruments,
   // alors l'accompagnement joue la mélodie en guide, doucement, au son d'un clavier.
   const guided = backing.length === 0 && melody.length > 0
@@ -84,12 +92,16 @@ export default function PianoPage() {
       notes={melody}
       backing={accompaniment}
       sidebar={songInfo}
+      tempo={music?.tempo ?? null}
+      gridOffset={gridOffset}
     />
   )
 }
 
-function PianoSession({ musicId, title, notes, backing, sidebar }) {
+function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffset }) {
   const navigate = useNavigate()
+  // Métronome : seulement pour les morceaux qui ont un tempo, et coupé tant que le joueur ne l'active pas.
+  const [metronomeOn, setMetronomeOn] = useState(false)
 
   // Démarre le moteur audio dès la première interaction avec la page, pour que
   // les premières touches jouées sonnent tout de suite.
@@ -142,6 +154,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar }) {
 
   const clock = useSongClock(duration, { leadIn: hasSong ? LEAD_IN : 0 })
   useBackingTrack(backing, clock)
+  useSongMetronome(tempo, clock, { enabled: metronomeOn, offset: gridOffset })
   const windowBase = hasSong ? windowAt(plan.segments, clock.time) : undefined
   const done = (record, id, time) => record[id] !== undefined && record[id] <= time
 
@@ -325,6 +338,22 @@ function PianoSession({ musicId, title, notes, backing, sidebar }) {
               <span className="piano-page__score-miss">✗ {missCount} ratée{missCount > 1 ? 's' : ''}</span>
             </p>
           </div>
+        )}
+        {tempo && (
+          <button
+            type="button"
+            className={`piano-page__metronome${metronomeOn ? ' is-on' : ''}`}
+            onClick={(e) => {
+              setMetronomeOn((on) => !on)
+              e.currentTarget.blur() // Entrée reste le raccourci Jouer / Pause
+            }}
+            aria-pressed={metronomeOn}
+          >
+            <span className="piano-page__metronome-label">Métronome</span>
+            <span className="piano-page__metronome-state">
+              {metronomeOn ? 'Activé' : 'Coupé'} · {tempo.bpm} BPM, {tempo.signature}
+            </span>
+          </button>
         )}
         <TransportBar className="piano-page__transport" clock={clock} piano={piano} accompaniment />
       </aside>

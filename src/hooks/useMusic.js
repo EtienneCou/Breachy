@@ -11,7 +11,8 @@ export const USER_SONG_PREFIX = 'user:'
  * - un morceau du catalogue de l'accueil (resources/catalog.js) qui a une partition (`musicItem`)
  * - un morceau de data/musicData.js
  * - `user:<id>` : un fichier MIDI ajouté par l'utilisateur (Services/MidiDatabase)
- * Retourne { music: { id, label }, notes, status: 'loading' | 'ready' | 'error' | 'unknown' }.
+ * Retourne { music: { id, label, tempo }, notes, status: 'loading' | 'ready' | 'error' | 'unknown' }.
+ * `tempo` : { bpm, signature } pour un enregistrement du jeu libre calé sur le métronome, sinon null.
  */
 export function useMusic(musicId) {
   const [loaded, setLoaded] = useState({ id: null, music: null, notes: [], status: 'loading' })
@@ -25,7 +26,7 @@ export function useMusic(musicId) {
         if (!found) return finish({ music: null, notes: [], status: 'unknown' })
         try {
           const notes = await loadMusic(found.item)
-          finish({ music: { id: musicId, label: found.label }, notes, status: 'ready' })
+          finish({ music: { id: musicId, label: found.label, tempo: found.tempo ?? null }, notes, status: 'ready' })
         } catch {
           finish({ music: { id: musicId, label: found.label }, notes: [], status: 'error' })
         } finally {
@@ -57,7 +58,7 @@ export async function loadSongNotes(musicId) {
   }
 }
 
-// Trouve de quoi charger le morceau : { item (format loadMusic), label, cleanup? } ou null.
+// Trouve de quoi charger le morceau : { item (format loadMusic), label, tempo?, cleanup? } ou null.
 async function resolveMusic(id) {
   if (!id) return null
 
@@ -68,6 +69,7 @@ async function resolveMusic(id) {
     return {
       item: { id, label: song.title, type: 'midi', url },
       label: song.title,
+      tempo: song.tempo, // enregistrements du jeu libre calés sur le métronome
       cleanup: () => URL.revokeObjectURL(url),
     }
   }

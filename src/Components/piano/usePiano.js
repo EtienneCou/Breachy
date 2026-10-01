@@ -88,6 +88,8 @@ export function usePiano({
 
   const handleKeyDown = useEffectEvent((e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return
+    // Saisie de texte (ex. nom d'un enregistrement) : le clavier écrit, il ne joue pas.
+    if (e.target instanceof HTMLElement && e.target.closest('textarea, input[type="text"], input[type="search"]')) return
     const inField = e.target instanceof HTMLElement && e.target.closest('input, select, textarea')
     if (inField && !(e.code in keymap.bindings)) return
 

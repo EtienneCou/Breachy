@@ -5,6 +5,9 @@ import { midiToFreq } from './notes.js'
 // General MIDI (gmSynth) dès qu'elle est chargée ; en attendant (quelques secondes
 // la première fois), un petit synthé de piano prend le relais.
 const PIANO_CHANNEL = 0
+// Réécoute d'un enregistrement (jeu libre) : son propre canal, pour que sa pédale
+// et ses notes ne se mélangent pas avec ce que le joueur joue en même temps.
+export const PLAYBACK_CHANNEL = 1
 const PIANO_PROGRAM = 0 // General MIDI : piano à queue acoustique
 const PIANO_VELOCITY = 100
 
@@ -25,9 +28,18 @@ class PianoSynth {
   pianoBus = null // voie du piano seul
   gm = null // vrai piano (banque de sons), une fois chargé
   volume = 0.7 // volume du piano joué par le joueur, de 0 à 1
-  sustain = false
-  voices = new Map() // midi -> { out, oscs }
-  held = new Set() // notes dont la touche est encore enfoncée
+  // État de chaque canal (le joueur, la réécoute) :
+  // pédale, notes enfoncées, et voix du piano de secours (midi -> { out, oscs })
+  parts = new Map()
+
+  part(channel) {
+    if (!this.parts.has(channel)) this.parts.set(channel, { sustain: false, held: new Set(), voices: new Map() })
+    return this.parts.get(channel)
+  }
+
+  get sustain() {
+    return this.part(PIANO_CHANNEL).sustain
+  }
 
   ensureContext() {
     if (!this.ctx) {
@@ -46,6 +58,7 @@ class PianoSynth {
         .then((synth) => {
           synth.connect(this.pianoBus)
           synth.programChange(PIANO_CHANNEL, PIANO_PROGRAM)
+          synth.programChange(PLAYBACK_CHANNEL, PIANO_PROGRAM)
           this.gm = synth
         })
         .catch((err) => console.warn('Piano : banque de sons indisponible', err))
@@ -59,44 +72,46 @@ class PianoSynth {
     if (this.pianoBus) this.pianoBus.gain.value = v
   }
 
-  setSustain(on) {
-    this.sustain = on
-    this.gm?.controllerChange(PIANO_CHANNEL, SUSTAIN_PEDAL, on ? 127 : 0)
+  setSustain(on, channel = PIANO_CHANNEL) {
+    const part = this.part(channel)
+    part.sustain = on
+    this.gm?.controllerChange(channel, SUSTAIN_PEDAL, on ? 127 : 0)
     if (!on) {
-      for (const midi of [...this.voices.keys()]) if (!this.held.has(midi)) this.stop(midi, 0.15)
+      for (const midi of [...part.voices.keys()]) if (!part.held.has(midi)) this.stop(midi, 0.15, channel)
     }
   }
 
-  noteOn(midi) {
+  noteOn(midi, channel = PIANO_CHANNEL) {
     this.ensureContext()
-    this.held.add(midi)
+    const part = this.part(channel)
+    part.held.add(midi)
     // Le navigateur démarre le son de façon asynchrone : tant qu'il n'est pas prêt,
     // on attend au lieu de jouer dans le vide (sinon les premières notes sont perdues).
     if (this.ctx.state !== 'running') {
       this.ctx.resume().then(() => {
-        this.play(midi)
+        this.play(midi, channel)
         // touche déjà relâchée pendant le démarrage : on joue quand même une note courte
-        if (!this.held.has(midi)) this.release(midi)
+        if (!part.held.has(midi)) this.release(midi, channel)
       })
       return
     }
-    this.play(midi)
+    this.play(midi, channel)
   }
 
-  play(midi) {
-    if (this.gm) this.gm.noteOn(PIANO_CHANNEL, midi, PIANO_VELOCITY)
-    else this.startVoice(midi)
+  play(midi, channel) {
+    if (this.gm) this.gm.noteOn(channel, midi, PIANO_VELOCITY)
+    else this.startVoice(midi, channel)
   }
 
   // Relâchement d'une touche. Avec le vrai piano, la pédale forte est gérée par le
   // synthétiseur lui-même ; avec le piano de secours, on la gère ici.
-  release(midi) {
-    this.gm?.noteOff(PIANO_CHANNEL, midi)
-    if (!this.sustain) this.stop(midi)
+  release(midi, channel) {
+    this.gm?.noteOff(channel, midi)
+    if (!this.part(channel).sustain) this.stop(midi, undefined, channel)
   }
 
-  startVoice(midi) {
-    this.stop(midi, 0.02)
+  startVoice(midi, channel) {
+    this.stop(midi, 0.02, channel)
     const { ctx } = this
     const t = ctx.currentTime
     const f = midiToFreq(midi)
@@ -132,16 +147,17 @@ class PianoSynth {
       osc.stop(t + decay + 0.1)
       return osc
     })
-    this.voices.set(midi, { out, oscs })
+    this.part(channel).voices.set(midi, { out, oscs })
   }
 
-  noteOff(midi) {
-    this.held.delete(midi)
-    this.release(midi)
+  noteOff(midi, channel = PIANO_CHANNEL) {
+    this.part(channel).held.delete(midi)
+    this.release(midi, channel)
   }
 
-  stop(midi, timeConstant = 0.09) {
-    const voice = this.voices.get(midi)
+  stop(midi, timeConstant = 0.09, channel = PIANO_CHANNEL) {
+    const { voices } = this.part(channel)
+    const voice = voices.get(midi)
     if (!voice) return
     const t = this.ctx.currentTime
     voice.out.gain.cancelScheduledValues(t)
@@ -154,7 +170,7 @@ class PianoSynth {
         // déjà arrêté
       }
     }
-    this.voices.delete(midi)
+    voices.delete(midi)
   }
 }
 
