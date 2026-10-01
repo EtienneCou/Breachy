@@ -61,10 +61,9 @@ export default function FreePlayPage() {
       <aside className="piano-page__side piano-page__side--scroll">
         <section className="piano-page__card" aria-label="Jeu libre">
           <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
-            ← Retour à l'accueil
+            Retour
           </button>
           <div className="piano-page__song">
-            <span className="piano-page__field-label">Mode</span>
             <strong className="piano-page__song-title">Jeu libre</strong>
           </div>
           <p className="piano-page__status">

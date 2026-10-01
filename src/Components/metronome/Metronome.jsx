@@ -21,8 +21,8 @@ function tempoName(bpm) {
  * `hints` : { on, off } textes sous l'interrupteur, selon la page.
  */
 const DEFAULT_HINTS = {
-  on: 'Il se lance avec l\'enregistrement et s\'arrête avec lui.',
-  off: 'L\'enregistrement part sans métronome.',
+  on: '',
+  off: '',
 }
 
 export default function Metronome({ metronome, locked = false, signatureLocked = false, hints = DEFAULT_HINTS, className = '' }) {
@@ -40,12 +40,11 @@ export default function Metronome({ metronome, locked = false, signatureLocked =
           onClick={m.toggle}
         >
           <span className="metronome__switch-track" aria-hidden="true"><span /></span>
-          {m.enabled ? 'Activé' : 'Désactivé'}
         </button>
       </header>
-      <p className="metronome__muted metronome__hint">
-        {m.enabled ? hints.on : hints.off}
-      </p>
+      {(m.enabled ? hints.on : hints.off) && (
+        <p className="metronome__muted metronome__hint">{m.enabled ? hints.on : hints.off}</p>
+      )}
 
       {/* Essai : l'entendre pour régler le tempo, hors enregistrement */}
       {!m.busy && (
@@ -85,8 +84,6 @@ export default function Metronome({ metronome, locked = false, signatureLocked =
         onPointerUp={(e) => e.currentTarget.blur()}
         aria-label="Tempo en battements par minute"
       />
-
-      {locked && <p className="metronome__muted metronome__locked">🔒 Tempo calé sur la prise en cours</p>}
 
       <details className="metronome__more">
         <summary>Réglages</summary>
