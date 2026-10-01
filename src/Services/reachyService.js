@@ -59,45 +59,63 @@ const sleep = (ms) =>
 export async function neutral() {
   return sendMove({
     antennas: [0, 0],
+    body_yaw: 0,
+
     pitch: 0,
     roll: 0,
     yaw: 0,
-    duration: 0.4,
-  });
+
+    duration: 1.5,
+    interpolation: "minjerk",
+  })
 }
 
 export async function correctReaction() {
-  // Petit hochement positif
   await sendMove({
-    antennas: [8, 8],
-    pitch: -5,
-    duration: 0.18,
-  });
+    antennas: [6, -6],
+    body_yaw: 0,
 
-  await sleep(180);
+    pitch: 0,
+    roll: 0,
+    yaw: 0,
+
+    duration: 1.4,
+    interpolation: "minjerk",
+  })
+
+  await sleep(500)
 
   await sendMove({
-    antennas: [12, 12],
-    pitch: 3,
-    duration: 0.18,
-  });
+    antennas: [-6, 6],
+    body_yaw: 0,
 
-  await sleep(180);
+    pitch: 0,
+    roll: 0,
+    yaw: 0,
 
-  await neutral();
+    duration: 1.4,
+    interpolation: "minjerk",
+  })
+
+  await sleep(400)
+
+  await neutral()
 }
-
 export async function wrongReaction() {
   await sendMove({
-    antennas: [-5, 5],
-    roll: 4,
-    yaw: -5,
-    duration: 0.25,
-  });
+    antennas: [0, 0],
 
-  await sleep(300);
+    pitch: 0,
+    roll: 1.5,
+    yaw: -1.5,
 
-  await neutral();
+    duration: 1.5,
+    interpolation: "minjerk",
+  })
+
+  await sleep(500)
+
+  await neutral()
 }
 
 export async function successReaction() {

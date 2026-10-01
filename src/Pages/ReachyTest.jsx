@@ -1,7 +1,12 @@
-import React from "react";
+import React, { useState } from "react"
 
-import useReachy from
-  "../hooks/useReachy";
+import useReachy from "../hooks/useReachy"
+
+import {
+  playBravo,
+  playEncouragement,
+} from "../Services/audioService"
+
 
 export default function ReachyTest() {
   const {
@@ -10,7 +15,69 @@ export default function ReachyTest() {
     wrong,
     success,
     neutral,
-  } = useReachy();
+  } = useReachy()
+
+  const [audioMessage, setAudioMessage] =
+    useState("")
+
+
+  const testBravo = async () => {
+    try {
+      setAudioMessage(
+        "Lecture de Bravo..."
+      )
+
+      await playBravo()
+
+      setAudioMessage(
+        "🔊 Bravo envoyé à Reachy"
+      )
+    } catch (error) {
+      console.error(error)
+
+      setAudioMessage(
+        "❌ Erreur audio Bravo"
+      )
+    }
+  }
+
+
+  const testEncouragement = async () => {
+    try {
+      setAudioMessage(
+        "Lecture encouragement..."
+      )
+
+      await playEncouragement()
+
+      setAudioMessage(
+        "🔊 Encouragement envoyé à Reachy"
+      )
+    } catch (error) {
+      console.error(error)
+
+      setAudioMessage(
+        "❌ Erreur audio encouragement"
+      )
+    }
+  }
+
+
+const testGoodReaction = () => {
+  playBravo().catch(console.error)
+
+  setTimeout(() => {
+    correct()
+  }, 100)
+}
+const testWrongReaction = () => {
+  playEncouragement().catch(console.error)
+
+  setTimeout(() => {
+    wrong()
+  }, 100)
+}
+
 
   return (
     <div
@@ -28,33 +95,114 @@ export default function ReachyTest() {
           : "🔴 Reachy non connecté"}
       </p>
 
-      <button
-        onClick={correct}
-        disabled={!connected}
-      >
-        ✅ Bonne note
-      </button>
 
-      <button
-        onClick={wrong}
-        disabled={!connected}
-      >
-        ❌ Mauvaise note
-      </button>
+      <h2>
+        Test mouvements
+      </h2>
 
-      <button
-        onClick={success}
-        disabled={!connected}
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          flexWrap: "wrap",
+          marginBottom: "30px",
+        }}
       >
-        🎉 Réussite
-      </button>
+        <button
+          onClick={correct}
+          disabled={!connected}
+        >
+          ✅ Bonne note
+        </button>
 
-      <button
-        onClick={neutral}
-        disabled={!connected}
+        <button
+          onClick={wrong}
+          disabled={!connected}
+        >
+          ❌ Mauvaise note
+        </button>
+
+        <button
+          onClick={success}
+          disabled={!connected}
+        >
+          🎉 Réussite
+        </button>
+
+        <button
+          onClick={neutral}
+          disabled={!connected}
+        >
+          🤖 Neutre
+        </button>
+      </div>
+
+
+      <h2>
+        Test audio
+      </h2>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          flexWrap: "wrap",
+          marginBottom: "30px",
+        }}
       >
-        🤖 Neutre
-      </button>
+        <button
+          onClick={testBravo}
+        >
+          🔊 Tester "Bravo"
+        </button>
+
+        <button
+          onClick={testEncouragement}
+        >
+          🔊 Tester "Courage"
+        </button>
+      </div>
+
+
+      <h2>
+        Test complet
+      </h2>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          onClick={testGoodReaction}
+          disabled={!connected}
+        >
+          🤖 + 🔊
+          10 bonnes notes
+        </button>
+
+        <button
+          onClick={testWrongReaction}
+          disabled={!connected}
+        >
+          🤖 + 🔊
+          10 mauvaises notes
+        </button>
+      </div>
+
+
+      {audioMessage && (
+        <p
+          style={{
+            marginTop: "30px",
+            fontWeight: "bold",
+          }}
+        >
+          {audioMessage}
+        </p>
+      )}
     </div>
-  );
+  )
 }
