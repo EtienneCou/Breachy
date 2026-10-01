@@ -529,6 +529,7 @@
 .piano-page .recorder { width: 100%; min-width: 0; overflow: hidden; }
 .piano-page .recorder__buttons { width: 100%; min-width: 0; }
 .piano-page .recorder__btn { min-width: 0; padding: 6px 6px; font-size: 0.78rem; }
+.piano-page .recorder__btn--icon { flex: 0 0 36px; width: 36px; min-width: 36px; padding: 0; }
 .piano-page .metronome__tempo { grid-template-columns: 28px minmax(0, 1fr) 28px; min-width: 0; }
 .piano-page .metronome__step { width: 28px; height: 28px; padding: 0; }
 .piano-page .metronome__signatures { grid-template-columns: repeat(4, minmax(0, 1fr)); min-width: 0; }
