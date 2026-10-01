@@ -61,6 +61,19 @@ export function melodyFor(musicId, notes) {
 }
 
 /**
+ * Partie que le joueur joue au piano. Un morceau composé dans le Studio indique
+ * lui-même sa partie (`practiceTrack` : { track, label }, la première piste piano),
+ * ou null s'il n'a pas de piste piano : on ne peut alors pas s'entraîner dessus.
+ * Les autres morceaux passent par melodyFor.
+ * Retourne { ids, label, playable }.
+ */
+export function practicePart(musicId, notes, practiceTrack) {
+  if (practiceTrack === null) return { ids: [], label: null, playable: false }
+  if (practiceTrack) return { ids: [String(practiceTrack.track)], label: practiceTrack.label, playable: true, fromStudio: true }
+  return { ...melodyFor(musicId, notes), playable: true }
+}
+
+/**
  * Sépare le morceau en deux :
  * - melody   : la partie que le joueur joue au piano (pistes `partIds`, ou tout le
  *              morceau s'il n'a qu'une partie)

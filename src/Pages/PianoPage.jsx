@@ -14,7 +14,7 @@ import { useMusic } from '../hooks/useMusic.js'
 import { SPEEDS, useSongClock } from '../hooks/useSongClock.js'
 import { useBackingTrack } from '../hooks/useBackingTrack.js'
 import { useSongMetronome } from '../hooks/useSongMetronome.js'
-import { melodyFor, splitSong } from '../utils/songParts.js'
+import { practicePart, splitSong } from '../utils/songParts.js'
 import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
 import { TIMING, computeGameStats } from '../utils/gameStats.js'
 import { saveResult } from '../utils/bestScores.js'
@@ -53,8 +53,9 @@ export default function PianoPage() {
   const { music, notes, status } = useMusic(musicId)
   const songImage = songsCatalog.find((song) => song.id === musicId)?.image
 
-  // Pour l'instant, le joueur joue toujours la mélodie, au piano.
-  const melodyPart = useMemo(() => melodyFor(musicId, notes), [musicId, notes])
+  // Le joueur joue la mélodie au piano, ou, pour un morceau du Studio, sa première piste piano.
+  const practiceTrack = music?.practiceTrack
+  const melodyPart = useMemo(() => practicePart(musicId, notes, practiceTrack), [musicId, notes, practiceTrack])
   const { melody, backing } = useMemo(
     () => splitSong(notes, melodyPart.ids, { leadIn: LEAD_IN }),
     [notes, melodyPart],
@@ -82,6 +83,8 @@ export default function PianoPage() {
       title={music?.label}
       image={songImage}
       melodyLabel={melodyPart?.label}
+      fromStudio={Boolean(melodyPart.fromStudio)}
+      noPianoPart={!melodyPart.playable}
       difficult={difficult}
       guided={guided}
       status={status}
@@ -426,7 +429,7 @@ function slotInfo(base) {
 
 const isWhite = (midi) => ![1, 3, 6, 8, 10].includes(midi % 12)
 
-function SongInfo({ title, image, melodyLabel, difficult, guided, status }) {
+function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficult, guided, status }) {
   const navigate = useNavigate()
   return (
     <section className="piano-page__card" aria-label="Morceau">
@@ -442,10 +445,22 @@ function SongInfo({ title, image, melodyLabel, difficult, guided, status }) {
       {status === 'ready' && difficult && (
         <p className="piano-page__badge">Morceau difficile : beaucoup de notes rapides</p>
       )}
-      {status === 'ready' && melodyLabel && (
+      {/* Morceau du Studio : la piste jouée est bien mise en avant */}
+      {status === 'ready' && fromStudio && (
+        <p className="piano-page__part">
+          🎯 Tu joues <strong>{melodyLabel}</strong>
+          <span>La première piste piano de ton Studio. Les autres pistes t'accompagnent.</span>
+        </p>
+      )}
+      {status === 'ready' && noPianoPart && (
+        <p className="piano-page__status piano-page__status--error">
+          Ce morceau du Studio n'a pas de piste piano : il n'y a rien à jouer. Ajoute une piste piano dans le Studio pour t'entraîner dessus.
+        </p>
+      )}
+      {status === 'ready' && melodyLabel && !fromStudio && (
         <p className="piano-page__status">Tu joues la mélodie ({melodyLabel}) au piano, les autres instruments t'accompagnent.</p>
       )}
-      {status === 'ready' && guided && (
+      {status === 'ready' && guided && !fromStudio && (
         <p className="piano-page__status">Ce morceau n'a qu'une partie : tu entends la mélodie en guide. Baisse « Accompagnement » pour jouer seul.</p>
       )}
       {status === 'loading' && <p className="piano-page__status">Chargement…</p>}

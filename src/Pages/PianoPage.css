@@ -322,6 +322,21 @@
   .piano-page__coach { grid-column: 1 / -1; }
 }
 
+/* Morceau du Studio : la piste que le joueur joue (toujours visible) */
+.piano-page__part {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: #ffd166;
+  background: rgba(249, 115, 22, 0.14);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  border-radius: 10px;
+}
+.piano-page__part span { font-size: 0.74rem; color: #c9bfb4; }
+
 /* ---------- Thème anthracite / braise partagé par l'entraînement et le jeu libre ---------- */
 .piano-page {
   --warm-red: #ef4444;
