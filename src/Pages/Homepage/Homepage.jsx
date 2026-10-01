@@ -113,7 +113,7 @@ export default function SongsPage() {
     key: `user:${song.id}`,
     song,
     title: song.title,
-    subtitle: song.source === "recording" ? "Mon enregistrement" : "Ma musique",
+    subtitle: song.origin === "studio" ? "Studio" : song.source === "recording" ? "Mon enregistrement" : "Ma musique",
     playable: true,
     isNew: song.isNew,
   }));
@@ -1687,6 +1687,10 @@ export default function SongsPage() {
           <div className="home-header__actions">
             <button type="button" className="free-play-btn" onClick={() => navigate("/jeu-libre")}>
               Jeu libre
+            </button>
+            {/* Studio : pistes en boucle, plusieurs instruments */}
+            <button type="button" className="free-play-btn" onClick={() => navigate("/studio")}>
+              Studio
             </button>
             <button type="button" className="add-music-btn" onClick={() => setIsUploadOpen(true)}>
               + Ajouter mes musiques

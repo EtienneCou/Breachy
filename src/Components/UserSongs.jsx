@@ -149,11 +149,7 @@ export default function UserSongs({
           <SongCard
             key={song.id}
             title={song.title}
-            subtitle={
-              isRecordings
-                ? `Mon enregistrement${song.tempo ? ` · ${song.tempo.bpm} BPM` : ""}`
-                : "Ma musique"
-            }
+            subtitle={subtitleOf(song)}
             musicId={`user:${song.id}`}
             info={songInfos[`user:${song.id}`]}
             isNew={song.isNew}
@@ -172,6 +168,17 @@ export default function UserSongs({
 }
 
 
+
+// Sous-titre d'une carte. Morceau du Studio : la piste jouée à l'entraînement.
+function subtitleOf(song) {
+  if (song.origin === "studio") {
+    return song.practiceTrack
+      ? `Studio · 🎯 tu joues la ${song.practiceTrack.label.toLowerCase()}`
+      : "Studio · pas de piste piano (écoute seulement)";
+  }
+  if (song.source === "recording") return `Mon enregistrement${song.tempo ? ` · ${song.tempo.bpm} BPM` : ""}`;
+  return "Ma musique";
+}
 
 function Styles() {
   return (
