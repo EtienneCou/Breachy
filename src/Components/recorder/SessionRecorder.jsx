@@ -158,15 +158,12 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
   const progress = playing && duration ? Math.min(1, elapsed / duration) : 0
 
   return (
-    <section className={`recorder ${className}`} aria-label="Enregistrement">
+    <section className={`recorder ${className}`} aria-label="Live">
       <header className="recorder__head">
-        <span className="recorder__title">Enregistrement</span>
+        <span className="recorder__title">Live</span>
         <span className={`recorder__state recorder__state--${status}`} aria-live="polite">
           {status === 'countIn' && 'Décompte'}
           {status === 'recording' && <><span className="recorder__dot" aria-hidden="true" /> REC</>}
-          {status === 'paused' && 'En pause'}
-          {status === 'playing' && 'Lecture'}
-          {status === 'playPaused' && 'Lecture en pause'}
         </span>
       </header>
 
@@ -179,7 +176,6 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
             <span className="recorder__muted"> / {formatTime(duration)}</span>
           </>
         )}
-        {status === 'idle' && <span className="recorder__muted">Aucun enregistrement</span>}
       </p>
 
       {playing && (
@@ -192,9 +188,6 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
           {noteCount} note{noteCount > 1 ? 's' : ''} enregistrée{noteCount > 1 ? 's' : ''}
           {tempo && ` · ${tempo.bpm} BPM, ${tempo.signature}`}
         </p>
-      )}
-      {recording && tempo && (
-        <p className="recorder__muted recorder__info">Calé sur le métronome : {tempo.bpm} BPM, {tempo.signature}</p>
       )}
 
       <div className="recorder__buttons">
@@ -250,10 +243,7 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         <label className="recorder__check">
           <input type="checkbox" checked={countIn} onChange={(e) => changeCountIn(e.target.checked)} />
           <span>
-            Décompte avant d'enregistrer
-            <span className="recorder__hint">
-              {metronome.enabled ? 'Une mesure au tempo du métronome' : '« 3, 2, 1 » puis c\'est parti'}
-            </span>
+            Activer le décompte
           </span>
         </label>
       )}
