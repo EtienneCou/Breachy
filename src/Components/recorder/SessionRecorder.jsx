@@ -186,7 +186,6 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
       {status === 'ready' && (
         <p className="recorder__muted recorder__info">
           {noteCount} note{noteCount > 1 ? 's' : ''} enregistrée{noteCount > 1 ? 's' : ''}
-          {tempo && ` · ${tempo.bpm} BPM, ${tempo.signature}`}
         </p>
       )}
 
@@ -194,7 +193,7 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         {/* Enregistrement */}
         {!recording && !playing && (
           <button type="button" className="recorder__btn recorder__btn--rec" onClick={startNew}>
-            <span className="recorder__dot" aria-hidden="true" /> {hasTake ? 'Nouvel enregistrement' : 'Enregistrer'}
+            <span className="recorder__dot" aria-hidden="true" /> {hasTake ? 'Nouveau' : 'Enregistrer'}
           </button>
         )}
         {status === 'recording' && (
@@ -213,8 +212,16 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
 
         {/* Lecture */}
         {(status === 'ready' || status === 'playPaused') && (
-          <button type="button" className="recorder__btn recorder__btn--play" onClick={playTake}>
-            ▶ {status === 'playPaused' ? 'Reprendre' : 'Écouter'}
+          <button
+            type="button"
+            className="recorder__btn recorder__btn--play recorder__btn--icon"
+            onClick={playTake}
+            aria-label={status === 'playPaused' ? 'Reprendre' : 'Écouter'}
+            title={status === 'playPaused' ? 'Reprendre' : 'Écouter'}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.5v13l10.5-6.5z" />
+            </svg>
           </button>
         )}
         {status === 'playing' && (
@@ -225,16 +232,20 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         )}
         {status === 'ready' && !savedId && !editing && (
           <button type="button" className="recorder__btn recorder__btn--save" onClick={() => setForm({ events, title: defaultTitle() })}>
-            💾 Sauvegarder
+            Save
           </button>
         )}
         {status === 'ready' && (
           <button
             type="button"
-            className="recorder__btn recorder__btn--ghost"
+            className="recorder__btn recorder__btn--ghost recorder__btn--icon"
             onClick={() => (savedId || window.confirm('Effacer l\'enregistrement ? Il n\'a pas été sauvegardé.')) && recorder.clear()}
+            aria-label={savedId ? 'Fermer' : 'Effacer'}
+            title={savedId ? 'Fermer' : 'Effacer'}
           >
-            {savedId ? 'Fermer' : 'Effacer'}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         )}
       </div>
