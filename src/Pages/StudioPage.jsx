@@ -6,36 +6,31 @@ import { playCue } from '../Components/metronome/click.js'
 import TrackList from '../Components/studio/TrackList.jsx'
 import StudioSave from '../Components/studio/StudioSave.jsx'
 import { DRUM_OCTAVE, drumPads, instrumentById } from '../Components/studio/instruments.js'
+import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
+import { useLanguage } from '../context/LanguageContext'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { LOOP_MEASURES, useStudio } from '../hooks/useStudio.js'
 import { useCoachAwake, useRobotMetronome } from '../Components/coach'
 import './StudioPage.css'
 
-const METRONOME_HINTS = {
-  on: 'Il bat pendant la lecture et l\'enregistrement.',
-  off: 'Lecture et enregistrement sans métronome.',
-}
-
-/**
- * Studio : composer en superposant des pistes qui tournent en boucle sur 4, 8, 12
- * ou 16 mesures. On choisit un instrument par piste (piano, guitare, basse,
- * batterie, boîte à rythme…), et on enregistre chaque piste en un seul passage,
- * après une mesure de décompte, pendant que les autres pistes jouent.
- * Ouverte depuis le bouton « Studio » de l'accueil (route /studio).
- */
 export default function StudioPage() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
-  // Le métronome donne le tempo et la mesure de la boucle, et bat (s'il est activé)
-  // tant que la boucle tourne.
   const [busy, setBusy] = useState(false)
-  const [saving, setSaving] = useState(false) // panneau de sauvegarde ouvert
+  const [saving, setSaving] = useState(false)
   const metronome = useMetronome({ play: busy })
   // Reachy bat la mesure quand le métronome sonne.
   useRobotMetronome(metronome)
   // Il reste éveillé tant que la boucle tourne ou que le métronome sonne.
   useCoachAwake(busy || metronome.running)
-  const cues = useRef([]) // bips du décompte quand le métronome est désactivé
+  const cues = useRef([])
+
+  const metronomeHints = {
+    on: t('metronome.studioHintOn'),
+    off: t('metronome.studioHintOff'),
+  }
+
 
   const studio = useStudio({
     bpm: metronome.bpm,
@@ -43,7 +38,6 @@ export default function StudioPage() {
     onLoopStart: (t, { countIn }) => {
       metronome.stopPreview()
       metronome.alignTo(t)
-      // Métronome désactivé : le décompte reste audible, avec des bips doux.
       if (countIn && !metronome.enabled) {
         pianoSynth.ensureContext()
         const beat = 60 / metronome.bpm
@@ -67,7 +61,6 @@ export default function StudioPage() {
     studio.stop()
   }
 
-  // Les instruments se chargent dès la première interaction avec la page.
   const { ensureSynth } = studio
   useEffect(() => {
     const warmUp = () => ensureSynth()
@@ -90,16 +83,16 @@ export default function StudioPage() {
     <main className="studio">
       <div className="studio__main">
         <header className="studio__bar">
-          <h1 className="studio__title">Studio</h1>
+          <h1 className="studio__title">{t('studio.title')}</h1>
 
-          <div className="studio__transport" role="toolbar" aria-label="Lecture de la boucle">
+          <div className="studio__transport" role="toolbar" aria-label={t('transport.toolbarAria')}>
             {busy ? (
               <button type="button" className="studio__btn studio__btn--stop" onClick={stop}>
-                ⏹ {studio.status === 'playing' ? 'Arrêter' : 'Annuler la prise'}
+                ⏹ {studio.status === 'playing' ? t('studio.stop') : t('studio.cancelTake')}
               </button>
             ) : (
               <button type="button" className="studio__btn studio__btn--play" onClick={studio.play} disabled={!hasNotes || !studio.ready}>
-                ▶ Lire la boucle
+                {t('studio.playLoop')}
               </button>
             )}
             {!busy && (
@@ -108,14 +101,14 @@ export default function StudioPage() {
                 className="studio__btn"
                 onClick={() => setSaving(true)}
                 disabled={!hasNotes || saving}
-                title="Ranger le morceau dans « Mes enregistrements », pour l'écouter ou t'entraîner dessus"
+                title={t('studio.saveTooltip')}
               >
-                💾 Sauvegarder
+                {t('studio.save')}
               </button>
             )}
             {studio.canUndo && (
-              <button type="button" className="studio__btn" onClick={studio.undoTake} title="Remettre la piste comme avant la dernière prise">
-                ↶ Annuler la dernière prise
+              <button type="button" className="studio__btn" onClick={studio.undoTake} title={t('studio.undoTooltip')}>
+                {t('studio.undoTake')}
               </button>
             )}
           </div>
@@ -126,15 +119,15 @@ export default function StudioPage() {
             ) : busy ? (
               <>
                 {studio.status === 'recording' && <span className="studio__rec">● REC</span>}
-                Mesure <strong>{measure}</strong>/{measures} · temps <strong>{beatInMeasure}</strong>
+                {t('studio.measurePos', measure, measures, beatInMeasure)}
               </>
             ) : (
-              <span className="studio__muted">{measures} mesures · {loopBeats} temps</span>
+              <span className="studio__muted">{t('studio.loopSummary', measures, loopBeats)}</span>
             )}
           </p>
 
-          <div className="studio__loop" role="radiogroup" aria-label="Longueur de la boucle">
-            <span className="studio__muted">Boucle</span>
+          <div className="studio__loop" role="radiogroup" aria-label={t('studio.loopGroupLabel')}>
+            <span className="studio__muted">{t('studio.loop')}</span>
             {LOOP_MEASURES.map((m) => (
               <button
                 key={m}
@@ -148,7 +141,7 @@ export default function StudioPage() {
                 {m}
               </button>
             ))}
-            <span className="studio__muted">mesures</span>
+            <span className="studio__muted">{t('studio.measures')}</span>
           </div>
         </header>
 
@@ -156,7 +149,7 @@ export default function StudioPage() {
           <StudioSave studio={studio} bpm={metronome.bpm} signature={metronome.signature} onClose={() => setSaving(false)} />
         )}
 
-        {!studio.ready && <p className="studio__loading">Les instruments se chargent au premier clic ou à la première touche…</p>}
+        {!studio.ready && <p className="studio__loading">{t('studio.loading')}</p>}
 
         <div className="studio__tracks">
           <TrackList studio={studio} beatsPerMeasure={beats} onRecord={(id) => studio.record(id, beats)} />
@@ -165,32 +158,33 @@ export default function StudioPage() {
         {studio.selected ? (
           <StudioKeyboard key={`${studio.selected.id}:${studio.selected.instrument}`} studio={studio} />
         ) : (
-          <p className="studio__hint">Ajoute une piste et sélectionne-la pour jouer au clavier.</p>
+          <p className="studio__hint">{t('studio.selectTrackPrompt')}</p>
         )}
       </div>
 
       <aside className="studio__side">
         <section className="studio__card">
-          <button type="button" className="studio__back" onClick={() => navigate('/')}>
-            ← Retour à l'accueil
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
+            <button type="button" className="studio__back" onClick={() => navigate('/')}>
+              {t('common.backHome')}
+            </button>
+            <LanguageToggle />
+          </div>
           <p className="studio__muted studio__help">
-            1. Ajoute une piste et choisis son instrument.<br />
-            2. Clique sur <span className="studio__dot" aria-hidden="true" /> : une mesure de décompte, puis la boucle s'enregistre une fois.<br />
-            3. Ajoute d'autres pistes : les précédentes jouent pendant que tu enregistres.<br />
-            4. <strong>Sauvegarde</strong> pour retrouver le morceau dans « Mes enregistrements ». À l'entraînement, tu joues la première piste piano 🎯.
+            {t('studio.help1')}<br />
+            {t('studio.help2')}<br />
+            {t('studio.help3')}<br />
+            {t('studio.help4')}
           </p>
         </section>
-        <Metronome metronome={metronome} locked={busy} signatureLocked={hasNotes} hints={METRONOME_HINTS} />
+        <Metronome metronome={metronome} locked={busy} signatureLocked={hasNotes} hints={metronomeHints} />
       </aside>
     </main>
   )
 }
 
-// Clavier de la piste sélectionnée. Monté à nouveau à chaque changement de piste
-// ou d'instrument, pour repartir sur la bonne octave. Les percussions ont un clavier
-// fixe, avec le nom du son sur chaque touche.
 function StudioKeyboard({ studio }) {
+  const { t } = useLanguage()
   const instrument = instrumentById(studio.selected.instrument)
   const drums = Boolean(instrument.drums)
 
@@ -217,23 +211,23 @@ function StudioKeyboard({ studio }) {
   const names = useMemo(() => (pads ? Object.fromEntries(Object.entries(pads).map(([k, p]) => [k, p.name])) : undefined), [pads])
 
   return (
-    <section className="studio__keyboard" style={{ '--track-color': instrument.color }} aria-label={`Clavier : ${instrument.label}`}>
+    <section className="studio__keyboard" style={{ '--track-color': instrument.color }} aria-label={`Keyboard: ${instrument.label}`}>
       <div className="studio__keyboard-bar">
         <span className="studio__keyboard-title">
           <span aria-hidden="true">{instrument.icon}</span> {instrument.label}
         </span>
         {piano.canShiftOctave && (
-          <span className="studio__octave" role="group" aria-label="Octave">
-            <button type="button" className="studio__chip" onClick={() => piano.setOctave((o) => o - 1)} disabled={!piano.canGoLower} aria-label="Octave plus grave">
+          <span className="studio__octave" role="group" aria-label={t('transport.octaveHeading')}>
+            <button type="button" className="studio__chip" onClick={() => piano.setOctave((o) => o - 1)} disabled={!piano.canGoLower} aria-label={t('studio.octaveLower')}>
               − <kbd>{piano.octaveKeys.down}</kbd>
             </button>
-            <span className="studio__muted">Octave {piano.octave}</span>
-            <button type="button" className="studio__chip" onClick={() => piano.setOctave((o) => o + 1)} disabled={!piano.canGoHigher} aria-label="Octave plus aiguë">
+            <span className="studio__muted">{t('transport.octaveHeading')} {piano.octave}</span>
+            <button type="button" className="studio__chip" onClick={() => piano.setOctave((o) => o + 1)} disabled={!piano.canGoHigher} aria-label={t('studio.octaveHigher')}>
               + <kbd>{piano.octaveKeys.up}</kbd>
             </button>
           </span>
         )}
-        {drums && <span className="studio__muted">Chaque touche joue un son du kit</span>}
+        {drums && <span className="studio__muted">{t('studio.drumPadHint')}</span>}
       </div>
       <Piano
         className="studio__piano"

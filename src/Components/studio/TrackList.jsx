@@ -2,23 +2,19 @@ import { useState } from 'react'
 import { MAX_TRACKS, isAudible } from '../../hooks/useStudio.js'
 import { STUDIO_INSTRUMENTS, instrumentById } from './instruments.js'
 import { practiceTrackNumber } from '../../utils/studioToMidi.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './TrackList.css'
 
-/**
- * Pistes du Studio : une ligne par piste (instrument, son, aperçu des notes sur la
- * boucle, enregistrer, muet, solo, volume, supprimer) et l'ajout d'une piste.
- * Cliquer sur une piste la sélectionne : c'est elle que joue le clavier.
- * `studio` est l'objet renvoyé par useStudio().
- */
 export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
+  const { t } = useLanguage()
   const { tracks, selectedId, status, recordingId, loopBeats, position } = studio
   const busy = status !== 'stopped'
   const [adding, setAdding] = useState(tracks.length === 0)
-  const practiceNumber = practiceTrackNumber(tracks) // piste jouée à l'entraînement
+  const practiceNumber = practiceTrackNumber(tracks)
 
   return (
-    <section className="tracks" aria-label="Pistes">
-      {tracks.length === 0 && !adding && <p className="tracks__empty">Aucune piste pour l'instant.</p>}
+    <section className="tracks" aria-label="Tracks">
+      {tracks.length === 0 && !adding && <p className="tracks__empty">{t('studio.noTracks')}</p>}
 
       <ol className="tracks__list">
         {tracks.map((track, index) => {
@@ -39,8 +35,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                     {index + 1}. {instrument.label}
                   </span>
                   {practiceNumber === index + 1 && (
-                    <span className="track__practice" title="À l'entraînement, c'est cette piste que tu joues au piano">
-                      🎯 Jouée à l'entraînement
+                    <span className="track__practice" title={t('studio.practiceTrackTitle')}>
+                      {t('studio.playedInPractice')}
                     </span>
                   )}
                   {instrument.variants.length > 1 ? (
@@ -49,7 +45,7 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                       value={track.variant}
                       disabled={busy}
                       onChange={(e) => studio.updateTrack(track.id, { variant: e.target.value })}
-                      aria-label={`Son de la piste ${index + 1}`}
+                      aria-label={`Sound ${index + 1}`}
                     >
                       {instrument.variants.map((v) => (
                         <option key={v.id} value={v.id}>{v.label}</option>
@@ -66,6 +62,7 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                 loopBeats={loopBeats}
                 beatsPerMeasure={beatsPerMeasure}
                 playhead={busy && position >= 0 ? position / loopBeats : null}
+                emptyText={t('studio.emptyTrackRoll')}
               />
 
               <div className="track__controls">
@@ -78,8 +75,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                     studio.select(track.id)
                     onRecord(track.id)
                   }}
-                  title={track.notes.length ? 'Réenregistrer la piste' : 'Enregistrer la piste'}
-                  aria-label={`Enregistrer la piste ${index + 1}`}
+                  title={track.notes.length ? t('studio.reRecordTrack') : t('studio.recordTrack')}
+                  aria-label={`Record track ${index + 1}`}
                 >
                   <span className="track__dot" aria-hidden="true" />
                 </button>
@@ -88,7 +85,7 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                   className={`track__btn${track.muted ? ' is-on' : ''}`}
                   onClick={() => studio.updateTrack(track.id, { muted: !track.muted })}
                   aria-pressed={track.muted}
-                  title="Muet"
+                  title={t('studio.mute')}
                 >
                   M
                 </button>
@@ -97,7 +94,7 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                   className={`track__btn track__btn--solo${track.solo ? ' is-on' : ''}`}
                   onClick={() => studio.updateTrack(track.id, { solo: !track.solo })}
                   aria-pressed={track.solo}
-                  title="Solo : n'entendre que les pistes en solo"
+                  title={t('studio.solo')}
                 >
                   S
                 </button>
@@ -110,8 +107,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                   value={track.volume}
                   onChange={(e) => studio.updateTrack(track.id, { volume: Number(e.target.value) })}
                   onPointerUp={(e) => e.currentTarget.blur()}
-                  aria-label={`Volume de la piste ${index + 1}`}
-                  title={`Volume ${Math.round(track.volume * 100)} %`}
+                  aria-label={`Volume track ${index + 1}`}
+                  title={`${t('transport.backingHeading')} ${Math.round(track.volume * 100)} %`}
                 />
                 <button
                   type="button"
@@ -119,10 +116,10 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                   disabled={busy}
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (!track.notes.length || window.confirm(`Supprimer la piste ${index + 1} (${instrument.label}) ?`)) studio.removeTrack(track.id)
+                    if (!track.notes.length || window.confirm(t('studio.confirmDeleteTrack', index + 1, instrument.label))) studio.removeTrack(track.id)
                   }}
-                  aria-label={`Supprimer la piste ${index + 1}`}
-                  title="Supprimer la piste"
+                  aria-label={`Delete track ${index + 1}`}
+                  title={t('studio.deleteTrack')}
                 >
                   ×
                 </button>
@@ -135,8 +132,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
       {/* Ajout d'une piste : choix de l'instrument */}
       {tracks.length < MAX_TRACKS &&
         (adding ? (
-          <div className="tracks__picker" role="group" aria-label="Instrument de la nouvelle piste">
-            <span className="track__muted">Instrument de la nouvelle piste :</span>
+          <div className="tracks__picker" role="group" aria-label={t('studio.newTrackInstrument')}>
+            <span className="track__muted">{t('studio.newTrackInstrument')}</span>
             <div className="tracks__instruments">
               {STUDIO_INSTRUMENTS.map((i) => (
                 <button
@@ -154,21 +151,19 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
               ))}
             </div>
             {tracks.length > 0 && (
-              <button type="button" className="track__btn tracks__cancel" onClick={() => setAdding(false)}>Annuler</button>
+              <button type="button" className="track__btn tracks__cancel" onClick={() => setAdding(false)}>{t('common.cancel')}</button>
             )}
           </div>
         ) : (
           <button type="button" className="tracks__add" disabled={busy} onClick={() => setAdding(true)}>
-            + Ajouter une piste
+            {t('studio.addTrack')}
           </button>
         ))}
     </section>
   )
 }
 
-// Aperçu des notes d'une piste sur toute la boucle : les mesures en fond, chaque
-// note à sa place (hauteur = note, de la plus grave à la plus aiguë de la piste).
-function TrackRoll({ track, loopBeats, beatsPerMeasure, playhead }) {
+function TrackRoll({ track, loopBeats, beatsPerMeasure, playhead, emptyText }) {
   const notes = track.notes.filter((n) => n.start < loopBeats)
   const pitches = notes.map((n) => n.note)
   const low = Math.min(...pitches)
@@ -187,7 +182,7 @@ function TrackRoll({ track, loopBeats, beatsPerMeasure, playhead }) {
           }}
         />
       ))}
-      {notes.length === 0 && <span className="track__roll-empty">Vide : clique sur ● pour enregistrer</span>}
+      {notes.length === 0 && <span className="track__roll-empty">{emptyText}</span>}
       {playhead != null && <span className="track__playhead" style={{ left: `${playhead * 100}%` }} />}
     </div>
   )
