@@ -30,7 +30,7 @@ const STATUS_LABELS = {
 export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton coach', idleText, talkToggle = false, children, className = '' }) {
   const coach = useCoach()
   const [open, setOpen] = useState(false)
-  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput, evil, transforming, pokeAvatar } = coach
+  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput, evil, transforming, pokeAvatar, listening } = coach
   const text = bubble?.text ?? idleText
   const robotOn = robotStatus === 'connected'
 
@@ -136,6 +136,7 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
                 🎙 Écoute (démo) : Reachy entend ce qu'on lui dit
               </label>
             )}
+            {settings.listen && LISTEN_SUPPORTED && <p className="coach__help">{listenText(listening ?? { state: 'starting' })}</p>}
           </div>
         )}
       </div>
@@ -145,6 +146,20 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
 
 // Reconnaissance vocale du navigateur (Chrome, Edge) : sans elle, pas d'option d'écoute.
 const LISTEN_SUPPORTED = typeof window !== 'undefined' && Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition)
+
+// Ce que fait l'écoute (démo), en clair
+const LISTEN_ERRORS = {
+  'not-allowed': 'Micro refusé : autorise-le dans la barre d\'adresse du navigateur (icône 🎙 ou 🔒).',
+  'service-not-allowed': 'Le navigateur refuse la reconnaissance vocale (essaie Chrome).',
+  'audio-capture': 'Aucun micro trouvé : vérifie le micro par défaut de Windows.',
+  network: 'Pas de connexion au service de reconnaissance (il faut Internet).',
+  'language-not-supported': 'Le français n\'est pas reconnu par ce navigateur.',
+}
+function listenText({ state, heard, error }) {
+  if (state === 'error') return `⚠️ ${LISTEN_ERRORS[error] ?? `Écoute impossible (${error}).`}`
+  if (state === 'starting') return 'Démarrage de l\'écoute… (accepte le micro si le navigateur le demande)'
+  return heard ? `J'écoute. Dernière chose entendue : « ${heard} »` : 'J\'écoute… Dis « Passe du côté obscur, Reachy ».'
+}
 
 // Niveaux de danse (voir DANCE_LEVELS dans danceEngine.js)
 const DANCE_NAMES = ['Calme', 'Il se laisse porter', 'Ça groove', 'Rock star !']

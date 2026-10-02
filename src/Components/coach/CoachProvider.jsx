@@ -476,29 +476,49 @@ export function CoachProvider({ children }) {
   // Écoute de la phrase secrète (démo) : reconnaissance vocale du navigateur (Chrome, Edge),
   // sur le micro par défaut de l'ordinateur. Elle s'arrête d'elle-même après un silence :
   // on la relance tant que l'écoute est activée.
+  // `listening` : ce que l'écoute fait, affiché dans les réglages pour vérifier pendant la démo
+  // ({ state: 'listening' | 'error', heard, error }, ou null tant qu'elle démarre).
+  const [listening, setListening] = useState(null)
   useEffect(() => {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
     if (!settings.listen || !Recognition) return
     const recognition = new Recognition()
     recognition.lang = 'fr-FR'
     recognition.continuous = true
-    recognition.interimResults = false
+    recognition.interimResults = true // on voit les mots arriver ; la phrase est vérifiée à chaque fois
     let active = true
+    const start = () => {
+      try {
+        recognition.start()
+      } catch {
+        // déjà en route : rien à faire
+      }
+    }
+    recognition.onstart = () => setListening((l) => ({ ...l, state: 'listening', error: null }))
     recognition.onresult = (event) => {
-      const heard = plain(event.results[event.results.length - 1][0].transcript)
-      if (isEvil() ? TO_NICE_WORDS.test(heard) : TO_EVIL_WORDS.test(heard)) transformRef.current()
+      const result = event.results[event.results.length - 1]
+      const text = result[0].transcript.trim()
+      setListening((l) => ({ ...l, heard: text }))
+      const heard = plain(text)
+      if (isEvil() ? TO_NICE_WORDS.test(heard) : TO_EVIL_WORDS.test(heard)) {
+        transformRef.current()
+        recognition.abort() // repart sur une phrase neuve (sinon la même phrase le retransformerait)
+      }
     }
     recognition.onend = () => {
-      if (active) setTimeout(() => active && recognition.start(), 300)
+      if (active) setTimeout(() => active && start(), 300)
     }
     recognition.onerror = (event) => {
-      // Micro refusé : on n'insiste pas (l'écoute reste affichée comme activée).
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') active = false
+      if (event.error === 'no-speech' || event.error === 'aborted') return // silence : on relance
+      // Micro refusé ou service indisponible : on n'insiste pas.
+      if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) active = false
+      setListening((l) => ({ ...l, state: 'error', error: event.error }))
     }
-    recognition.start()
+    start()
     return () => {
       active = false
       recognition.abort()
+      setListening(null)
     }
   }, [settings.listen])
 
@@ -608,8 +628,9 @@ export function CoachProvider({ children }) {
       evil,
       transforming,
       pokeAvatar,
+      listening,
     }),
-    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput, asleep, holdAwake, evil, transforming, pokeAvatar],
+    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput, asleep, holdAwake, evil, transforming, pokeAvatar, listening],
   )
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>
 }
