@@ -12,10 +12,11 @@ import './ResultsModal.css'
  * - onQuit           bouton « Quitter »
  * - slowerSpeed      vitesse plus lente disponible (ex. 0.75), ou null
  * - onRestartSlower  recommencer à `slowerSpeed` : proposé quand la réussite est faible
+ * - coach            bilan du coach Reachy, affiché en haut de la colonne de droite (optionnel)
  */
 const SLOW_DOWN_BELOW = 50 // % de réussite en dessous duquel on propose de ralentir
 
-export default function ResultsModal({ results, onRestart, onQuit, slowerSpeed = null, onRestartSlower }) {
+export default function ResultsModal({ results, onRestart, onQuit, slowerSpeed = null, onRestartSlower, coach = null }) {
   const stats = useMemo(() => computeGameStats(results), [results])
   const [showDetails, setShowDetails] = useState(false)
   const focusRef = useRef(null)
@@ -56,6 +57,8 @@ export default function ResultsModal({ results, onRestart, onQuit, slowerSpeed =
         </div>
 
         <div className="results-modal__side">
+          {/* Bilan du coach Reachy (optionnel) */}
+          {coach}
           <ul className="results-modal__stats">
             {kidStats.map((s) => (
               <li key={s.id} className={`results-modal__stat results-modal__stat--${s.tone}`}>

@@ -1,7 +1,7 @@
 export { default as Piano } from './Piano.jsx'
 export { default as PianoLanes } from './PianoLanes.jsx'
 export { default as PianoStage } from './PianoStage.jsx'
-export { usePiano } from './usePiano.js'
+export { PLAYER_ACTIVITY, usePiano } from './usePiano.js'
 export { PLAYBACK_CHANNEL, pianoSynth } from './synth.js'
 export { backingSynth } from './backingSynth.js'
 export * from './notes.js'

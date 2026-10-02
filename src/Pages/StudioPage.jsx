@@ -8,6 +8,7 @@ import StudioSave from '../Components/studio/StudioSave.jsx'
 import { DRUM_OCTAVE, drumPads, instrumentById } from '../Components/studio/instruments.js'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { LOOP_MEASURES, useStudio } from '../hooks/useStudio.js'
+import { useCoachAwake, useRobotMetronome } from '../Components/coach'
 import './StudioPage.css'
 
 const METRONOME_HINTS = {
@@ -30,6 +31,10 @@ export default function StudioPage() {
   const [busy, setBusy] = useState(false)
   const [saving, setSaving] = useState(false) // panneau de sauvegarde ouvert
   const metronome = useMetronome({ play: busy })
+  // Reachy bat la mesure quand le métronome sonne.
+  useRobotMetronome(metronome)
+  // Il reste éveillé tant que la boucle tourne ou que le métronome sonne.
+  useCoachAwake(busy || metronome.running)
   const cues = useRef([]) // bips du décompte quand le métronome est désactivé
 
   const studio = useStudio({
