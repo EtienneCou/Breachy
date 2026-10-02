@@ -1,0 +1,42 @@
+/* Bouton sélecteur de langue (FR / EN) placé discrètement près du logo */
+.lang-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f0e7;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.lang-toggle-btn:hover {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.15);
+  color: #ffedd5;
+  transform: translateY(-1px);
+}
+
+.lang-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.lang-toggle__flag {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.lang-toggle__text {
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  font-size: 12px;
+}

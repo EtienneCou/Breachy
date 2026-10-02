@@ -1,4 +1,5 @@
 import { DIFFICULTIES } from '../../utils/difficulty.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './DifficultyFilter.css'
 
 /**
@@ -7,20 +8,23 @@ import './DifficultyFilter.css'
  * - onChange  (id | null) ; recliquer sur le niveau choisi le désélectionne
  */
 export default function DifficultyFilter({ value, onChange }) {
+  const { t } = useLanguage()
+
   return (
     <label className="difficulty-filter">
-      <span className="difficulty-filter__label">Difficulté</span>
+      <span className="difficulty-filter__label">{t('difficulty.label')}</span>
       <select
         className="difficulty-filter__select"
-        aria-label="Filtrer par difficulté"
+        aria-label={t('difficulty.label')}
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value || null)}
       >
-        <option value="">Tous les niveaux</option>
+        <option value="">{t('difficulty.all')}</option>
         {DIFFICULTIES.map((difficulty) => (
-          <option key={difficulty.id} value={difficulty.id}>{difficulty.label}</option>
+          <option key={difficulty.id} value={difficulty.id}>{t('difficulty.' + difficulty.id)}</option>
         ))}
       </select>
     </label>
   )
 }
+

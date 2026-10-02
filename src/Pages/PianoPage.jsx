@@ -19,6 +19,9 @@ import { planKeyWindows, windowAt } from '../utils/keyWindow.js'
 import { TIMING, computeGameStats } from '../utils/gameStats.js'
 import { saveResult } from '../utils/bestScores.js'
 import songsCatalog from '../resources/catalog'
+import { useLanguage } from '../context/LanguageContext'
+import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
+import { playBravo, playEncouragement } from '../Services/audioService'
 import './PianoPage.css'
 
 // Morceau chargé quand l'adresse n'en indique pas : il a un accompagnement,
@@ -108,6 +111,7 @@ export default function PianoPage() {
 
 function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffset }) {
   const navigate = useNavigate()
+  const { t, language } = useLanguage()
   // Métronome : seulement pour les morceaux qui ont un tempo, et coupé tant que le joueur ne l'active pas.
   const [metronomeOn, setMetronomeOn] = useState(false)
 
@@ -245,6 +249,24 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
   }, [plan, noteStates, hits, clock.time])
   const heat = heatLevel(streak)
 
+  // Reachy réagit vocalement toutes les 10 bonnes notes
+  const lastGoodReaction = useState(0)
+  useEffect(() => {
+    if (hitCount > 0 && hitCount % 10 === 0 && hitCount !== lastGoodReaction[0]) {
+      lastGoodReaction[1](hitCount)
+      playBravo(language)
+    }
+  }, [hitCount, language, lastGoodReaction])
+
+  // Reachy réagit vocalement toutes les 10 mauvaises notes
+  const lastBadReaction = useState(0)
+  useEffect(() => {
+    if (missCount > 0 && missCount % 10 === 0 && missCount !== lastBadReaction[0]) {
+      lastBadReaction[1](missCount)
+      playEncouragement(language)
+    }
+  }, [missCount, language, lastBadReaction])
+
   // Étincelles sur chaque note réussie à l'instant, sur sa touche. Le mot
   // (« Parfait ! », « Bien ! »…) n'accompagne que la dernière réussite : sur les
   // passages rapides, les mots ne s'empilent pas et ne restent pas sur d'autres touches.
@@ -263,11 +285,11 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
         tone,
         sparks: age <= SPARK_TIME,
         text: isLatest && age <= WORD_TIME
-          ? tone === 'perfect' ? 'Parfait !' : tone === 'good' ? 'Bien !' : offsetMs < 0 ? 'Trop tôt' : 'Trop tard'
+          ? tone === 'perfect' ? t('pianoPage.perfect') : tone === 'good' ? t('pianoPage.good') : offsetMs < 0 ? t('pianoPage.tooEarly') : t('pianoPage.tooLate')
           : null,
       }
     })
-  }, [hits, clock.time, noteById, noteLayout, firstBase])
+  }, [hits, clock.time, noteById, noteLayout, firstBase, t])
 
   // Fin du morceau : résultats pour le popup de statistiques.
   const finished = clock.status === 'finished'
@@ -325,7 +347,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     <main className="piano-page">
       <div className="piano-page__play">
         {hasSong && (
-          <div className="piano-page__progress" role="progressbar" aria-label="Avancée du morceau" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+          <div className="piano-page__progress" role="progressbar" aria-label={t('pianoPage.progressBar')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
             <span style={{ transform: `scaleX(${progress})` }} />
           </div>
         )}
@@ -360,15 +382,15 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
 
       <aside className="piano-page__side">
         {sidebar}
-        <CoachPanel className="piano-page__coach" talkToggle idleText={hasSong ? null : 'Choisis un morceau sur l\'accueil, je t\'accompagne.'} />
+        <CoachPanel className="piano-page__coach" talkToggle idleText={hasSong ? null : (language === 'en' ? 'Choose a song from home, I will guide you.' : 'Choisis un morceau sur l\'accueil, je t\'accompagne.')} />
         {hasSong && (
           <div className="piano-page__points" aria-live="polite">
             <p className="piano-page__points-line">
-              <span className="piano-page__points-value">{score.toLocaleString('fr-FR')}</span> points
+              <span className="piano-page__points-value">{score.toLocaleString(language === 'en' ? 'en-US' : 'fr-FR')}</span> {t('pianoPage.points')}
             </p>
             <p className="piano-page__score">
-              <span className="piano-page__score-hit">{hitCount} réussie{hitCount > 1 ? 's' : ''}</span>
-              <span className="piano-page__score-miss">{missCount} ratée{missCount > 1 ? 's' : ''}</span>
+              <span className="piano-page__score-hit">{t('pianoPage.hits', hitCount)}</span>
+              <span className="piano-page__score-miss">{t('pianoPage.missed', missCount)}</span>
             </p>
           </div>
         )}
@@ -382,9 +404,9 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
             }}
             aria-pressed={metronomeOn}
           >
-            <span className="piano-page__metronome-label">Métronome</span>
+            <span className="piano-page__metronome-label">{t('pianoPage.metronome')}</span>
             <span className="piano-page__metronome-state">
-              {metronomeOn ? 'Activé' : 'Coupé'} · {tempo.bpm} BPM, {tempo.signature}
+              {metronomeOn ? t('pianoPage.metronomeOn') : t('pianoPage.metronomeOff')} · {tempo.bpm} BPM, {tempo.signature}
             </span>
           </button>
         )}
@@ -394,7 +416,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
       {results && (
         <ResultsModal
           results={results}
-          coach={<CoachPanel title="Le bilan de Reachy" idleText={finish?.bubble} />}
+          coach={<CoachPanel title={language === 'en' ? "Reachy's review" : "Le bilan de Reachy"} idleText={finish?.bubble} />}
           onRestart={clock.restart}
           onQuit={() => navigate('/')}
           slowerSpeed={slowerSpeed}
@@ -435,42 +457,49 @@ const isWhite = (midi) => ![1, 3, 6, 8, 10].includes(midi % 12)
 
 function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficult, guided, status }) {
   const navigate = useNavigate()
+  const { t, isEn } = useLanguage()
+
   return (
-    <section className="piano-page__card" aria-label="Morceau">
-      <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
-        Retour
-      </button>
+    <section className="piano-page__card" aria-label={t('pianoPage.cardLabel')}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+        <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
+          {t('common.backHome')}
+        </button>
+        <LanguageToggle />
+      </div>
 
       <div className="piano-page__song">
-        <strong className="piano-page__song-title">{title ?? 'Morceau inconnu'}</strong>
+        <strong className="piano-page__song-title">{title ?? t('pianoPage.unknownSong')}</strong>
         {image && <img className="piano-page__song-image" src={image} alt="" />}
       </div>
 
       {status === 'ready' && difficult && (
-        <p className="piano-page__badge">Morceau difficile : beaucoup de notes rapides</p>
+        <p className="piano-page__badge">{t('pianoPage.difficultBadge')}</p>
       )}
       {/* Morceau du Studio : la piste jouée est bien mise en avant */}
       {status === 'ready' && fromStudio && (
         <p className="piano-page__part">
-          🎯 Tu joues <strong>{melodyLabel}</strong>
-          <span>La première piste piano de ton Studio. Les autres pistes t'accompagnent.</span>
+          🎯 {isEn ? 'You are playing' : 'Tu joues'} <strong>{melodyLabel}</strong>
+          <span>{isEn ? 'The first piano track from your Studio. Other tracks accompany you.' : 'La première piste piano de ton Studio. Les autres pistes t\'accompagnent.'}</span>
         </p>
       )}
       {status === 'ready' && noPianoPart && (
         <p className="piano-page__status piano-page__status--error">
-          Ce morceau du Studio n'a pas de piste piano : il n'y a rien à jouer. Ajoute une piste piano dans le Studio pour t'entraîner dessus.
+          {isEn
+            ? "This Studio track has no piano part: there is nothing to play. Add a piano track in the Studio to practice on it."
+            : "Ce morceau du Studio n'a pas de piste piano : il n'y a rien à jouer. Ajoute une piste piano dans le Studio pour t'entraîner dessus."}
         </p>
       )}
       {status === 'ready' && melodyLabel && !fromStudio && (
-        <p className="piano-page__status">Tu joues la mélodie ({melodyLabel}) au piano, les autres instruments t'accompagnent.</p>
+        <p className="piano-page__status">{t('pianoPage.melodyHelp', melodyLabel)}</p>
       )}
       {status === 'ready' && guided && !fromStudio && (
-        <p className="piano-page__status">Ce morceau n'a qu'une partie : tu entends la mélodie en guide. Baisse « Accompagnement » pour jouer seul.</p>
+        <p className="piano-page__status">{t('pianoPage.guided')}</p>
       )}
-      {status === 'loading' && <p className="piano-page__status">Chargement…</p>}
-      {status === 'error' && <p className="piano-page__status piano-page__status--error">Impossible de charger ce morceau.</p>}
+      {status === 'loading' && <p className="piano-page__status">{t('pianoPage.loading')}</p>}
+      {status === 'error' && <p className="piano-page__status piano-page__status--error">{t('pianoPage.error')}</p>}
       {status === 'unknown' && (
-        <p className="piano-page__status piano-page__status--error">Ce morceau n'existe pas. Reviens à l'accueil pour en choisir un.</p>
+        <p className="piano-page__status piano-page__status--error">{t('pianoPage.unknown')}</p>
       )}
     </section>
   )

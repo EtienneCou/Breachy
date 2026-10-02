@@ -5,6 +5,7 @@ import { pianoSynth } from '../piano'
 import { playCue } from '../metronome/click.js'
 import { USER_SONG_PREFIX } from '../../hooks/useMusic.js'
 import { recordingToMidi } from '../../utils/recordingToMidi.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './SessionRecorder.css'
 
 function formatTime(seconds) {
@@ -12,12 +13,12 @@ function formatTime(seconds) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
-// Titre proposé à la sauvegarde : « Enregistrement du 1 oct. à 09:42 »
-function defaultTitle() {
+function getDefaultTitle(isEn) {
   const d = new Date()
-  const day = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-  const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  return `Enregistrement du ${day} à ${time}`
+  const locale = isEn ? 'en-US' : 'fr-FR'
+  const day = d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+  const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  return isEn ? `Recording of ${day} at ${time}` : `Enregistrement du ${day} à ${time}`
 }
 
 const COUNT_IN_KEY = 'breachy.countIn'
@@ -31,19 +32,9 @@ function loadCountIn() {
   }
 }
 
-/**
- * Panneau d'enregistrement du jeu libre : enregistrer, mettre en pause, arrêter,
- * puis écouter, effacer, ou sauvegarder dans « Mes enregistrements » (accueil),
- * d'où l'enregistrement peut servir à l'entraînement comme un morceau.
- * `recorder` est l'objet renvoyé par useSessionRecorder().
- *
- * `metronome` (objet de useMetronome) : s'il est activé au départ, la prise est calée
- * sur ses temps (décompte d'une mesure) et son tempo est sauvegardé avec elle, pour
- * le métronome de l'entraînement. Il sonne alors pendant la prise (et sa réécoute),
- * voir FreePlayPage. Sinon, le décompte est un simple « 3, 2, 1 », sans tempo.
- */
 export default function SessionRecorder({ recorder, metronome, className = '' }) {
   const navigate = useNavigate()
+  const { t, isEn } = useLanguage()
   const { status, events, elapsed, duration, noteCount, tempo } = recorder
   const [countIn, setCountIn] = useState(loadCountIn)
   const changeCountIn = (on) => {
@@ -54,10 +45,8 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
       // réglage simplement pas retenu
     }
   }
-  // Formulaire de sauvegarde, et prise déjà sauvegardée : liés à la prise en cours,
-  // ils disparaissent d'eux-mêmes après un nouvel enregistrement.
-  const [form, setForm] = useState(null) // { events, title } pendant la saisie du titre
-  const [saved, setSaved] = useState(null) // { events, id }
+  const [form, setForm] = useState(null)
+  const [saved, setSaved] = useState(null)
   const [saveError, setSaveError] = useState('')
   const editing = form?.events === events
   const savedId = saved?.events === events ? saved.id : null
@@ -68,16 +57,13 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
   const cues = useRef([]) // bips du décompte « 3, 2, 1 », coupés si on annule
 
   const startNew = () => {
-    if (hasTake && !savedId && !window.confirm('Remplacer l\'enregistrement actuel ? Il n\'a pas été sauvegardé.')) return
-    metronome?.stopPreview() // l'essai du métronome s'arrête quand l'enregistrement commence
+    if (hasTake && !savedId && !window.confirm(t('recorder.confirmReplace'))) return
+    metronome?.stopPreview()
     if (metronome?.enabled) {
-      // Calée sur le métronome : le départ tombe sur un premier temps,
-      // après une mesure de décompte si elle est demandée.
       const delay = 0.1 + (countIn ? metronome.measureLength : 0)
       metronome.alignTo(metronome.audioNow() + delay)
       recorder.record({ delay, tempo: { bpm: metronome.bpm, signature: metronome.signature } })
     } else if (countIn) {
-      // Sans métronome : « 3, 2, 1 » juste pour annoncer le départ, sans tempo.
       pianoSynth.ensureContext()
       const { ctx } = pianoSynth
       const start = ctx.currentTime + 0.05
@@ -104,8 +90,6 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
     recorder.stopRecording()
   }
 
-  // Réécoute d'une prise calée : le métronome prend son tempo et la suit.
-  // Une prise sans tempo est réécoutée sans métronome (voir FreePlayPage).
   const playTake = () => {
     metronome?.stopPreview()
     if (tempo && metronome) {
@@ -116,14 +100,12 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
     recorder.play()
   }
 
-  // Reprise après une pause : le métronome reprend la grille de la prise là où elle en était.
   const resume = () => {
     metronome?.stopPreview()
     if (tempo && metronome) metronome.alignTo(metronome.audioNow() - recorder.position())
     recorder.resumeRecording()
   }
 
-  // Chiffre du décompte : temps restants (calé sur le métronome) ou secondes (« 3, 2, 1 »)
   const beatsLeft =
     status !== 'countIn'
       ? null
@@ -133,7 +115,7 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
 
   const save = async (e) => {
     e.preventDefault()
-    const title = form.title.trim() || defaultTitle()
+    const title = form.title.trim() || getDefaultTitle(isEn)
     const id = crypto.randomUUID()
     try {
       await addMidiSong({
@@ -141,29 +123,32 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         title,
         fileName: `${title}.mid`,
         file: recordingToMidi(events, title, tempo),
-        tempo, // { bpm, signature } ou null : pour le métronome de l'entraînement
+        tempo,
         type: 'audio/midi',
         createdAt: new Date().toISOString(),
-        source: 'recording', // rangé dans l'onglet « Mes enregistrements » de l'accueil
+        source: 'recording',
       })
       setSaved({ events, id })
       setForm(null)
       setSaveError('')
     } catch (err) {
       console.error(err)
-      setSaveError('La sauvegarde a échoué. Réessaie.')
+      setSaveError(t('recorder.saveError'))
     }
   }
 
   const progress = playing && duration ? Math.min(1, elapsed / duration) : 0
 
   return (
-    <section className={`recorder ${className}`} aria-label="Live">
+    <section className={`recorder ${className}`} aria-label={t('recorder.title')}>
       <header className="recorder__head">
-        <span className="recorder__title">Live</span>
+        <span className="recorder__title">{t('recorder.title')}</span>
         <span className={`recorder__state recorder__state--${status}`} aria-live="polite">
-          {status === 'countIn' && 'Décompte'}
-          {status === 'recording' && <><span className="recorder__dot" aria-hidden="true" /> REC</>}
+          {status === 'countIn' && t('recorder.countIn')}
+          {status === 'recording' && <><span className="recorder__dot" aria-hidden="true" /> {t('recorder.rec')}</>}
+          {status === 'paused' && t('recorder.paused')}
+          {status === 'playing' && t('recorder.playing')}
+          {status === 'playPaused' && t('recorder.playPaused')}
         </span>
       </header>
 
@@ -176,6 +161,7 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
             <span className="recorder__muted"> / {formatTime(duration)}</span>
           </>
         )}
+        {status === 'idle' && <span className="recorder__muted">{t('recorder.noRecording')}</span>}
       </p>
 
       {playing && (
@@ -185,39 +171,41 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
       )}
       {status === 'ready' && (
         <p className="recorder__muted recorder__info">
-          {noteCount} note{noteCount > 1 ? 's' : ''} enregistrée{noteCount > 1 ? 's' : ''}
+          {t('recorder.notesCount', noteCount)}
+          {tempo && ` · ${tempo.bpm} BPM, ${tempo.signature}`}
         </p>
+      )}
+      {recording && tempo && (
+        <p className="recorder__muted recorder__info">{t('recorder.syncedMetronome', tempo.bpm, tempo.signature)}</p>
       )}
 
       <div className="recorder__buttons">
-        {/* Enregistrement */}
         {!recording && !playing && (
           <button type="button" className="recorder__btn recorder__btn--rec" onClick={startNew}>
-            <span className="recorder__dot" aria-hidden="true" /> {hasTake ? 'Nouveau' : 'Enregistrer'}
+            <span className="recorder__dot" aria-hidden="true" /> {hasTake ? t('recorder.newRec') : t('recorder.record')}
           </button>
         )}
         {status === 'recording' && (
-          <button type="button" className="recorder__btn" onClick={recorder.pauseRecording}>⏸ Pause</button>
+          <button type="button" className="recorder__btn" onClick={recorder.pauseRecording}>⏸ {t('recorder.pause')}</button>
         )}
         {status === 'paused' && (
           <button type="button" className="recorder__btn" onClick={resume}>
-            <span className="recorder__dot" aria-hidden="true" /> Reprendre
+            <span className="recorder__dot" aria-hidden="true" /> {t('recorder.resume')}
           </button>
         )}
         {recording && (
           <button type="button" className="recorder__btn recorder__btn--stop" onClick={stop}>
-            {status === 'countIn' ? 'Annuler' : '⏹ Arrêter'}
+            {status === 'countIn' ? t('recorder.cancel') : t('recorder.stop')}
           </button>
         )}
 
-        {/* Lecture */}
         {(status === 'ready' || status === 'playPaused') && (
           <button
             type="button"
             className="recorder__btn recorder__btn--play recorder__btn--icon"
             onClick={playTake}
-            aria-label={status === 'playPaused' ? 'Reprendre' : 'Écouter'}
-            title={status === 'playPaused' ? 'Reprendre' : 'Écouter'}
+            aria-label={status === 'playPaused' ? t('recorder.resume') : t('recorder.listen')}
+            title={status === 'playPaused' ? t('recorder.resume') : t('recorder.listen')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5.5v13l10.5-6.5z" />
@@ -225,23 +213,23 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
           </button>
         )}
         {status === 'playing' && (
-          <button type="button" className="recorder__btn" onClick={recorder.pausePlayback}>⏸ Pause</button>
+          <button type="button" className="recorder__btn" onClick={recorder.pausePlayback}>⏸ {t('recorder.pause')}</button>
         )}
         {playing && (
-          <button type="button" className="recorder__btn recorder__btn--stop" onClick={recorder.stopPlayback}>⏹ Arrêter</button>
+          <button type="button" className="recorder__btn recorder__btn--stop" onClick={recorder.stopPlayback}>{t('recorder.stop')}</button>
         )}
         {status === 'ready' && !savedId && !editing && (
-          <button type="button" className="recorder__btn recorder__btn--save" onClick={() => setForm({ events, title: defaultTitle() })}>
-            Save
+          <button type="button" className="recorder__btn recorder__btn--save" onClick={() => setForm({ events, title: getDefaultTitle(isEn) })}>
+            {t('recorder.save')}
           </button>
         )}
         {status === 'ready' && (
           <button
             type="button"
             className="recorder__btn recorder__btn--ghost recorder__btn--icon"
-            onClick={() => (savedId || window.confirm('Effacer l\'enregistrement ? Il n\'a pas été sauvegardé.')) && recorder.clear()}
-            aria-label={savedId ? 'Fermer' : 'Effacer'}
-            title={savedId ? 'Fermer' : 'Effacer'}
+            onClick={() => (savedId || window.confirm(t('recorder.confirmClear'))) && recorder.clear()}
+            aria-label={savedId ? t('recorder.close') : t('recorder.clear')}
+            title={savedId ? t('recorder.close') : t('recorder.clear')}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -254,15 +242,17 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         <label className="recorder__check">
           <input type="checkbox" checked={countIn} onChange={(e) => changeCountIn(e.target.checked)} />
           <span>
-            Activer le décompte
+            {t('recorder.countInLabel')}
+            <span className="recorder__hint">
+              {metronome.enabled ? t('recorder.countInMetroHint') : t('recorder.countInFreeHint')}
+            </span>
           </span>
         </label>
       )}
 
-      {/* Sauvegarde : nom de l'enregistrement */}
       {editing && status === 'ready' && (
         <form className="recorder__save" onSubmit={save}>
-          <label className="recorder__muted" htmlFor="recorder-title">Nom de l'enregistrement</label>
+          <label className="recorder__muted" htmlFor="recorder-title">{t('recorder.nameLabel')}</label>
           <input
             id="recorder-title"
             className="recorder__input"
@@ -274,27 +264,26 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
             onFocus={(e) => e.target.select()}
           />
           <div className="recorder__buttons">
-            <button type="submit" className="recorder__btn recorder__btn--play">Sauvegarder</button>
-            <button type="button" className="recorder__btn recorder__btn--ghost" onClick={() => setForm(null)}>Annuler</button>
+            <button type="submit" className="recorder__btn recorder__btn--play">{t('common.save')}</button>
+            <button type="button" className="recorder__btn recorder__btn--ghost" onClick={() => setForm(null)}>{t('common.cancel')}</button>
           </div>
           {saveError && <p className="recorder__error">{saveError}</p>}
         </form>
       )}
 
-      {/* Sauvegardé : on peut aller le retrouver, ou s'entraîner dessus */}
       {savedId && (
         <div className="recorder__saved">
-          <p className="recorder__saved-text">✓ Sauvegardé dans « Mes enregistrements »</p>
+          <p className="recorder__saved-text">{t('recorder.savedOk')}</p>
           <div className="recorder__buttons">
             <button type="button" className="recorder__btn" onClick={() => navigate('/?onglet=enregistrements')}>
-              Voir mes enregistrements
+              {t('recorder.viewRecordings')}
             </button>
             <button
               type="button"
               className="recorder__btn recorder__btn--play"
               onClick={() => navigate(`/piano?morceau=${encodeURIComponent(USER_SONG_PREFIX + savedId)}`)}
             >
-              S'entraîner dessus
+              {t('recorder.practiceOn')}
             </button>
           </div>
         </div>

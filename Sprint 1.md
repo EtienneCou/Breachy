@@ -1,4 +1,4 @@
-# 📋 Rapport de Sprint — Breachy
+# 📋 Rapport de Sprint — Reachy
 
 ## 📌 Sprint 0 & 1 : Prototype & Présentation Client
 
