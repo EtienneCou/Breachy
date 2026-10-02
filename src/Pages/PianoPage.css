@@ -313,6 +313,15 @@
 .piano-page__metronome.is-on { border-color: transparent; background: #1f7bff; color: #ffffff; }
 .piano-page__metronome.is-on .piano-page__metronome-state { color: #dbeafe; }
 
+/* Reachy, le coach, dans la colonne de droite */
+.piano-page__coach { flex: none; }
+@media (max-height: 760px) and (min-width: 721px) {
+  .piano-page__coach .reachy { width: 52px; height: auto; }
+}
+@media (max-width: 720px) {
+  .piano-page__coach { grid-column: 1 / -1; }
+}
+
 /* Morceau du Studio : la piste que le joueur joue (toujours visible) */
 .piano-page__part {
   display: grid;
@@ -463,7 +472,7 @@
   border: 0 !important;
   box-shadow: 0 10px 24px rgba(249, 115, 22, 0.3);
 }
-.piano-page .piano-page__transport { width: 200px; }
+.piano-page .piano-page__transport { width: 100%; max-width: 100%; box-sizing: border-box; }
 .piano-page__transport .transport__heading,
 .piano-page__transport .transport__clock {
   align-self: flex-start;
@@ -518,11 +527,27 @@
 .piano-page .recorder__saved { border-color: #34353a; }
 .piano-page .metronome__slider,
 .piano-page .recorder__check input { accent-color: #f97316; }
+.piano-page .recorder__check { color: #ffffff; }
 .piano-page .recorder__progress { background: #34353a; }
 .piano-page .recorder__progress span { background: linear-gradient(90deg, #fbbf24, #f97316, #ef4444); }
 .piano-page .recorder__time { color: #fff7ed; }
 .piano-page .recorder__saved-text { color: #fbbf24; }
 .piano-page .recorder__error { color: #f87171; }
+.piano-page .recorder__time:empty { display: none; }
+.piano-page .metronome { width: 100%; min-width: 0; overflow: hidden; }
+.piano-page .recorder { width: 100%; min-width: 0; overflow: hidden; }
+.piano-page .recorder__buttons { width: 100%; min-width: 0; }
+.piano-page .recorder__btn { min-width: 0; padding: 6px 6px; font-size: 0.78rem; }
+.piano-page .recorder__btn--icon { flex: 0 0 36px; width: 36px; min-width: 36px; padding: 0; }
+.piano-page .metronome__tempo { grid-template-columns: 28px minmax(0, 1fr) 28px; min-width: 0; }
+.piano-page .metronome__step { width: 28px; height: 28px; padding: 0; }
+.piano-page .metronome__signatures { grid-template-columns: repeat(4, minmax(0, 1fr)); min-width: 0; }
+.piano-page .metronome__sig { min-width: 0; padding-inline: 2px; }
+.piano-page .metronome__more summary { color: #f97316; }
+.piano-page .transport--vertical .transport__section--octave { min-width: 0; width: 100%; }
+.piano-page .transport--vertical .transport__section--octave .transport__stepper { min-width: 0; max-width: 100%; }
+.piano-page .transport--vertical .transport__section--octave .transport__btn--small { flex-basis: 30px; width: 30px; }
+.piano-page .transport--vertical .transport__section--octave .transport__value { min-width: 0; overflow: hidden; }
 
 .piano-page__side > .piano-page__points,
 .piano-page__side > .piano-page__card,

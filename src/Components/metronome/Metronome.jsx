@@ -35,9 +35,11 @@ export default function Metronome({ metronome, locked = false, signatureLocked =
           {m.enabled ? t('metronome.on') : t('metronome.off')}
         </button>
       </header>
-      <p className="metronome__muted metronome__hint">
-        {m.enabled ? resolvedHints.on : resolvedHints.off}
-      </p>
+      {(m.enabled ? resolvedHints.on : resolvedHints.off) && (
+        <p className="metronome__muted metronome__hint">
+          {m.enabled ? resolvedHints.on : resolvedHints.off}
+        </p>
+      )}
 
       {/* Essai : l'entendre pour régler le tempo, hors enregistrement */}
       {!m.busy && (

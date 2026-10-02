@@ -8,6 +8,7 @@ import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
 import { useLanguage } from '../context/LanguageContext'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { useSessionRecorder } from '../hooks/useSessionRecorder.js'
+import { useCoachAwake, useRobotMetronome } from '../Components/coach'
 import './PianoPage.css'
 
 /**
@@ -20,6 +21,10 @@ export default function FreePlayPage() {
   const metronome = useMetronome({
     play: Boolean(recorder.tempo) && ['countIn', 'recording', 'playing'].includes(recorder.status),
   })
+  // Reachy bat la mesure quand le métronome sonne.
+  useRobotMetronome(metronome)
+  // Il reste éveillé pendant une prise, sa réécoute et le métronome.
+  useCoachAwake(metronome.running || ['countIn', 'recording', 'playing'].includes(recorder.status))
   const piano = usePiano({
     onNoteOn: (midi) => recorder.noteOn(midi),
     onNoteOff: (midi) => recorder.noteOff(midi),

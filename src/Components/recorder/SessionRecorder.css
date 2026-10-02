@@ -9,6 +9,8 @@
   background: #ffffff;
   color: #0b1026;
   font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+  width: 100%;
+  min-width: 0;
 }
 .recorder *,
 .recorder *::before,
@@ -65,31 +67,42 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  width: 100%;
+  min-width: 0;
 }
 .recorder__btn {
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   min-height: 36px;
-  padding: 6px 10px;
+  padding: 6px 8px;
   border: 1px solid #e6e9f3;
   border-radius: 10px;
   background: #ffffff;
   color: #0b1026;
-  font: 700 0.82rem/1.1 inherit;
+  font: 700 0.8rem/1.1 inherit;
   font-family: inherit;
   cursor: pointer;
+  white-space: nowrap;
 }
 .recorder__btn:hover { background: #f4f6fb; }
 .recorder__btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
-.recorder__btn--rec { border-color: #fecdd3; background: #fff1f2; color: #e11d48; }
+.recorder__btn--rec { flex: 1 1 100%; width: 100%; border-color: #fecdd3; background: #fff1f2; color: #e11d48; }
 .recorder__btn--rec:hover { background: #ffe4e6; }
 .recorder__btn--play { border-color: transparent; background: #1f7bff; color: #ffffff; }
 .recorder__btn--play:hover { background: #0d69ff; }
 .recorder__btn--stop { color: #0b1026; }
 .recorder__btn--ghost { flex: 0 0 auto; color: #7180b0; }
+.recorder__btn--icon {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+.recorder__btn--icon svg { display: block; }
 
 .recorder__dot {
   width: 9px;

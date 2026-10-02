@@ -200,8 +200,16 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         )}
 
         {(status === 'ready' || status === 'playPaused') && (
-          <button type="button" className="recorder__btn recorder__btn--play" onClick={playTake}>
-            ▶ {status === 'playPaused' ? t('recorder.resume') : t('recorder.listen')}
+          <button
+            type="button"
+            className="recorder__btn recorder__btn--play recorder__btn--icon"
+            onClick={playTake}
+            aria-label={status === 'playPaused' ? t('recorder.resume') : t('recorder.listen')}
+            title={status === 'playPaused' ? t('recorder.resume') : t('recorder.listen')}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5.5v13l10.5-6.5z" />
+            </svg>
           </button>
         )}
         {status === 'playing' && (
@@ -218,10 +226,14 @@ export default function SessionRecorder({ recorder, metronome, className = '' })
         {status === 'ready' && (
           <button
             type="button"
-            className="recorder__btn recorder__btn--ghost"
+            className="recorder__btn recorder__btn--ghost recorder__btn--icon"
             onClick={() => (savedId || window.confirm(t('recorder.confirmClear'))) && recorder.clear()}
+            aria-label={savedId ? t('recorder.close') : t('recorder.clear')}
+            title={savedId ? t('recorder.close') : t('recorder.clear')}
           >
-            {savedId ? t('recorder.close') : t('recorder.clear')}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
           </button>
         )}
       </div>

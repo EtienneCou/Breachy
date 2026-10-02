@@ -10,6 +10,7 @@ import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
 import { useLanguage } from '../context/LanguageContext'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { LOOP_MEASURES, useStudio } from '../hooks/useStudio.js'
+import { useCoachAwake, useRobotMetronome } from '../Components/coach'
 import './StudioPage.css'
 
 export default function StudioPage() {
@@ -19,12 +20,17 @@ export default function StudioPage() {
   const [busy, setBusy] = useState(false)
   const [saving, setSaving] = useState(false)
   const metronome = useMetronome({ play: busy })
+  // Reachy bat la mesure quand le métronome sonne.
+  useRobotMetronome(metronome)
+  // Il reste éveillé tant que la boucle tourne ou que le métronome sonne.
+  useCoachAwake(busy || metronome.running)
   const cues = useRef([])
 
   const metronomeHints = {
     on: t('metronome.studioHintOn'),
     off: t('metronome.studioHintOff'),
   }
+
 
   const studio = useStudio({
     bpm: metronome.bpm,

@@ -1,0 +1,268 @@
+/* Panneau du coach Reachy : avatar + bulle + état du robot */
+.coach {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid #dfe7fb;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f7faff 0%, #ffffff 100%);
+  color: #0b1026;
+  font-family: 'Instrument Sans', 'Segoe UI', system-ui, sans-serif;
+}
+.coach *,
+.coach *::before,
+.coach *::after { box-sizing: border-box; }
+.coach--wide { gap: 18px; padding: 16px 20px; border-radius: 18px; }
+
+.coach__avatar { display: grid; place-items: center; }
+.coach__content { display: grid; gap: 6px; min-width: 0; }
+.coach__top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+.coach__title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #5d6a94; }
+.coach--wide .coach__title { font-size: 0.8rem; }
+
+.coach__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid #e3e8f4;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #5d6a94;
+  font: 600 0.68rem/1.4 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.coach__status:hover { background: #f4f7fd; }
+.coach__status:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; }
+.coach__status-dot { width: 7px; height: 7px; border-radius: 50%; background: #b8c1da; }
+.coach__status--connected { color: #15803d; border-color: #bbf0cf; }
+.coach__status--connected .coach__status-dot { background: #22c55e; box-shadow: 0 0 0 3px #dcfce7; }
+.coach__status--searching .coach__status-dot { background: #f59e0b; }
+
+/* Bulle de BD : pointe vers Reachy, elle « pop » à chaque nouvelle réplique */
+.coach__bubble {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  margin-left: 6px;
+  padding: 9px 12px;
+  border: 2px solid #c7dcff;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(31, 123, 255, 0.12);
+}
+.coach__bubble::before,
+.coach__bubble::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  border-style: solid;
+}
+/* la pointe : un triangle bordé (contour puis fond) */
+.coach__bubble::before { left: -12px; border-width: 8px 12px 8px 0; border-color: transparent #c7dcff transparent transparent; }
+.coach__bubble::after { left: -8px; top: 18px; border-width: 6px 9px 6px 0; border-color: transparent #ffffff transparent transparent; }
+.coach--wide .coach__bubble { padding: 12px 16px; border-radius: 20px; }
+.coach--wide .coach__bubble::before { top: 26px; }
+.coach--wide .coach__bubble::after { top: 28px; }
+.coach__bubble.is-live { animation: coach-pop 0.28s cubic-bezier(0.3, 1.5, 0.5, 1); transform-origin: left center; }
+@keyframes coach-pop { from { transform: scale(0.9); opacity: 0.4; } }
+.coach__text {
+  margin: 0;
+  color: #0b1026;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.coach--wide .coach__text { font-size: 1.02rem; }
+
+.coach__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.coach__settings {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #e3e8f4;
+  border-radius: 10px;
+  background: #ffffff;
+  font-size: 0.8rem;
+}
+.coach__check { display: flex; align-items: flex-start; gap: 7px; line-height: 1.3; }
+.coach__check input { margin: 1px 0 0; accent-color: #1f7bff; }
+.coach__field { display: grid; gap: 3px; color: #5d6a94; }
+.coach__field input {
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid #d9dfeb;
+  border-radius: 8px;
+  font: inherit;
+  color: #0b1026;
+}
+.coach__help { margin: 0; color: #5d6a94; line-height: 1.4; }
+.coach__help code { font-size: 0.75rem; padding: 0 3px; border-radius: 4px; background: #f1f4fa; color: #0b1026; }
+
+@media (prefers-reduced-motion: reduce) {
+  .coach__bubble.is-live { animation: none; }
+}
+
+/* Robot connecté : c'est lui qui bouge, l'avatar dessiné s'efface et la bulle prend la place */
+.coach--robot { grid-template-columns: minmax(0, 1fr); }
+.coach--robot .coach__bubble { margin-left: 0; }
+.coach--robot .coach__bubble::before,
+.coach--robot .coach__bubble::after { display: none; }
+
+/* Interrupteur des encouragements parlés */
+.coach__talk {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  color: #5d6a94;
+  font: 700 0.76rem/1.2 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.coach__talk.is-on { color: #1f7bff; }
+.coach__talk:focus-visible { outline: 2px solid #1f7bff; outline-offset: 2px; border-radius: 6px; }
+.coach__talk-track {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: #d9dfeb;
+  transition: background 0.15s;
+}
+.coach__talk-track span {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(11, 16, 38, 0.25);
+  transition: transform 0.15s;
+}
+.coach__talk.is-on .coach__talk-track { background: #1f7bff; }
+.coach__talk.is-on .coach__talk-track span { transform: translateX(12px); }
+@media (prefers-reduced-motion: reduce) {
+  .coach__talk-track,
+  .coach__talk-track span { transition: none; }
+}
+
+/* Combien il parle : Peu / Moyen / Beaucoup */
+.coach__amount {
+  justify-self: start;
+  display: inline-grid;
+  grid-auto-flow: column;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: #eef2f8;
+}
+.coach__amount-btn {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #5d6a94;
+  font: 700 0.72rem/1.3 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.coach__amount-btn:hover { color: #1d4ed8; }
+.coach__amount-btn:focus-visible { outline: 2px solid #1f7bff; outline-offset: 1px; }
+.coach__amount-btn.is-active { background: #ffffff; color: #1d4ed8; box-shadow: 0 1px 4px rgba(15, 23, 42, 0.1); }
+
+/* Jauge de danse : 4 crans de plus en plus hauts, le nom du niveau à côté */
+.coach__meter { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.coach__meter-steps { display: flex; align-items: flex-end; gap: 3px; flex: none; }
+.coach__meter-steps span {
+  width: 7px;
+  border-radius: 2px;
+  background: #e3e8f4;
+  transition: background 0.3s;
+}
+.coach__meter-steps span:nth-child(1) { height: 7px; }
+.coach__meter-steps span:nth-child(2) { height: 11px; }
+.coach__meter-steps span:nth-child(3) { height: 15px; }
+.coach__meter-steps span:nth-child(4) { height: 19px; }
+.coach__meter-steps span.is-on { background: #1f7bff; }
+.coach__meter-name { font-size: 0.78rem; font-weight: 700; color: #1f3a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coach__meter.is-up .coach__meter-steps { animation: coach-meter-up 0.6s ease-out; }
+.coach__meter.is-up .coach__meter-name { animation: coach-meter-name 0.6s ease-out; }
+.coach__meter.is-down { animation: coach-meter-down 0.8s ease-out; }
+@keyframes coach-meter-up {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+@keyframes coach-meter-name {
+  0% { opacity: 0; transform: translateY(4px); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes coach-meter-down {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .coach__meter.is-up .coach__meter-steps,
+  .coach__meter.is-up .coach__meter-name,
+  .coach__meter.is-down { animation: none; }
+}
+
+/* ---------- Thème anthracite / braise (accueil et entraînement, nouveau design) ---------- */
+.songs-page .coach,
+.piano-page .coach {
+  border-color: #34353a;
+  background: #1a1b1f;
+  color: #f7f0e7;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+:is(.songs-page, .piano-page) .coach__title { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__status { border-color: #34353a; background: #222327; color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__status:hover { background: #2a2b30; }
+:is(.songs-page, .piano-page) .coach__status--connected { color: #fbbf24; border-color: rgba(251, 191, 36, 0.4); }
+:is(.songs-page, .piano-page) .coach__status--connected .coach__status-dot { background: #fbbf24; box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.2); }
+:is(.songs-page, .piano-page) .coach__bubble {
+  border-color: rgba(249, 115, 22, 0.45);
+  background: #222327;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+}
+:is(.songs-page, .piano-page) .coach__bubble::before { border-right-color: rgba(249, 115, 22, 0.45); }
+:is(.songs-page, .piano-page) .coach__bubble::after { border-right-color: #222327; }
+:is(.songs-page, .piano-page) .coach__text { color: #fff7ed; }
+:is(.songs-page, .piano-page) .coach__talk { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__talk.is-on { color: #fbbf24; }
+:is(.songs-page, .piano-page) .coach__talk-track { background: #3a3b40; }
+:is(.songs-page, .piano-page) .coach__talk.is-on .coach__talk-track { background: #f97316; }
+:is(.songs-page, .piano-page) .coach__amount { background: #222327; }
+:is(.songs-page, .piano-page) .coach__amount-btn { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__amount-btn:hover { color: #fbbf24; }
+:is(.songs-page, .piano-page) .coach__amount-btn.is-active { background: #34353a; color: #fbbf24; box-shadow: none; }
+:is(.songs-page, .piano-page) .coach__settings { border-color: #34353a; background: #222327; color: #f7f0e7; }
+:is(.songs-page, .piano-page) .coach__field,
+:is(.songs-page, .piano-page) .coach__help { color: #aaa39a; }
+:is(.songs-page, .piano-page) .coach__field input { border-color: #34353a; background: #1a1b1f; color: #f7f0e7; }
+:is(.songs-page, .piano-page) .coach__help code { background: #1a1b1f; color: #ffd166; }
+:is(.songs-page, .piano-page) .coach__check input { accent-color: #f97316; }
+:is(.songs-page, .piano-page) .coach__status:focus-visible,
+:is(.songs-page, .piano-page) .coach__talk:focus-visible,
+:is(.songs-page, .piano-page) .coach__amount-btn:focus-visible { outline-color: #fbbf24; }
+
+/* Jauge de danse, braise : du jaune au rouge en montant */
+:is(.songs-page, .piano-page) .coach__meter-steps span { background: #3a3b40; }
+:is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(1) { background: #fbbf24; }
+:is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(2) { background: #f59e0b; }
+:is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(3) { background: #f97316; }
+:is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(4) { background: #ef4444; }
+:is(.songs-page, .piano-page) .coach__meter-name { color: #fff7ed; }
+:is(.songs-page, .piano-page) .coach__meter--3 .coach__meter-name { color: #fbbf24; }

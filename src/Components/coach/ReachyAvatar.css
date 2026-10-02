@@ -1,0 +1,146 @@
+/* Reachy dessiné : couleurs et animations par humeur */
+.reachy {
+  --reachy-shell: #ffffff;
+  --reachy-line: #c9d2e6;
+  --reachy-visor: #0e1430;
+  --reachy-eye: #1c2550;
+  --reachy-pupil: #5ab0ff;
+  --reachy-antenna: #0e1430;
+  overflow: visible;
+}
+.reachy__shell { fill: var(--reachy-shell); stroke: var(--reachy-line); stroke-width: 2; }
+.reachy__neck { fill: var(--reachy-line); }
+.reachy__visor { fill: var(--reachy-visor); }
+.reachy__eye-ring { fill: var(--reachy-eye); stroke: #2f3a73; stroke-width: 2; }
+.reachy__pupil { fill: var(--reachy-pupil); transition: fill 0.2s, r 0.2s; }
+.reachy__glint { fill: #ffffff; opacity: 0.85; }
+.reachy__antenna path { fill: none; stroke: var(--reachy-antenna); stroke-width: 3; stroke-linecap: round; }
+.reachy__antenna circle { fill: var(--reachy-antenna); }
+
+.reachy__head,
+.reachy__body,
+.reachy__antenna,
+.reachy__eyes {
+  transform-box: view-box;
+  transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.reachy__head { transform-origin: 60px 100px; }
+.reachy__body { transform-origin: 60px 136px; }
+.reachy__antenna--left { transform-origin: 44px 32px; }
+.reachy__antenna--right { transform-origin: 76px 32px; }
+.reachy__eye { transform-box: fill-box; transform-origin: center; animation: reachy-blink 5s infinite; }
+
+/* Calme : il respire et ses antennes bougent doucement */
+.reachy--idle .reachy__head { animation: reachy-breathe 3.6s ease-in-out infinite; }
+.reachy--idle .reachy__antenna--left { animation: reachy-sway-left 4s ease-in-out infinite; }
+.reachy--idle .reachy__antenna--right { animation: reachy-sway-right 4.4s ease-in-out infinite; }
+
+/* Content : petit bond, antennes levées */
+.reachy--happy .reachy__head { animation: reachy-hop 0.5s ease-out; }
+.reachy--happy .reachy__antenna--left { transform: rotate(-18deg); }
+.reachy--happy .reachy__antenna--right { transform: rotate(18deg); }
+.reachy--happy .reachy__pupil { fill: #7ee3a6; }
+
+/* Fête une série : antennes qui s'agitent, bonds */
+.reachy--cheer .reachy__head { animation: reachy-hop 0.4s ease-out 3; }
+.reachy--cheer .reachy__antenna--left { animation: reachy-wiggle-left 0.25s ease-in-out infinite; }
+.reachy--cheer .reachy__antenna--right { animation: reachy-wiggle-right 0.25s ease-in-out infinite; }
+.reachy--cheer .reachy__pupil { fill: #ffd166; }
+
+/* Danse : la tête et le corps se balancent */
+.reachy--dance .reachy__head { animation: reachy-dance-head 0.6s ease-in-out infinite; }
+.reachy--dance .reachy__body { animation: reachy-dance-body 1.2s ease-in-out infinite; }
+.reachy--dance .reachy__antenna--left { animation: reachy-wiggle-left 0.3s ease-in-out infinite; }
+.reachy--dance .reachy__antenna--right { animation: reachy-wiggle-right 0.3s ease-in-out infinite; }
+.reachy--dance .reachy__pupil { fill: #ff8fd1; }
+
+/* Déçu pour toi : tête basse, antennes tombantes */
+.reachy--sad .reachy__head { transform: translateY(6px) rotate(-4deg); }
+.reachy--sad .reachy__antenna--left { transform: rotate(-55deg); }
+.reachy--sad .reachy__antenna--right { transform: rotate(55deg); }
+.reachy--sad .reachy__pupil { fill: #8fa3d6; }
+
+/* Il réfléchit : tête penchée, regard en haut */
+.reachy--think .reachy__head { transform: rotate(9deg); }
+.reachy--think .reachy__eyes { transform: translate(2px, -3px); }
+.reachy--think .reachy__antenna--right { transform: rotate(-20deg); }
+
+/* Attentif : tête en avant, antennes droites */
+.reachy--attentive .reachy__head { transform: translateY(-3px) scale(1.03); }
+.reachy--attentive .reachy__antenna--left { transform: rotate(8deg); }
+.reachy--attentive .reachy__antenna--right { transform: rotate(-8deg); }
+
+/* Rassurant : hochement lent */
+.reachy--calm .reachy__head { animation: reachy-slow-nod 1.6s ease-in-out infinite; }
+.reachy--calm .reachy__pupil { fill: #9ad8ff; }
+
+/* Fier de toi : menton levé, antennes hautes */
+.reachy--proud .reachy__head { transform: translateY(-4px) rotate(-3deg); }
+.reachy--proud .reachy__antenna--left { transform: rotate(-25deg); }
+.reachy--proud .reachy__antenna--right { transform: rotate(25deg); }
+.reachy--proud .reachy__pupil { fill: #7ee3a6; }
+
+/* Surpris : grands yeux */
+.reachy--surprised .reachy__pupil { r: 8; }
+.reachy--surprised .reachy__head { transform: translateY(-5px); }
+
+/* Il s'ennuie : yeux mi-clos, tête penchée */
+.reachy--sleepy .reachy__head { transform: translateY(3px) rotate(-6deg); }
+.reachy--sleepy .reachy__eye { animation: none; transform: scaleY(0.45); }
+.reachy--sleepy .reachy__antenna--left { transform: rotate(-30deg); }
+.reachy--sleepy .reachy__antenna--right { transform: rotate(30deg); }
+
+/* Il dort : yeux fermés, tête basse, respiration lente */
+.reachy--asleep .reachy__head { animation: reachy-sleep 4s ease-in-out infinite; }
+.reachy--asleep .reachy__eye { animation: none; transform: scaleY(0.08); }
+.reachy--asleep .reachy__antenna--left { transform: rotate(-60deg); }
+.reachy--asleep .reachy__antenna--right { transform: rotate(60deg); }
+.reachy--asleep .reachy__pupil { fill: #8fa3d6; }
+@keyframes reachy-sleep { 0%, 100% { transform: translateY(8px) rotate(-4deg); } 50% { transform: translateY(10px) rotate(-3deg); } }
+
+/* Il parle : petites vibrations */
+.reachy.is-speaking .reachy__antenna--left { animation: reachy-talk-left 0.35s ease-in-out infinite; }
+.reachy.is-speaking .reachy__antenna--right { animation: reachy-talk-right 0.35s ease-in-out infinite; }
+
+/* Danse pendant le morceau, au tempo (--beat) et selon le niveau du joueur */
+.reachy--groove { --beat: 0.6s; }
+/* 0 : les antennes seules */
+.reachy--groove-0 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-0 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
+/* 1 : antennes + tête penchée sur les côtés, très lentement */
+.reachy--groove-1 .reachy__head { animation: reachy-groove-tilt calc(var(--beat) * 8) ease-in-out infinite; }
+.reachy--groove-1 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-1 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
+/* 2 : côtés et hochement, plus rapides */
+.reachy--groove-2 .reachy__head { animation: reachy-groove-sway calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-2 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-2 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-2 .reachy__pupil { fill: #7ee3a6; }
+/* 3 : rock star — headbang, corps et antennes à fond */
+.reachy--groove-3 .reachy__head { animation: reachy-groove-bang var(--beat) cubic-bezier(0.5, 0, 0.3, 1) infinite; }
+.reachy--groove-3 .reachy__body { animation: reachy-dance-body calc(var(--beat) * 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__antenna--left { animation: reachy-wiggle-left calc(var(--beat) / 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__antenna--right { animation: reachy-wiggle-right calc(var(--beat) / 2) ease-in-out infinite; }
+.reachy--groove-3 .reachy__pupil { fill: #ffd166; }
+
+@keyframes reachy-groove-tilt { 0%, 100% { transform: rotate(-7deg); } 50% { transform: rotate(7deg); } }
+@keyframes reachy-groove-bang { 0%, 100% { transform: translateY(0) rotate(0); } 20% { transform: translateY(8px) rotate(3deg); } 60% { transform: translateY(-1px) rotate(-1deg); } }
+@keyframes reachy-groove-sway { 0%, 100% { transform: rotate(-8deg) translateY(0); } 25%, 75% { transform: rotate(0deg) translateY(4px); } 50% { transform: rotate(8deg) translateY(0); } }
+
+@keyframes reachy-breathe { 50% { transform: translateY(-2px); } }
+@keyframes reachy-sway-left { 50% { transform: rotate(-8deg); } }
+@keyframes reachy-sway-right { 50% { transform: rotate(8deg); } }
+@keyframes reachy-hop { 40% { transform: translateY(-8px); } }
+@keyframes reachy-wiggle-left { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(5deg); } }
+@keyframes reachy-wiggle-right { 0%, 100% { transform: rotate(30deg); } 50% { transform: rotate(-5deg); } }
+@keyframes reachy-dance-head { 0%, 100% { transform: rotate(-10deg) translateY(-2px); } 50% { transform: rotate(10deg) translateY(2px); } }
+@keyframes reachy-dance-body { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes reachy-slow-nod { 50% { transform: translateY(3px) rotate(2deg); } }
+@keyframes reachy-talk-left { 50% { transform: rotate(-12deg); } }
+@keyframes reachy-talk-right { 50% { transform: rotate(12deg); } }
+@keyframes reachy-blink { 0%, 94%, 100% { transform: scaleY(1); } 97% { transform: scaleY(0.1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .reachy *,
+  .reachy .reachy__eye { animation: none !important; transition: none !important; }
+}
