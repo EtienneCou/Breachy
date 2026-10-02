@@ -127,10 +127,10 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 
   | Réussite | Danses (elles alternent toutes les 4 mesures) |
   |---|---|
-  | moins de 50 % | calme : balancier, glissé de côté |
-  | 50 à 74 % | il se laisse porter : tête penchée, chaloupé |
-  | 75 à 89 % | ça groove : hochement, « ouais ! » |
-  | 90 % et plus | rock star : headbang, spirales |
+  | moins de 50 % | calme : tête qui tourne en rond, balancier |
+  | 50 à 74 % | il se laisse porter : « mmh mmh » (penche et hoche), tête penchée |
+  | 75 à 89 % | ça groove : spirales, chaloupé |
+  | 90 % et plus | rock star : headbang |
 
   La danse ne s'arrête jamais pendant le morceau. On passe d'une danse à l'autre en fondu. Les formules viennent de [reachy_mini_dances_library](https://github.com/pollen-robotics/reachy_mini_dances_library), portées dans [pollenMoves.js](src/Components/coach/pollenMoves.js) ; les autres danses de Pollen y restent disponibles pour changer les niveaux (`DANCE_LEVELS` dans danceEngine.js).
 - **Bilan à la fin du morceau**, dit à voix haute : pourcentage de réussite, meilleure série, nouveau record s'il y en a un, un conseil (jouer plus lentement, en avance, en retard…) et un encouragement. Il l'accompagne d'une émotion selon le résultat.

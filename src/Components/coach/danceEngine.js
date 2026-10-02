@@ -9,17 +9,18 @@
 
 import { pollenPose } from './pollenMoves.js'
 
-// Danses de chaque niveau (deux, qui alternent toutes les 4 mesures) et leur ampleur
-// (1 = celle de Pollen). Les autres danses de pollenMoves.js restent disponibles.
+// Danses de chaque niveau (une ou deux, qui alternent toutes les 4 mesures) et leur ampleur
+// (1 = celle de Pollen), classées d'après l'énergie mesurée de chaque danse (vitesse
+// moyenne de la tête). Les autres danses de pollenMoves.js restent disponibles.
 export const DANCE_LEVELS = [
-  // 0 · Calme : balancier, glissé de côté
-  { moves: ['pendulum_swing', 'side_to_side_sway'], amount: 0.5 },
-  // 1 · Il se laisse porter : tête penchée, chaloupé
-  { moves: ['head_tilt_roll', 'groovy_sway_and_roll'], amount: 0.7 },
-  // 2 · Ça groove : hochement, « ouais ! »
-  { moves: ['simple_nod', 'yeah_nod'], amount: 0.85 },
-  // 3 · Rock star : headbang, spirales
-  { moves: ['headbanger_combo', 'interwoven_spirals'], amount: 1 },
+  // 0 · Calme : tête qui tourne en rond, balancier (lents, sur 4 temps)
+  { moves: ['dizzy_spin', 'pendulum_swing'], amount: 0.4 },
+  // 1 · Il se laisse porter : « mmh mmh », tête penchée
+  { moves: ['uh_huh_tilt', 'head_tilt_roll'], amount: 0.9 },
+  // 2 · Ça groove : spirales, chaloupé
+  { moves: ['interwoven_spirals', 'groovy_sway_and_roll'], amount: 0.85 },
+  // 3 · Rock star : headbang
+  { moves: ['headbanger_combo'], amount: 1 },
 ]
 
 // Autres façons de bouger en rythme, hors entraînement :
