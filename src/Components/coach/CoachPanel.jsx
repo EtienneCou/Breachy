@@ -30,15 +30,17 @@ const STATUS_LABELS = {
 export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton coach', idleText, talkToggle = false, children, className = '' }) {
   const coach = useCoach()
   const [open, setOpen] = useState(false)
-  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput } = coach
+  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput, evil, transforming, pokeAvatar, listening } = coach
   const text = bubble?.text ?? idleText
   const robotOn = robotStatus === 'connected'
 
   return (
-    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''} ${className}`} aria-label="Reachy, ton coach">
+    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''}${evil ? ' coach--evil' : ''} ${className}`} aria-label="Reachy, ton coach">
       {!robotOn && (
-        <div className="coach__avatar">
-          <ReachyAvatar mood={mood} speaking={speaking} groove={groove} size={layout === 'wide' ? 104 : 72} />
+        // Clics répétés sur l'avatar : easter egg (voir CoachProvider). Pas un vrai bouton :
+        // il ne se remarque pas au clavier, il faut le chercher.
+        <div className="coach__avatar" onClick={pokeAvatar}>
+          <ReachyAvatar mood={mood} speaking={speaking} groove={groove} evil={evil} transforming={transforming} size={layout === 'wide' ? 104 : 72} />
         </div>
       )}
 
@@ -128,11 +130,35 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
               <input type="checkbox" checked={settings.sounds} onChange={(e) => updateSettings({ sounds: e.target.checked })} />
               Petits sons pendant le jeu
             </label>
+            {LISTEN_SUPPORTED && (
+              <label className="coach__check">
+                <input type="checkbox" checked={settings.listen} onChange={(e) => updateSettings({ listen: e.target.checked })} />
+                🎙 Écoute (démo) : Reachy entend ce qu'on lui dit
+              </label>
+            )}
+            {settings.listen && LISTEN_SUPPORTED && <p className="coach__help">{listenText(listening ?? { state: 'starting' })}</p>}
           </div>
         )}
       </div>
     </section>
   )
+}
+
+// Reconnaissance vocale du navigateur (Chrome, Edge) : sans elle, pas d'option d'écoute.
+const LISTEN_SUPPORTED = typeof window !== 'undefined' && Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition)
+
+// Ce que fait l'écoute (démo), en clair
+const LISTEN_ERRORS = {
+  'not-allowed': 'Micro refusé : autorise-le dans la barre d\'adresse du navigateur (icône 🎙 ou 🔒).',
+  'service-not-allowed': 'Le navigateur refuse la reconnaissance vocale (essaie Chrome).',
+  'audio-capture': 'Aucun micro trouvé : vérifie le micro par défaut de Windows.',
+  network: 'Pas de connexion au service de reconnaissance (il faut Internet).',
+  'language-not-supported': 'Le français n\'est pas reconnu par ce navigateur.',
+}
+function listenText({ state, heard, error }) {
+  if (state === 'error') return `⚠️ ${LISTEN_ERRORS[error] ?? `Écoute impossible (${error}).`}`
+  if (state === 'starting') return 'Démarrage de l\'écoute… (accepte le micro si le navigateur le demande)'
+  return heard ? `J'écoute. Dernière chose entendue : « ${heard} »` : 'J\'écoute… Dis « Passe du côté obscur, Reachy ».'
 }
 
 // Niveaux de danse (voir DANCE_LEVELS dans danceEngine.js)

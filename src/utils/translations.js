@@ -248,6 +248,7 @@ export const TRANSLATIONS = {
       streakCount: (n) => `Série de ${n} !`,
       multiplier: (m) => `Points ×${m}`,
       songProgress: "Avancée du morceau",
+      cardLabel: "Morceau en cours",
     },
     results: {
       songFinished: "Morceau terminé !",
@@ -613,6 +614,7 @@ export const TRANSLATIONS = {
       streakCount: (n) => `${n} streak!`,
       multiplier: (m) => `Points ×${m}`,
       songProgress: "Song progress",
+      cardLabel: "Current song",
     },
     results: {
       songFinished: "Song completed!",
@@ -745,10 +747,10 @@ export function getTranslation(path, lang = 'fr', ...args) {
     if (current && current[part] !== undefined) {
       current = current[part];
     } else {
-      // Fallback en français
+      // Fallback en français (seulement si la clé y existe en entier)
       let fallback = TRANSLATIONS.fr;
       for (const fpart of parts) {
-        if (fallback && fallback[fpart] !== undefined) fallback = fallback[fpart];
+        fallback = fallback?.[fpart];
       }
       current = fallback ?? path;
       break;
@@ -758,7 +760,10 @@ export function getTranslation(path, lang = 'fr', ...args) {
   if (typeof current === 'function') {
     return current(...args);
   }
-  return current ?? path;
+  // Clé absente ou incomplète (un bloc entier au lieu d'un texte) : on affiche la clé
+  // plutôt que de faire planter la page.
+  if (current == null || typeof current === 'object') return path;
+  return current;
 }
 
 /**

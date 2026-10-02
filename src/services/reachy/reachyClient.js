@@ -111,6 +111,20 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
     setTracking: (weight) =>
       weight == null ? request('/media/tracking/disable') : request('/media/tracking/enable', { body: { weight } }),
 
+    /**
+     * Position réelle des antennes [droite, gauche] et du corps, en degrés (null si le
+     * daemon ne répond pas). Sert à sentir qu'on le touche : ses moteurs mesurent leur position.
+     */
+    async presentPose() {
+      try {
+        const state = await request('/state/full?with_control_mode=false&with_head_pose=false', { method: 'GET', timeout: STATUS_TIMEOUT_MS })
+        const toDeg = (r) => (r * 180) / Math.PI
+        return { antennas: state.antennas_position.map(toDeg), body: toDeg(state.body_yaw ?? 0) }
+      } catch {
+        return null
+      }
+    },
+
     /** Mouvements en cours (liste d'identifiants). */
     running: () => request('/move/running', { method: 'GET' }),
 

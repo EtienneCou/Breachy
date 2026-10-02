@@ -79,23 +79,24 @@ export function forgetRobotSounds() {
  * - robot   où parler avec la voix du robot : { kind: 'robot', client } sur son haut-parleur,
  *           { kind: 'preview' } sur l'ordinateur (simulation sans haut-parleur), ou null.
  *           Si cette voix n'est pas prête ou échoue, c'est la voix du navigateur qui parle.
+ * - evil    voix du Reachy diabolique (plus grave, plus lente)
  */
-export function speak(text, { onEnd, onStart, quick = false, robot = null } = {}) {
+export function speak(text, { onEnd, onStart, quick = false, robot = null, evil = false } = {}) {
   const interrupting = canSpeak() && (window.speechSynthesis.speaking || window.speechSynthesis.pending)
   stopSpeaking()
   const myTurn = turn
   if (robot && robotVoiceReady()) {
-    speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd }).catch((error) => {
+    speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil }).catch((error) => {
       console.warn('Voix du robot : repli sur la voix du navigateur.', error.message)
-      if (myTurn === turn) speakInBrowser(text, { onStart, onEnd, quick, interrupting })
+      if (myTurn === turn) speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil })
     })
   } else {
-    speakInBrowser(text, { onStart, onEnd, quick, interrupting })
+    speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil })
   }
 }
 
-async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd }) {
-  const { blob, duration, name } = await synthesize(text)
+async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil }) {
+  const { blob, duration, name } = await synthesize(text, evil ? 'evil' : 'nice')
   if (myTurn !== turn) return // une autre phrase est arrivée entre-temps
   if (robot.kind === 'preview') {
     preview = new Audio(URL.createObjectURL(blob))
@@ -132,7 +133,7 @@ async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd }) {
 // secours termine la phrase si le navigateur ne le fait pas.
 let current = null
 
-function speakInBrowser(text, { onEnd, onStart, quick, interrupting }) {
+function speakInBrowser(text, { onEnd, onStart, quick, interrupting, evil }) {
   if (!canSpeak()) {
     onEnd?.()
     return
@@ -142,8 +143,8 @@ function speakInBrowser(text, { onEnd, onStart, quick, interrupting }) {
   utterance.lang = 'fr-FR'
   const voice = pickVoice()
   if (voice) utterance.voice = voice
-  utterance.rate = quick ? 1.15 : 1.05
-  utterance.pitch = 1.25 // voix un peu plus aiguë : un petit robot sympathique
+  utterance.rate = (quick ? 1.15 : 1.05) * (evil ? 0.85 : 1)
+  utterance.pitch = evil ? 0.3 : 1.25 // aiguë : un petit robot sympathique ; grave : le diabolique
 
   let ended = false
   let rescue = 0

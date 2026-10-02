@@ -2,7 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_REACHY_URL, createReachyClient } from '../../services/reachy/reachyClient.js'
 import { forgetRobotSounds, playCoachSound, speak, stopSpeaking } from './coachAudio.js'
 import { prepareLines, prepareRobotVoice } from './robotVoice.js'
-import { LINES, SLEEP_RULES } from './coachRules.js'
+import { LINES, SLEEP_RULES, isEvil, setEvil, transformReaction } from './coachRules.js'
+import { EVIL_LINES } from './coachEvil.js'
 import { PLAYER_ACTIVITY, backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
 import { ROBOT_INTENSITY } from './danceEngine.js'
@@ -18,7 +19,9 @@ const CoachContext = createContext(null)
 const SETTINGS_KEY = 'breachy.coach'
 // talk : encouragements parlés pendant le jeu (le joueur peut les couper : Reachy danse seulement)
 // talkAmount : combien il parle ('low', 'medium', 'high')
-const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium' }
+// listen : écoute de la phrase secrète (démo), coupée par défaut : le micro n'est jamais
+// ouvert sans que l'équipe l'ait activé dans les réglages
+const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium', listen: false }
 
 const DUCK = 0.55 // l'accompagnement baisse à 55 % pendant que Reachy parle
 const POLL_MS = 4000
@@ -53,6 +56,25 @@ const TRACKING_WEIGHT = 0.7
 // on le fait varier par petits pas.
 const TRACKING_FADE_MS = 800
 const TRACKING_FADE_STEPS = 10
+
+// Seconde personnalité (easter egg) : trop de clics rapides sur l'avatar, ou ses antennes
+// (ou son corps) tripotées sur le vrai robot, et il devient diabolique ; pareil pour revenir.
+const CLICKS_TO_TRANSFORM = 7 // clics sur l'avatar…
+const CLICK_WINDOW_MS = 3000 // … en moins de 3 s
+const CLICK_HINT = 4 // à partir de là, il réagit (indice pour qui cherche)
+const TOUCHES_TO_TRANSFORM = 3 // antennes ou corps poussés à la main…
+const TOUCH_WINDOW_MS = 6000 // … en moins de 6 s
+const TOUCH_DEG = 20 // écart entre la position mesurée et la position de repos qui compte comme un toucher
+const TOUCH_POLL_MS = 200
+const TOUCH_SETTLE_MS = 1000 // il doit être immobile depuis 1 s pour prendre sa position de repos
+const TRANSFORM_MS = 2600 // durée de la transformation sur le robot
+// Pose menaçante : tête baissée qui regarde par en dessous, antennes plaquées en arrière.
+const MENACE_POSE = { head: { roll: 0, pitch: 14, yaw: 0, z: -10 }, antennas: [-75, 75], body: 0 }
+// Phrase secrète (démo, avec l'écoute activée) : « Passe du côté obscur, Reachy » le
+// transforme ; « Redeviens gentil » le ramène. Comparées sans accents ni majuscules.
+const TO_EVIL_WORDS = /cote obscur/
+const TO_NICE_WORDS = /redeviens gentil|cote lumineux/
+const plain = (text) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 // Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus
 // (les émotions ont leur durée réelle : voir emotionMoves.js).
@@ -107,7 +129,7 @@ export function CoachProvider({ children }) {
   const robotStatus = !settings.robot ? 'off' : connected ? 'connected' : 'searching'
   const live = useRef({})
   useEffect(() => {
-    live.current = { settings, robotStatus, voiceOutput }
+    live.current = { settings, robotStatus, voiceOutput, dancing }
   })
 
   // ---------- Robot ----------
@@ -252,6 +274,7 @@ export function CoachProvider({ children }) {
     const { voiceOutput: output } = live.current
     speak(text, {
       quick,
+      evil: isEvil(),
       robot: output === 'robot' ? { kind: 'robot', client } : output === 'preview' ? { kind: 'preview' } : null,
       onStart: () => backingSynth.duck(DUCK),
       onEnd: () => {
@@ -417,6 +440,152 @@ export function CoachProvider({ children }) {
     }
   }, [])
 
+  // ---------- Seconde personnalité (easter egg) ----------
+
+  const [evil, setEvilState] = useState(false)
+  const [transforming, setTransforming] = useState(false)
+  const pokes = useRef({ clicks: [], touches: [] })
+
+  const transform = useCallback(() => {
+    const toEvil = !isEvil()
+    setEvil(toEvil)
+    setEvilState(toEvil)
+    setTransforming(true)
+    setTimeout(() => setTransforming(false), TRANSFORM_MS)
+    if (live.current.robotStatus === 'connected' && !idle.current.asleep) {
+      // Il prend d'un coup sa pose menaçante (ou se redresse, redevenu gentil), puis revient
+      // au neutre ; la danse en cours reprend ensuite d'elle-même.
+      const r = robot.current
+      for (const t of r.timers) clearTimeout(t)
+      r.timers = []
+      r.busyUntil = performance.now() + TRANSFORM_MS
+      r.priority = 4
+      client.stopAll().catch(() => {}).then(() => client.goto({ ...(toEvil ? MENACE_POSE : NEUTRAL), duration: toEvil ? 0.5 : 0.9 })).catch(() => {})
+      if (!dance.current) r.timers.push(setTimeout(() => client.goto({ ...NEUTRAL, duration: 1 }).catch(() => {}), TRANSFORM_MS - 1000))
+    }
+    // Sa voix diabolique : les phrases du jeu sont fabriquées à l'avance.
+    if (toEvil && live.current.voiceOutput !== 'browser') prepareLines(Object.values(EVIL_LINES).flat(), 'evil')
+    react('transform', transformReaction(toEvil))
+  }, [client, react])
+
+  const transformRef = useRef(transform)
+  useEffect(() => {
+    transformRef.current = transform
+  })
+
+  // Écoute de la phrase secrète (démo) : reconnaissance vocale du navigateur (Chrome, Edge),
+  // sur le micro par défaut de l'ordinateur. Elle s'arrête d'elle-même après un silence :
+  // on la relance tant que l'écoute est activée.
+  // `listening` : ce que l'écoute fait, affiché dans les réglages pour vérifier pendant la démo
+  // ({ state: 'listening' | 'error', heard, error }, ou null tant qu'elle démarre).
+  const [listening, setListening] = useState(null)
+  useEffect(() => {
+    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+    if (!settings.listen || !Recognition) return
+    const recognition = new Recognition()
+    recognition.lang = 'fr-FR'
+    recognition.continuous = true
+    recognition.interimResults = true // on voit les mots arriver ; la phrase est vérifiée à chaque fois
+    let active = true
+    const start = () => {
+      try {
+        recognition.start()
+      } catch {
+        // déjà en route : rien à faire
+      }
+    }
+    recognition.onstart = () => setListening((l) => ({ ...l, state: 'listening', error: null }))
+    recognition.onresult = (event) => {
+      const result = event.results[event.results.length - 1]
+      const text = result[0].transcript.trim()
+      setListening((l) => ({ ...l, heard: text }))
+      const heard = plain(text)
+      if (isEvil() ? TO_NICE_WORDS.test(heard) : TO_EVIL_WORDS.test(heard)) {
+        transformRef.current()
+        recognition.abort() // repart sur une phrase neuve (sinon la même phrase le retransformerait)
+      }
+    }
+    recognition.onend = () => {
+      if (active) setTimeout(() => active && start(), 300)
+    }
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'aborted') return // silence : on relance
+      // Micro refusé ou service indisponible : on n'insiste pas.
+      if (['not-allowed', 'service-not-allowed', 'audio-capture'].includes(event.error)) active = false
+      setListening((l) => ({ ...l, state: 'error', error: event.error }))
+    }
+    start()
+    return () => {
+      active = false
+      recognition.abort()
+      setListening(null)
+    }
+  }, [settings.listen])
+
+  /** Clic sur l'avatar : beaucoup de clics rapides le transforment. */
+  const pokeAvatar = useCallback(() => {
+    const now = performance.now()
+    const clicks = [...pokes.current.clicks.filter((t) => now - t < CLICK_WINDOW_MS), now]
+    pokes.current.clicks = clicks
+    if (clicks.length >= CLICKS_TO_TRANSFORM) {
+      pokes.current.clicks = []
+      transform()
+    } else if (clicks.length === CLICK_HINT) {
+      react('poke', { mood: 'surprised', bubble: isEvil() ? 'Continue. Pour voir.' : 'Hé ! Ça chatouille !', priority: 1, cooldown: 4 })
+    }
+  }, [transform, react])
+
+  // Sur le vrai robot : ses moteurs mesurent leur position. Au repos (ni danse, ni geste,
+  // ni sommeil), ses antennes et son corps ne bougent pas : s'ils s'écartent nettement de
+  // leur position de repos, quelqu'un les pousse. Trois fois en peu de temps : transformation.
+  useEffect(() => {
+    if (robotStatus !== 'connected') return
+    let rest = null // position de repos { antennas, body }
+    let last = null
+    let stillSince = 0
+    let touching = false
+    let polling = false
+    const id = setInterval(async () => {
+      const now = performance.now()
+      const resting = now >= robot.current.busyUntil && !live.current.dancing && !idle.current.asleep
+      if (!resting) {
+        rest = null
+        last = null
+        touching = false
+        return
+      }
+      if (polling) return
+      polling = true
+      const pose = await client.presentPose()
+      polling = false
+      if (!pose) return
+      const gap = (a, b) => (a && b ? Math.max(Math.abs(a.antennas[0] - b.antennas[0]), Math.abs(a.antennas[1] - b.antennas[1]), Math.abs(a.body - b.body)) : Infinity)
+      // Position de repos : prise quand il est resté immobile assez longtemps.
+      if (gap(pose, last) > 2) stillSince = now
+      last = pose
+      if (!rest) {
+        if (now - stillSince >= TOUCH_SETTLE_MS) rest = pose
+        return
+      }
+      const away = gap(pose, rest)
+      if (!touching && away > TOUCH_DEG) {
+        touching = true
+        const touches = [...pokes.current.touches.filter((t) => now - t < TOUCH_WINDOW_MS), now]
+        pokes.current.touches = touches
+        if (touches.length >= TOUCHES_TO_TRANSFORM) {
+          pokes.current.touches = []
+          rest = null
+          transformRef.current()
+        } else if (touches.length === 1) {
+          react('touch', { mood: 'surprised', bubble: isEvil() ? 'Touche encore. Pour voir.' : 'Hé ! Pas touche aux antennes !', priority: 1, cooldown: 8 })
+        }
+      } else if (touching && away < TOUCH_DEG / 3) {
+        touching = false
+      }
+    }, TOUCH_POLL_MS)
+    return () => clearInterval(id)
+  }, [robotStatus, client, react])
+
   // ---------- Regard ----------
   // Avec la caméra du vrai robot : il te suit du regard quand il ne danse pas.
   const robotOn = robotStatus === 'connected' && media
@@ -455,8 +624,13 @@ export function CoachProvider({ children }) {
       bubble: asleep ? { text: 'Zzz…', id: 'sleep' } : bubble,
       holdAwake,
       setDancing,
+      // Seconde personnalité : diabolique ou non, transformation en cours, clic sur l'avatar
+      evil,
+      transforming,
+      pokeAvatar,
+      listening,
     }),
-    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput, asleep, holdAwake],
+    [settings, updateSettings, robotStatus, mood, bubble, speaking, react, dismiss, client, groove, registerDance, robotBusyUntil, simulation, voiceOutput, asleep, holdAwake, evil, transforming, pokeAvatar, listening],
   )
   return <CoachContext.Provider value={value}>{children}</CoachContext.Provider>
 }
