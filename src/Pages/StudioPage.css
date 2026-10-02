@@ -142,7 +142,6 @@
   display: grid;
   gap: 6px;
   padding: 8px 10px 10px;
-  border-top: 4px solid var(--track-color);
   border-radius: 14px;
 }
 .studio__keyboard-bar {
@@ -156,6 +155,8 @@
 .studio__piano {
   --piano-height: clamp(130px, 22vh, 210px);
   --piano-accent: var(--track-color);
+  --piano-accent-soft: color-mix(in srgb, var(--track-color) 28%, white);
+  --piano-accent-deep: color-mix(in srgb, var(--track-color) 62%, black);
   --piano-lane-line: #2a2b30;
 }
 

@@ -1580,6 +1580,62 @@ body:has(.songs-page) {
 .songs-page .modal-overlay { background: rgba(0, 0, 0, 0.72); }
 .songs-page .modal-content { border-color: var(--home-border); background: var(--home-surface); color: var(--home-text); }
 
+/* The upload modal is rendered through a portal, outside .songs-page. */
+.songs-upload-modal {
+  background: rgba(9, 9, 11, 0.78);
+  backdrop-filter: blur(8px);
+}
+.songs-upload-modal .songs-upload-modal__content {
+  border: 1px solid #34353a;
+  border-radius: 22px;
+  background: radial-gradient(circle at 100% 0, rgba(249, 115, 22, 0.1), transparent 38%), #1a1b1f;
+  color: #f7f0e7;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.58);
+}
+.songs-upload-modal .modal-close {
+  border: 1px solid #414146;
+  background: #25262a;
+  color: #c8beb3;
+}
+.songs-upload-modal .modal-close:hover { background: #34353a; color: #fff7ed; }
+.songs-upload-modal .modal-header h2 { color: #fff7ed; letter-spacing: -0.035em; }
+.songs-upload-modal .modal-header p { color: #aaa39a; line-height: 1.55; }
+@media (max-width: 650px) {
+  .songs-upload-modal { padding: 12px; }
+  .songs-upload-modal .songs-upload-modal__content { padding: 24px 18px; }
+}
+
+.songs-upload-modal .midi-uploader { max-width: none; }
+.songs-upload-modal .drop-zone {
+  border: 1px dashed #69402b !important;
+  border-radius: 16px !important;
+  background: rgba(249, 115, 22, 0.055) !important;
+}
+.songs-upload-modal .upload-icon {
+  background: rgba(249, 115, 22, 0.15) !important;
+  color: #fbbf24 !important;
+}
+.songs-upload-modal .drop-zone h3 { color: #fff7ed !important; }
+.songs-upload-modal .drop-zone p { color: #aaa39a !important; }
+.songs-upload-modal .choose-file-btn {
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #fbbf24, #f97316) !important;
+  color: #22140c !important;
+}
+.songs-upload-modal .selected-file {
+  border-color: #414146 !important;
+  background: #222327 !important;
+}
+.songs-upload-modal .selected-file strong { color: #f7f0e7 !important; }
+.songs-upload-modal .selected-file span,
+.songs-upload-modal .selected-file button { color: #aaa39a !important; }
+.songs-upload-modal .save-btn {
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #fbbf24, #f97316) !important;
+  color: #22140c !important;
+}
+.songs-upload-modal .error { color: #fca5a5 !important; }
+
 .songs-page .empty-user-songs {
   align-items: flex-start;
   border: 1px solid #34353a;

@@ -1923,7 +1923,7 @@ export default function SongsPage() {
 
           <div
 
-            className="modal-overlay"
+            className="modal-overlay songs-upload-modal"
 
             onClick={() => setIsUploadOpen(false)}
 
@@ -1931,7 +1931,7 @@ export default function SongsPage() {
 
             <div
 
-              className="modal-content"
+              className="modal-content songs-upload-modal__content"
 
               onClick={(e) => e.stopPropagation()}
 

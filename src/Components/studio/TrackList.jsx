@@ -146,7 +146,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                     setAdding(false)
                   }}
                 >
-                  <span aria-hidden="true">{i.icon}</span> {i.label}
+                  <span className="tracks__instrument-icon" aria-hidden="true">{i.icon}</span>
+                  <span className="tracks__instrument-label">{i.label}</span>
                 </button>
               ))}
             </div>
