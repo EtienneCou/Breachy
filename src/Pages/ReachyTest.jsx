@@ -1,14 +1,16 @@
 import React, { useState } from "react"
-
+import { useNavigate } from "react-router-dom"
 import useReachy from "../hooks/useReachy"
-
 import {
   playBravo,
   playEncouragement,
 } from "../Services/audioService"
-
+import { useLanguage } from "../context/LanguageContext"
+import LanguageToggle from "../Components/LanguageToggle/LanguageToggle"
 
 export default function ReachyTest() {
+  const navigate = useNavigate()
+  const { language, t } = useLanguage()
   const {
     connected,
     correct,
@@ -17,89 +19,84 @@ export default function ReachyTest() {
     neutral,
   } = useReachy()
 
-  const [audioMessage, setAudioMessage] =
-    useState("")
+  const [audioMessage, setAudioMessage] = useState("")
 
-
-  const testBravo = async () => {
+  const testBravo = async (explicitLang) => {
     try {
-      setAudioMessage(
-        "Lecture de Bravo..."
-      )
-
-      await playBravo()
-
-      setAudioMessage(
-        "🔊 Bravo envoyé à Reachy"
-      )
+      const targetLang = explicitLang || language
+      setAudioMessage(t('reachyTest.playingBravo'))
+      await playBravo(targetLang)
+      setAudioMessage(`${t('reachyTest.bravoSent')} (${targetLang.toUpperCase()})`)
     } catch (error) {
       console.error(error)
-
-      setAudioMessage(
-        "❌ Erreur audio Bravo"
-      )
+      setAudioMessage(t('reachyTest.errorBravo'))
     }
   }
 
-
-  const testEncouragement = async () => {
+  const testEncouragement = async (explicitLang) => {
     try {
-      setAudioMessage(
-        "Lecture encouragement..."
-      )
-
-      await playEncouragement()
-
-      setAudioMessage(
-        "🔊 Encouragement envoyé à Reachy"
-      )
+      const targetLang = explicitLang || language
+      setAudioMessage(t('reachyTest.playingCourage'))
+      await playEncouragement(targetLang)
+      setAudioMessage(`${t('reachyTest.courageSent')} (${targetLang.toUpperCase()})`)
     } catch (error) {
       console.error(error)
-
-      setAudioMessage(
-        "❌ Erreur audio encouragement"
-      )
+      setAudioMessage(t('reachyTest.errorCourage'))
     }
   }
 
+  const testGoodReaction = () => {
+    playBravo(language).catch(console.error)
+    setTimeout(() => {
+      correct()
+    }, 100)
+  }
 
-const testGoodReaction = () => {
-  playBravo().catch(console.error)
-
-  setTimeout(() => {
-    correct()
-  }, 100)
-}
-const testWrongReaction = () => {
-  playEncouragement().catch(console.error)
-
-  setTimeout(() => {
-    wrong()
-  }, 100)
-}
-
+  const testWrongReaction = () => {
+    playEncouragement(language).catch(console.error)
+    setTimeout(() => {
+      wrong()
+    }, 100)
+  }
 
   return (
     <div
       style={{
         padding: "40px",
+        maxWidth: "900px",
+        margin: "0 auto",
+        fontFamily: "var(--font-family, system-ui, sans-serif)",
       }}
     >
-      <h1>
-        Reachy Band
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          style={{
+            background: "none",
+            border: "none",
+            color: "#6c8cff",
+            cursor: "pointer",
+            fontSize: "1rem",
+            fontWeight: "600",
+          }}
+        >
+          {t('reachyTest.backHome')}
+        </button>
+        <LanguageToggle />
+      </div>
+
+      <h1 style={{ marginBottom: "10px" }}>
+        {t('reachyTest.title')}
       </h1>
 
-      <p>
+      <p style={{ marginBottom: "30px", fontWeight: "600" }}>
         {connected
-          ? "🟢 Reachy connecté"
-          : "🔴 Reachy non connecté"}
+          ? t('reachyTest.connected')
+          : t('reachyTest.disconnected')}
       </p>
 
-
-      <h2>
-        Test mouvements
-      </h2>
-
+      <h2>{t('reachyTest.movementsTitle')}</h2>
       <div
         style={{
           display: "flex",
@@ -108,40 +105,21 @@ const testWrongReaction = () => {
           marginBottom: "30px",
         }}
       >
-        <button
-          onClick={correct}
-          disabled={!connected}
-        >
-          ✅ Bonne note
+        <button onClick={correct} disabled={!connected}>
+          {t('reachyTest.goodNote')}
         </button>
-
-        <button
-          onClick={wrong}
-          disabled={!connected}
-        >
-          ❌ Mauvaise note
+        <button onClick={wrong} disabled={!connected}>
+          {t('reachyTest.badNote')}
         </button>
-
-        <button
-          onClick={success}
-          disabled={!connected}
-        >
-          🎉 Réussite
+        <button onClick={success} disabled={!connected}>
+          {t('reachyTest.success')}
         </button>
-
-        <button
-          onClick={neutral}
-          disabled={!connected}
-        >
-          🤖 Neutre
+        <button onClick={neutral} disabled={!connected}>
+          {t('reachyTest.neutral')}
         </button>
       </div>
 
-
-      <h2>
-        Test audio
-      </h2>
-
+      <h2>{t('reachyTest.audioTitle')}</h2>
       <div
         style={{
           display: "flex",
@@ -150,24 +128,21 @@ const testWrongReaction = () => {
           marginBottom: "30px",
         }}
       >
-        <button
-          onClick={testBravo}
-        >
-          🔊 Tester "Bravo"
+        <button onClick={() => testBravo('fr')}>
+          {t('reachyTest.testBravoFr')}
         </button>
-
-        <button
-          onClick={testEncouragement}
-        >
-          🔊 Tester "Courage"
+        <button onClick={() => testBravo('en')}>
+          {t('reachyTest.testBravoEn')}
+        </button>
+        <button onClick={() => testEncouragement('fr')}>
+          {t('reachyTest.testCourageFr')}
+        </button>
+        <button onClick={() => testEncouragement('en')}>
+          {t('reachyTest.testCourageEn')}
         </button>
       </div>
 
-
-      <h2>
-        Test complet
-      </h2>
-
+      <h2>{t('reachyTest.completeTitle')}</h2>
       <div
         style={{
           display: "flex",
@@ -175,29 +150,22 @@ const testWrongReaction = () => {
           flexWrap: "wrap",
         }}
       >
-        <button
-          onClick={testGoodReaction}
-          disabled={!connected}
-        >
-          🤖 + 🔊
-          10 bonnes notes
+        <button onClick={testGoodReaction} disabled={!connected}>
+          {t('reachyTest.goodTenReaction')} ({language.toUpperCase()})
         </button>
-
-        <button
-          onClick={testWrongReaction}
-          disabled={!connected}
-        >
-          🤖 + 🔊
-          10 mauvaises notes
+        <button onClick={testWrongReaction} disabled={!connected}>
+          {t('reachyTest.badTenReaction')} ({language.toUpperCase()})
         </button>
       </div>
-
 
       {audioMessage && (
         <p
           style={{
             marginTop: "30px",
             fontWeight: "bold",
+            padding: "12px",
+            borderRadius: "8px",
+            backgroundColor: "rgba(255, 255, 255, 0.08)",
           }}
         >
           {audioMessage}

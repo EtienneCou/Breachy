@@ -753,7 +753,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
       lastBadReaction.current =
         missCount
     }
-  }, [missCount])
+  }, [missCount, language])
 
 
   // =================================================
@@ -1447,16 +1447,8 @@ function safeMidi(
 }
 
 function playBravoSound() {
-  const audio = new Audio('/sound/bravo-kid.mp3')
-  audio.volume = 0.9
-  audio.play().catch((error) => {
-    console.error('Erreur lecture son bravo :', error)
-  })
+  playBravo()
 }
 function playEncouragementSound() {
-  const audio = new Audio('/sound/courage-kid.mp3')
-  audio.volume = 0.9
-  audio.play().catch((error) => {
-    console.error('Erreur lecture son bravo :', error)
-  })
-}
+  playEncouragement()
+}
