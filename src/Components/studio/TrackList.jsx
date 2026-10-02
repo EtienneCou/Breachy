@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { MAX_TRACKS, isAudible } from '../../hooks/useStudio.js'
 import { STUDIO_INSTRUMENTS, instrumentById } from './instruments.js'
-import { practiceTrackNumber } from '../../utils/studioToMidi.js'
 import './TrackList.css'
 
 /**
@@ -14,7 +13,6 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
   const { tracks, selectedId, status, recordingId, loopBeats, position } = studio
   const busy = status !== 'stopped'
   const [adding, setAdding] = useState(tracks.length === 0)
-  const practiceNumber = practiceTrackNumber(tracks) // piste jouée à l'entraînement
 
   return (
     <section className="tracks" aria-label="Pistes">
@@ -38,11 +36,6 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                   <span className="track__title">
                     {index + 1}. {instrument.label}
                   </span>
-                  {practiceNumber === index + 1 && (
-                    <span className="track__practice" title="À l'entraînement, c'est cette piste que tu joues au piano">
-                      🎯 Jouée à l'entraînement
-                    </span>
-                  )}
                   {instrument.variants.length > 1 ? (
                     <select
                       className="track__variant"
@@ -149,7 +142,8 @@ export default function TrackList({ studio, beatsPerMeasure, onRecord }) {
                     setAdding(false)
                   }}
                 >
-                  <span aria-hidden="true">{i.icon}</span> {i.label}
+                  <span className="tracks__instrument-icon" aria-hidden="true">{i.icon}</span>
+                  <span className="tracks__instrument-label">{i.label}</span>
                 </button>
               ))}
             </div>

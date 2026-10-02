@@ -31,7 +31,7 @@
 }
 .studio-save__input:focus { outline: 2px solid #fbbf24; outline-offset: 1px; border-color: transparent; }
 
-.studio-save__text { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #f7f0e7; }
+.studio-save__text { margin: 0; font-size: 0.85rem; line-height: 1.4; color: #f7f0e7; text-align: left; }
 .studio-save__text strong { color: #ffd166; }
 .studio-save__text--warn { color: #fca5a5; }
 .studio-save__ok { margin: 0; font-weight: 800; color: #fbbf24; }

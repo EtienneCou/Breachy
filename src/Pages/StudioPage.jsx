@@ -105,7 +105,7 @@ export default function StudioPage() {
                 disabled={!hasNotes || saving}
                 title="Ranger le morceau dans « Mes enregistrements », pour l'écouter ou t'entraîner dessus"
               >
-                💾 Sauvegarder
+                Sauvegarder
               </button>
             )}
             {studio.canUndo && (
@@ -167,13 +167,13 @@ export default function StudioPage() {
       <aside className="studio__side">
         <section className="studio__card">
           <button type="button" className="studio__back" onClick={() => navigate('/')}>
-            ← Retour à l'accueil
+            Retour
           </button>
           <p className="studio__muted studio__help">
-            1. Ajoute une piste et choisis son instrument.<br />
-            2. Clique sur <span className="studio__dot" aria-hidden="true" /> : une mesure de décompte, puis la boucle s'enregistre une fois.<br />
-            3. Ajoute d'autres pistes : les précédentes jouent pendant que tu enregistres.<br />
-            4. <strong>Sauvegarde</strong> pour retrouver le morceau dans « Mes enregistrements ». À l'entraînement, tu joues la première piste piano 🎯.
+            1. Ajoute une piste et choisis un instrument.<br />
+            2. Clique sur <span className="studio__dot" aria-hidden="true" /> : compte à rebours, puis enregistre la boucle une fois.<br />
+            3. Ajoute des pistes : les précédentes jouent pendant l'enregistrement.<br />
+            4. <strong>Sauvegarde</strong> pour retrouver ton morceau. À l'entraînement, joue la première piste piano.
           </p>
         </section>
         <Metronome metronome={metronome} locked={busy} signatureLocked={hasNotes} hints={METRONOME_HINTS} />

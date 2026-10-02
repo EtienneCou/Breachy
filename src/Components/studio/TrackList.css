@@ -20,14 +20,13 @@
 .tracks__empty { margin: 0; color: #aaa39a; font-size: 0.85rem; }
 
 .track {
-  --track-color: #1f7bff;
+  --track-color: #f97316;
   display: grid;
   grid-template-columns: 170px minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
   border: 1px solid #34353a;
-  border-left: 4px solid var(--track-color);
   border-radius: 12px;
   background: #1a1b1f;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
@@ -35,7 +34,6 @@
 }
 .track.is-selected {
   border-color: color-mix(in srgb, var(--track-color) 60%, #1a1b1f);
-  border-left-color: var(--track-color);
   background: color-mix(in srgb, var(--track-color) 10%, #1a1b1f);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--track-color) 22%, transparent);
 }
@@ -168,23 +166,40 @@
   gap: 6px;
 }
 .tracks__instrument {
-  --track-color: #1f7bff;
+  --track-color: #f97316;
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
-  padding: 6px 10px;
-  border: 1px solid #34353a;
-  border-left: 4px solid var(--track-color);
-  border-radius: 10px;
-  background: #24252a;
+  min-height: 48px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--track-color) 10%, #24252a), #24252a 72%);
   color: #f7f0e7;
   font: 700 0.82rem/1.1 inherit;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
-.tracks__instrument:hover { background: color-mix(in srgb, var(--track-color) 16%, #24252a); }
+.tracks__instrument-icon {
+  display: grid;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--track-color) 18%, #1a1b1f);
+  color: color-mix(in srgb, var(--track-color) 62%, #fff7ed);
+  font-size: 1rem;
+}
+.tracks__instrument-label { min-width: 0; }
+.tracks__instrument:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--track-color) 19%, #24252a), #292a2f 72%);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--track-color) 14%, transparent);
+  transform: translateY(-1px);
+}
 .tracks__instrument:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 .tracks__cancel { justify-self: start; }
 
@@ -195,16 +210,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .track.is-recording .track__dot { animation: none; }
+  .tracks__instrument { transition: none; }
 }
 
-/* Piste jouée à l'entraînement : la première piste piano qui a des notes */
-.track__practice {
-  justify-self: start;
-  padding: 1px 7px;
-  border-radius: 999px;
-  background: rgba(249, 115, 22, 0.16);
-  color: #ffd166;
-  font-size: 0.68rem;
-  font-weight: 700;
-  white-space: nowrap;
-}

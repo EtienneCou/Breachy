@@ -173,7 +173,7 @@ export default function UserSongs({
 function subtitleOf(song) {
   if (song.origin === "studio") {
     return song.practiceTrack
-      ? `Studio · 🎯 tu joues la ${song.practiceTrack.label.toLowerCase()}`
+      ? "Studio"
       : "Studio · pas de piste piano (écoute seulement)";
   }
   if (song.source === "recording") return `Mon enregistrement${song.tempo ? ` · ${song.tempo.bpm} BPM` : ""}`;

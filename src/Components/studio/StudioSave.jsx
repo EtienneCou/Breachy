@@ -62,13 +62,6 @@ export default function StudioSave({ studio, bpm, signature, onClose }) {
       {saved ? (
         <>
           <p className="studio-save__ok">✓ Sauvegardé dans « Mes enregistrements »</p>
-          <p className="studio-save__text">
-            {saved.practiceTrack ? (
-              <>🎯 À l'entraînement, tu joueras la <strong>{saved.practiceTrack.label}</strong>.</>
-            ) : (
-              'Pas de piste piano : tu pourras l\'écouter, mais pas t\'entraîner dessus.'
-            )}
-          </p>
           <div className="studio-save__buttons">
             <button type="button" className="studio-save__btn" onClick={() => navigate('/?onglet=enregistrements')}>
               Voir mes enregistrements
@@ -102,13 +95,13 @@ export default function StudioSave({ studio, bpm, signature, onClose }) {
           />
           <p className={`studio-save__text${practiceLabel ? '' : ' studio-save__text--warn'}`}>
             {practiceLabel ? (
-              <>🎯 À l'entraînement, tu joueras la <strong>{practiceLabel}</strong> (la première piste piano). Les autres pistes t'accompagneront.</>
+              <>À l'entraînement, tu joueras la <strong>{practiceLabel}</strong> (la première piste piano). Les autres pistes t'accompagneront.</>
             ) : (
               'Aucune piste piano : tu pourras écouter ce morceau, mais pas t\'entraîner dessus. Ajoute une piste piano pour pouvoir le jouer.'
             )}
           </p>
           <div className="studio-save__buttons">
-            <button type="submit" className="studio-save__btn studio-save__btn--main">💾 Sauvegarder</button>
+            <button type="submit" className="studio-save__btn studio-save__btn--main">Sauvegarder</button>
             <button type="button" className="studio-save__btn studio-save__btn--ghost" onClick={onClose}>Annuler</button>
           </div>
           {error && <p className="studio-save__error">{error}</p>}
