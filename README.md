@@ -152,6 +152,17 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 
 Tout ce qui précède est aussi joué par l'**avatar dessiné** à l'écran : humeurs, danses, sommeil, bulles de texte.
 
+### Secret : le Reachy diabolique (easter egg, à ne pas dévoiler aux joueurs)
+
+Reachy a une seconde personnalité, sarcastique et pince-sans-rire. Rien ne la signale : il faut la trouver.
+
+- **Pour la réveiller** : cliquer très vite sur l'avatar (7 clics en moins de 3 s ; il réagit dès le 4e), ou, sur le vrai robot au repos, pousser ses antennes ou tourner son corps à la main 3 fois en moins de 6 s (ses moteurs sentent l'écart).
+- **Transformation** : le robot baisse la tête d'un coup, antennes plaquées en arrière, et ricane ; l'avatar tremble et prend des cornes, des sourcils froncés et des yeux rouges.
+- **Ensuite** : voix plus grave et plus lente avec un léger écho, phrases et bilan sarcastiques (il se moque du jeu, jamais de la personne), panneau du coach sombre.
+- **Pour revenir au gentil** : le même geste. Recharger la page le fait aussi redevenir gentil.
+
+Réglages dans [CoachProvider.jsx](src/Components/coach/CoachProvider.jsx) (`CLICKS_TO_TRANSFORM`, `TOUCH_DEG`…) ; ses phrases sont dans [coachEvil.js](src/Components/coach/coachEvil.js). Le seuil de toucher (`TOUCH_DEG`, 20°) reste à régler sur le vrai robot : la simulation ne se touche pas.
+
 ---
 
 ## Régler l'intensité des mouvements

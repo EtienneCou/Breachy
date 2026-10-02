@@ -14,6 +14,7 @@
 // }
 
 import { SOLFEGE, noteToMidi } from '../piano/notes.js'
+import { EVIL_FINISH, EVIL_LINES, EVIL_MOODS, EVIL_TEXT, EVIL_WELCOME } from './coachEvil.js'
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
 
@@ -33,6 +34,7 @@ function line(moment, choices) {
   lastLine = chosen
   return chosen
 }
+const pickLine = (moment, choices) => line(moment, choices)
 
 // Ce que Reachy dit pendant le jeu : des mots courts, qui ne couvrent pas la musique.
 export const LINES = {
@@ -57,18 +59,40 @@ export const LINES = {
   danceDown: ['Fais-moi danser !', 'Allez, réveille-moi !', 'Je compte sur toi pour le rythme !', 'Donne-moi du rythme !', 'On remonte ensemble ?', 'Il me faut un peu de rythme !', 'Allez, fais-moi bouger !', 'On se reconcentre ?'],
 }
 
+// ---------- Personnalité ----------
+// Reachy a une seconde personnalité, diabolique (coachEvil.js), révélée par un easter egg.
+// Les réactions gardent la même logique ; seuls les textes et quelques humeurs changent.
+let evil = false
+export const setEvil = (on) => {
+  evil = Boolean(on)
+}
+export const isEvil = () => evil
+
+/** Phrases du moment pour la personnalité en cours. */
+const lines = (moment) => (evil ? EVIL_LINES : LINES)[moment]
+/** Une phrase du moment, sans redite (mémoire propre à chaque personnalité). */
+const say = (moment) => line(`${evil ? 'evil:' : ''}${moment}`, lines(moment))
+/** Humeur de l'avatar : le diabolique se réjouit de tes erreurs et boude tes réussites. */
+const mood = (moment, nice) => (evil ? EVIL_MOODS[moment] ?? nice : nice)
+
 // Réaction parlée : le même texte dans la bulle et à voix haute.
 const spoken = (moment) => {
-  const text = line(moment, LINES[moment])
+  const text = say(moment)
   return { bubble: text, say: text }
+}
+
+/** Transformation (easter egg) : il annonce sa nouvelle personnalité. */
+export function transformReaction(toEvil) {
+  const text = line(toEvil ? 'toEvil' : 'toNice', EVIL_LINES[toEvil ? 'toEvil' : 'toNice'])
+  return { mood: toEvil ? 'cheer' : 'surprised', bubble: text, speech: text, sound: toEvil ? 'oops' : 'hello', priority: 4, holdMs: 4000 }
 }
 
 // ---------- Pendant l'entraînement ----------
 
 export const TRAINING_RULES = {
   ready: ({ title }) => ({
-    mood: 'attentive',
-    bubble: title ? `On joue « ${title} » ? Appuie sur Entrée !` : 'Prêt ? Appuie sur Entrée !',
+    mood: mood('ready', 'attentive'),
+    bubble: evil ? EVIL_TEXT.ready(title) : title ? `On joue « ${title} » ? Appuie sur Entrée !` : 'Prêt ? Appuie sur Entrée !',
     robot: { emotion: 'attentive1' },
     priority: 2,
   }),
@@ -86,7 +110,7 @@ export const TRAINING_RULES = {
   count: ({ n }) => ({
     mood: 'attentive',
     bubble: String(n),
-    speech: LINES.count[3 - n],
+    speech: lines('count')[3 - n],
     quick: true,
     robot: { gesture: `count${n}` },
     priority: 3,
@@ -95,21 +119,21 @@ export const TRAINING_RULES = {
 
   // Fin du décompte : « C'est parti ! » et un hochement.
   go: () => {
-    const text = line('start', LINES.start)
+    const text = say('start')
     return { mood: 'happy', bubble: text, speech: text, quick: true, sound: 'go', robot: { gesture: 'go' }, priority: 3, holdMs: 1200 }
   },
 
   // Une note réussie : petit geste ajouté à sa danse, pour sentir qu'il suit.
   // Pas d'humeur ni de parole : c'est la danse elle-même qui montre si le joueur joue bien.
   hit: ({ precision }) => ({
-    bubble: precision === 'perfect' && Math.random() < 0.2 ? pick(['Oui !', 'Joli !', 'Top !']) : null,
+    bubble: precision === 'perfect' && Math.random() < 0.2 ? pick(evil ? EVIL_LINES.hitBubble : ['Oui !', 'Joli !', 'Top !']) : null,
     robot: { gesture: Math.random() < 0.5 ? 'antennaFlick' : 'nod' },
     priority: 1,
     cooldown: 1.2,
   }),
 
   miss: () => ({
-    bubble: Math.random() < 0.3 ? pick(['Presque…', 'Hmm ?', 'Pas grave']) : null,
+    bubble: Math.random() < 0.3 ? pick(evil ? EVIL_LINES.missBubble : ['Presque…', 'Hmm ?', 'Pas grave']) : null,
     robot: { gesture: 'tilt' },
     priority: 1,
     cooldown: 2,
@@ -118,7 +142,7 @@ export const TRAINING_RULES = {
   milestone: ({ streak }) => {
     const moment = streak >= 100 ? 'milestoneBig' : streak >= 50 ? 'milestone50' : streak >= 25 ? 'milestone25' : 'milestone10'
     return {
-      mood: streak >= 50 ? 'dance' : 'cheer',
+      mood: mood('milestone', streak >= 50 ? 'dance' : 'cheer'),
       ...spoken(moment),
       sound: 'cheer',
       robot: { gesture: 'perk' },
@@ -128,7 +152,7 @@ export const TRAINING_RULES = {
 
   // Une belle série vient de se casser.
   streakLost: () => ({
-    mood: 'sad',
+    mood: mood('streakLost', 'sad'),
     ...spoken('streakLost'),
     sound: 'oops',
     robot: { gesture: 'tilt' },
@@ -138,7 +162,7 @@ export const TRAINING_RULES = {
 
   // Beaucoup de notes ratées d'un coup.
   struggle: () => ({
-    mood: 'calm',
+    mood: mood('struggle', 'calm'),
     ...spoken('struggle'),
     sound: 'think',
     robot: { gesture: 'tilt' },
@@ -148,7 +172,7 @@ export const TRAINING_RULES = {
 
   // Ça repart bien après un passage difficile.
   comeback: () => ({
-    mood: 'proud',
+    mood: mood('comeback', 'proud'),
     ...spoken('comeback'),
     sound: 'happy',
     robot: { gesture: 'perk' },
@@ -172,7 +196,7 @@ export const TRAINING_RULES = {
 
   pause: () => ({
     mood: 'attentive',
-    bubble: 'Je t\'attends',
+    bubble: evil ? EVIL_TEXT.pause : 'Je t\'attends',
     robot: { emotion: 'serenity1' }, // commence et finit au neutre : la pause ne fait pas sursauter le robot
     priority: 2,
   }),
@@ -191,7 +215,7 @@ export const TRAINING_RULES = {
 // phrases du jeu) : d'une partie à l'autre, il ne dit pas deux fois la même chose.
 
 /** Choisit une formulation parmi `templates` (fonctions), sans redite pour ce moment. */
-function variant(moment, templates, ...args) {
+function pickVariant(moment, templates, ...args) {
   // Identifiants propres au moment : ils ne se mélangent pas avec ceux des autres moments.
   const ids = templates.map((_, i) => `${moment}#${i}`)
   return templates[ids.indexOf(line(moment, ids))](...args)
@@ -272,33 +296,36 @@ function spokenNote(name) {
  */
 export function finishReaction(stats, { speed = 1, title, previousBest = null } = {}) {
   const { successPercent: percent, stars, bestStreak, tendency } = stats
-  const opening = line(`finishOpening${stars}`, FINISH.opening[stars] ?? FINISH.opening[0])
+  const F = evil ? EVIL_FINISH : FINISH
+  const variant = (moment, templates, ...args) => pickVariant(`${evil ? 'evil:' : ''}${moment}`, templates, ...args)
+  const line = (moment, choices) => pickLine(`${evil ? 'evil:' : ''}${moment}`, choices)
+  const opening = line(`finishOpening${stars}`, F.opening[stars] ?? F.opening[0])
 
-  const figures = `${variant('finishFigures', FINISH.figures, percent)}${bestStreak >= 5 ? variant('finishStreak', FINISH.streak, bestStreak) : ''}.`
+  const figures = `${variant('finishFigures', F.figures, percent)}${bestStreak >= 5 ? variant('finishStreak', F.streak, bestStreak) : ''}.`
   const best = previousBest?.successPercent
-  const record = best != null && percent > best ? variant('finishRecord', FINISH.record, percent, best) : null
-  const near = best != null && percent < best && best - percent <= 5 ? variant('finishNear', FINISH.nearRecord, best - percent, best) : null
+  const record = best != null && percent > best ? variant('finishRecord', F.record, percent, best) : null
+  const near = best != null && percent < best && best - percent <= 5 ? variant('finishNear', F.nearRecord, best - percent, best) : null
 
   // Conseil : d'abord ce qui compte le plus (morceau maîtrisé, vitesse) ; sinon l'un des
   // points à travailler, au hasard, pour ne pas répéter le même conseil à chaque partie.
   const songName = title ? `« ${title} »` : 'ce morceau'
   let advice = null
-  if (stars === 3 && speed >= 1) advice = variant('finishMaster', FINISH.master, songName)
-  else if (percent >= 90 && speed < 1) advice = line('finishFaster', FINISH.faster)
-  else if (percent < 60 && speed > 0.5) advice = line('finishSlower', FINISH.slower)
+  if (stars === 3 && speed >= 1) advice = variant('finishMaster', F.master, songName)
+  else if (percent >= 90 && speed < 1) advice = line('finishFaster', F.faster)
+  else if (percent < 60 && speed > 0.5) advice = line('finishSlower', F.slower)
   else {
     const trouble = stats.troubleNotes?.find((n) => n.errors >= 2)
     const troubleName = trouble && spokenNote(trouble.note)
     const options = [
-      tendency === 'early' && (() => line('finishEarly', FINISH.early)),
-      tendency === 'late' && (() => line('finishLate', FINISH.late)),
-      stats.missedNotes > stats.wrongNotes && (() => line('finishMissed', FINISH.missed)),
-      troubleName && (() => variant('finishTrouble', FINISH.trouble, troubleName)),
+      tendency === 'early' && (() => line('finishEarly', F.early)),
+      tendency === 'late' && (() => line('finishLate', F.late)),
+      stats.missedNotes > stats.wrongNotes && (() => line('finishMissed', F.missed)),
+      troubleName && (() => variant('finishTrouble', F.trouble, troubleName)),
     ].filter(Boolean)
     if (options.length) advice = pick(options)()
   }
 
-  const cheer = record ? line('finishCheerRecord', FINISH.cheerRecord) : line(`finishCheer${stars}`, FINISH.cheer[stars] ?? FINISH.cheer[0])
+  const cheer = record ? line('finishCheerRecord', F.cheerRecord) : line(`finishCheer${stars}`, F.cheer[stars] ?? F.cheer[0])
 
   const speech = [opening, figures, record ?? near, advice, cheer].filter(Boolean).join(' ')
   return {
@@ -320,10 +347,16 @@ export function finishReaction(stats, { speed = 1, title, previousBest = null } 
  * Retourne la réaction, avec `text` : le message à garder dans la bulle.
  */
 export function welcomeReaction({ suggestion, firstVisitToday, day = 0 }) {
-  const hello = (firstVisitToday ? ['Salut ! Content de te voir.', 'Coucou ! On fait de la musique ?', 'Bonjour ! Prêt à jouer ?'] : ['Re-bonjour !', 'On continue ?', 'Te revoilà !'])[day % 3]
-  const offer = suggestion
-    ? `Aujourd'hui, je te conseille « ${suggestion.title} »${suggestion.levelLabel ? ` (niveau ${suggestion.levelLabel.toLowerCase()})` : ''}.`
-    : 'Choisis un morceau, je t\'accompagne pendant que tu joues.'
+  const hellos = evil
+    ? firstVisitToday ? EVIL_WELCOME.helloFirst : EVIL_WELCOME.helloAgain
+    : firstVisitToday ? ['Salut ! Content de te voir.', 'Coucou ! On fait de la musique ?', 'Bonjour ! Prêt à jouer ?'] : ['Re-bonjour !', 'On continue ?', 'Te revoilà !']
+  const hello = hellos[day % 3]
+  const level = suggestion?.levelLabel?.toLowerCase()
+  const offer = evil
+    ? suggestion ? EVIL_WELCOME.offer(suggestion.title, level) : EVIL_WELCOME.noOffer
+    : suggestion
+      ? `Aujourd'hui, je te conseille « ${suggestion.title} »${level ? ` (niveau ${level})` : ''}.`
+      : 'Choisis un morceau, je t\'accompagne pendant que tu joues.'
   const text = `${hello} ${offer}`
   return {
     text,
@@ -343,7 +376,7 @@ export function welcomeReaction({ suggestion, firstVisitToday, day = 0 }) {
 export const SLEEP_RULES = {
   bored: () => ({
     mood: 'sleepy',
-    bubble: pick(['Tu es là ? On joue ?', 'Je m\'ennuie un peu…', 'Une petite chanson ?']),
+    bubble: pick(evil ? EVIL_LINES.bored : ['Tu es là ? On joue ?', 'Je m\'ennuie un peu…', 'Une petite chanson ?']),
     sound: 'think',
     robot: { emotion: pick(['boredom1', 'boredom2']) },
     priority: 2,
@@ -351,7 +384,7 @@ export const SLEEP_RULES = {
   }),
 
   wake: () => {
-    const text = line('wake', LINES.wake)
+    const text = say('wake')
     return { mood: 'surprised', bubble: text, speech: text, sound: 'hello', priority: 3, holdMs: 4000 }
   },
 }

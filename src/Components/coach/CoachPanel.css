@@ -266,3 +266,12 @@
 :is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(4) { background: #ef4444; }
 :is(.songs-page, .piano-page) .coach__meter-name { color: #fff7ed; }
 :is(.songs-page, .piano-page) .coach__meter--3 .coach__meter-name { color: #fbbf24; }
+
+/* Reachy diabolique : le panneau s'assombrit, la bulle passe au rouge */
+.coach.coach--evil { border-color: #7f1d1d; background: linear-gradient(180deg, #1a1012 0%, #121214 100%); color: #fde2e2; }
+.coach.coach--evil .coach__title { color: #f87171; }
+.coach.coach--evil .coach__bubble { border-color: rgba(220, 38, 38, 0.55); background: #1d1416; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.18); }
+.coach.coach--evil .coach__bubble::before { border-right-color: rgba(220, 38, 38, 0.55); }
+.coach.coach--evil .coach__bubble::after { border-right-color: #1d1416; }
+.coach.coach--evil .coach__text { color: #fde2e2; }
+.coach__avatar { cursor: default; user-select: none; }

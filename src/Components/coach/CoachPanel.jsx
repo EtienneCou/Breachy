@@ -30,15 +30,17 @@ const STATUS_LABELS = {
 export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton coach', idleText, talkToggle = false, children, className = '' }) {
   const coach = useCoach()
   const [open, setOpen] = useState(false)
-  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput } = coach
+  const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput, evil, transforming, pokeAvatar } = coach
   const text = bubble?.text ?? idleText
   const robotOn = robotStatus === 'connected'
 
   return (
-    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''} ${className}`} aria-label="Reachy, ton coach">
+    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''}${evil ? ' coach--evil' : ''} ${className}`} aria-label="Reachy, ton coach">
       {!robotOn && (
-        <div className="coach__avatar">
-          <ReachyAvatar mood={mood} speaking={speaking} groove={groove} size={layout === 'wide' ? 104 : 72} />
+        // Clics répétés sur l'avatar : easter egg (voir CoachProvider). Pas un vrai bouton :
+        // il ne se remarque pas au clavier, il faut le chercher.
+        <div className="coach__avatar" onClick={pokeAvatar}>
+          <ReachyAvatar mood={mood} speaking={speaking} groove={groove} evil={evil} transforming={transforming} size={layout === 'wide' ? 104 : 72} />
         </div>
       )}
 
