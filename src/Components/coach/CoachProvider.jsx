@@ -19,7 +19,9 @@ const CoachContext = createContext(null)
 const SETTINGS_KEY = 'breachy.coach'
 // talk : encouragements parlés pendant le jeu (le joueur peut les couper : Reachy danse seulement)
 // talkAmount : combien il parle ('low', 'medium', 'high')
-const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium' }
+// listen : écoute de la phrase secrète (démo), coupée par défaut : le micro n'est jamais
+// ouvert sans que l'équipe l'ait activé dans les réglages
+const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium', listen: false }
 
 const DUCK = 0.55 // l'accompagnement baisse à 55 % pendant que Reachy parle
 const POLL_MS = 4000
@@ -68,6 +70,11 @@ const TOUCH_SETTLE_MS = 1000 // il doit être immobile depuis 1 s pour prendre s
 const TRANSFORM_MS = 2600 // durée de la transformation sur le robot
 // Pose menaçante : tête baissée qui regarde par en dessous, antennes plaquées en arrière.
 const MENACE_POSE = { head: { roll: 0, pitch: 14, yaw: 0, z: -10 }, antennas: [-75, 75], body: 0 }
+// Phrase secrète (démo, avec l'écoute activée) : « Passe du côté obscur, Reachy » le
+// transforme ; « Redeviens gentil » le ramène. Comparées sans accents ni majuscules.
+const TO_EVIL_WORDS = /cote obscur/
+const TO_NICE_WORDS = /redeviens gentil|cote lumineux/
+const plain = (text) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 // Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus
 // (les émotions ont leur durée réelle : voir emotionMoves.js).
@@ -461,6 +468,40 @@ export function CoachProvider({ children }) {
     react('transform', transformReaction(toEvil))
   }, [client, react])
 
+  const transformRef = useRef(transform)
+  useEffect(() => {
+    transformRef.current = transform
+  })
+
+  // Écoute de la phrase secrète (démo) : reconnaissance vocale du navigateur (Chrome, Edge),
+  // sur le micro par défaut de l'ordinateur. Elle s'arrête d'elle-même après un silence :
+  // on la relance tant que l'écoute est activée.
+  useEffect(() => {
+    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+    if (!settings.listen || !Recognition) return
+    const recognition = new Recognition()
+    recognition.lang = 'fr-FR'
+    recognition.continuous = true
+    recognition.interimResults = false
+    let active = true
+    recognition.onresult = (event) => {
+      const heard = plain(event.results[event.results.length - 1][0].transcript)
+      if (isEvil() ? TO_NICE_WORDS.test(heard) : TO_EVIL_WORDS.test(heard)) transformRef.current()
+    }
+    recognition.onend = () => {
+      if (active) setTimeout(() => active && recognition.start(), 300)
+    }
+    recognition.onerror = (event) => {
+      // Micro refusé : on n'insiste pas (l'écoute reste affichée comme activée).
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') active = false
+    }
+    recognition.start()
+    return () => {
+      active = false
+      recognition.abort()
+    }
+  }, [settings.listen])
+
   /** Clic sur l'avatar : beaucoup de clics rapides le transforment. */
   const pokeAvatar = useCallback(() => {
     const now = performance.now()
@@ -477,10 +518,6 @@ export function CoachProvider({ children }) {
   // Sur le vrai robot : ses moteurs mesurent leur position. Au repos (ni danse, ni geste,
   // ni sommeil), ses antennes et son corps ne bougent pas : s'ils s'écartent nettement de
   // leur position de repos, quelqu'un les pousse. Trois fois en peu de temps : transformation.
-  const transformRef = useRef(transform)
-  useEffect(() => {
-    transformRef.current = transform
-  })
   useEffect(() => {
     if (robotStatus !== 'connected') return
     let rest = null // position de repos { antennas, body }

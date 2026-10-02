@@ -275,3 +275,6 @@
 .coach.coach--evil .coach__bubble::after { border-right-color: #1d1416; }
 .coach.coach--evil .coach__text { color: #fde2e2; }
 .coach__avatar { cursor: default; user-select: none; }
+/* L'accueil garde une ancienne règle « .reachy » (robot flottant, en position fixe et non
+   cliquable) : l'avatar du coach reste à sa place et reçoit les clics. */
+.coach .coach__avatar .reachy { position: static; display: block; pointer-events: auto; }

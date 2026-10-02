@@ -130,12 +130,21 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
               <input type="checkbox" checked={settings.sounds} onChange={(e) => updateSettings({ sounds: e.target.checked })} />
               Petits sons pendant le jeu
             </label>
+            {LISTEN_SUPPORTED && (
+              <label className="coach__check">
+                <input type="checkbox" checked={settings.listen} onChange={(e) => updateSettings({ listen: e.target.checked })} />
+                🎙 Écoute (démo) : Reachy entend ce qu'on lui dit
+              </label>
+            )}
           </div>
         )}
       </div>
     </section>
   )
 }
+
+// Reconnaissance vocale du navigateur (Chrome, Edge) : sans elle, pas d'option d'écoute.
+const LISTEN_SUPPORTED = typeof window !== 'undefined' && Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition)
 
 // Niveaux de danse (voir DANCE_LEVELS dans danceEngine.js)
 const DANCE_NAMES = ['Calme', 'Il se laisse porter', 'Ça groove', 'Rock star !']
