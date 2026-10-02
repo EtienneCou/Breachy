@@ -13,6 +13,8 @@
 //   cooldown: secondes avant de pouvoir rejouer ce type de réaction
 // }
 
+import { SOLFEGE, noteToMidi } from '../piano/notes.js'
+
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
 
 // ---------- Phrases sans répétition ----------
@@ -185,6 +187,82 @@ export const TRAINING_RULES = {
 }
 
 // ---------- Bilan de fin de morceau ----------
+// Chaque partie du bilan a plusieurs formulations, choisies sans redite (comme les
+// phrases du jeu) : d'une partie à l'autre, il ne dit pas deux fois la même chose.
+
+/** Choisit une formulation parmi `templates` (fonctions), sans redite pour ce moment. */
+function variant(moment, templates, ...args) {
+  // Identifiants propres au moment : ils ne se mélangent pas avec ceux des autres moments.
+  const ids = templates.map((_, i) => `${moment}#${i}`)
+  return templates[ids.indexOf(line(moment, ids))](...args)
+}
+
+const FINISH = {
+  // Ouverture, selon les étoiles (0 à 3)
+  opening: [
+    ['C\'est un début !', 'On a commencé, c\'est le principal !', 'Premier tour de chauffe !', 'Pas facile, celui-là !', 'Bon, on s\'échauffe !', 'Tous les musiciens commencent comme ça !'],
+    ['Pas mal du tout !', 'C\'est en bonne voie !', 'Joli effort !', 'Ça prend forme !', 'Il y a du mieux !', 'On sent que ça vient !'],
+    ['Très bien joué !', 'Belle partie !', 'Bravo, c\'était chouette !', 'Super, j\'ai bien dansé !', 'Ça sonnait bien !', 'Joli travail !'],
+    ['Magnifique, bravo !', 'Waouh, quelle partie !', 'Incroyable !', 'Presque parfait !', 'Chapeau l\'artiste !', 'Quel concert !'],
+  ],
+  figures: [
+    (p) => `${p} % de notes réussies`,
+    (p) => `Tu as réussi ${p} % des notes`,
+    (p) => `Score : ${p} %`,
+    (p) => `${p} % de réussite`,
+  ],
+  streak: [
+    (n) => `, avec une série de ${n}`,
+    (n) => `, et ${n} notes d'affilée`,
+    (n) => `, dont ${n} notes sans faute d'affilée`,
+  ],
+  record: [
+    (p, b) => `Nouveau record : ${p} %, contre ${b} % la dernière fois !`,
+    (p, b) => `Record battu ! ${b} % avant, ${p} % maintenant !`,
+    (p, b) => `Tu as pulvérisé ton record de ${b} % !`,
+    (p) => `Nouveau meilleur score : ${p} % !`,
+  ],
+  // Pas de record, mais tout près
+  nearRecord: [
+    (d) => `Tu es à ${d} ${d > 1 ? 'points' : 'point'} de ton record !`,
+    (d, b) => `Ton record de ${b} % n'est plus très loin !`,
+    (d, b) => `Encore un petit effort pour battre ton ${b} % !`,
+  ],
+  master: [
+    (t) => `Tu maîtrises ${t}. Essaie un morceau plus difficile !`,
+    (t) => `${t[0].toUpperCase()}${t.slice(1)} n'a plus de secret pour toi. Un nouveau défi ?`,
+    () => 'Je crois que tu es prêt pour un morceau plus dur !',
+    () => 'Et si on tentait un morceau plus difficile ?',
+  ],
+  faster: ['Tu es prêt pour la vitesse supérieure.', 'Et si on accélérait un peu ?', 'Essaie un cran plus vite, tu peux le faire !', 'Monte la vitesse, je te suis !'],
+  slower: ['Essaie un peu plus lentement, pour bien poser chaque note.', 'Ralentis un peu le morceau, ça aide beaucoup.', 'Baisse la vitesse : mieux vaut lent et juste !', 'Un peu plus lentement, et ça va rouler.'],
+  early: ['Tu joues un peu en avance : attends que la note touche la ligne.', 'Petite avance sur le rythme : laisse la note arriver.', 'Pas si vite : attends la ligne avant d\'appuyer.', 'Tu es pressé ! Attends un tout petit peu.'],
+  late: ['Tu joues un peu en retard : anticipe un tout petit peu.', 'Un petit retard : appuie un poil plus tôt.', 'Anticipe un peu, la note arrive vite !', 'Prépare ton doigt un peu avant la ligne.'],
+  missed: ['Quelques notes oubliées : garde les yeux sur les notes qui arrivent.', 'Des notes t\'ont échappé : regarde un peu plus haut sur la piste.', 'Garde un œil sur les notes qui tombent, certaines sont passées.'],
+  trouble: [
+    (n) => `Le ${n} t'a donné du fil à retordre.`,
+    (n) => `Attention au ${n}, il t'a piégé plusieurs fois.`,
+    (n) => `Petit point à travailler : le ${n}.`,
+    (n) => `Le ${n} était ton adversaire du jour !`,
+  ],
+  // Encouragement final, selon les étoiles ; il y en a toujours un.
+  cheer: [
+    ['Ne lâche rien, chaque essai te rapproche du but. On recommence ensemble ?', 'On réessaie ? Je suis sûr que ça ira mieux !', 'Courage, la prochaine sera meilleure !', 'Tous les pianistes sont passés par là. On y retourne ?', 'Je reste avec toi, on recommence quand tu veux !'],
+    ['Tu es sur la bonne voie, encore un essai et ça va le faire !', 'Encore une fois et tu vas voir la différence !', 'Continue, tu progresses !', 'Ça vient ! On en refait un ?', 'Je sens que la prochaine sera la bonne !'],
+    ['Je suis fier de toi, continue comme ça !', 'Encore un petit effort et c\'est trois étoiles !', 'Tu y es presque, bravo !', 'J\'ai adoré danser là-dessus !', 'Tu as du rythme, ça se voit !'],
+    ['Tu es un vrai musicien, je me régale à danser avec toi !', 'Quel plaisir de danser avec toi !', 'Tu m\'as fait vibrer les antennes !', 'On devrait faire des concerts ensemble !', 'Je suis bluffé, vraiment !'],
+  ],
+  cheerRecord: ['Tu progresses, continue comme ça !', 'Tu t\'améliores à chaque partie !', 'Quelle progression, bravo !', 'Le travail paie !'],
+}
+
+// Note dite à voix haute : 'C#4' → « do dièse »
+function spokenNote(name) {
+  try {
+    return SOLFEGE[noteToMidi(name) % 12].toLowerCase().replace('♯', ' dièse')
+  } catch {
+    return null
+  }
+}
 
 /**
  * Bilan dit par Reachy à la fin d'un morceau, à partir de computeGameStats(results) :
@@ -194,39 +272,35 @@ export const TRAINING_RULES = {
  */
 export function finishReaction(stats, { speed = 1, title, previousBest = null } = {}) {
   const { successPercent: percent, stars, bestStreak, tendency } = stats
-  const opening = [
-    'C\'est un début !',
-    'Pas mal du tout !',
-    'Très bien joué !',
-    'Magnifique, bravo !',
-  ][stars] ?? 'Bravo !'
+  const opening = line(`finishOpening${stars}`, FINISH.opening[stars] ?? FINISH.opening[0])
 
-  const figures = `${percent} % de notes réussies${bestStreak > 1 ? `, et une série de ${bestStreak}` : ''}.`
-  const record =
-    previousBest && percent > previousBest.successPercent
-      ? `Nouveau record : ${percent} %, contre ${previousBest.successPercent} % la dernière fois !`
-      : null
+  const figures = `${variant('finishFigures', FINISH.figures, percent)}${bestStreak >= 5 ? variant('finishStreak', FINISH.streak, bestStreak) : ''}.`
+  const best = previousBest?.successPercent
+  const record = best != null && percent > best ? variant('finishRecord', FINISH.record, percent, best) : null
+  const near = best != null && percent < best && best - percent <= 5 ? variant('finishNear', FINISH.nearRecord, best - percent, best) : null
 
-  let advice
-  if (stars === 3 && speed >= 1) advice = `Tu maîtrises ${title ? `« ${title} »` : 'ce morceau'}. Essaie un morceau plus difficile !`
-  else if (percent >= 90 && speed < 1) advice = 'Tu es prêt pour la vitesse supérieure.'
-  else if (percent < 60 && speed > 0.5) advice = 'Essaie un peu plus lentement, pour bien poser chaque note.'
-  else if (tendency === 'early') advice = 'Tu joues un peu en avance : attends que la note touche la ligne.'
-  else if (tendency === 'late') advice = 'Tu joues un peu en retard : anticipe un tout petit peu.'
-  else if (stats.missedNotes > stats.wrongNotes) advice = 'Quelques notes oubliées : garde les yeux sur les notes qui arrivent.'
-  else advice = null
+  // Conseil : d'abord ce qui compte le plus (morceau maîtrisé, vitesse) ; sinon l'un des
+  // points à travailler, au hasard, pour ne pas répéter le même conseil à chaque partie.
+  const songName = title ? `« ${title} »` : 'ce morceau'
+  let advice = null
+  if (stars === 3 && speed >= 1) advice = variant('finishMaster', FINISH.master, songName)
+  else if (percent >= 90 && speed < 1) advice = line('finishFaster', FINISH.faster)
+  else if (percent < 60 && speed > 0.5) advice = line('finishSlower', FINISH.slower)
+  else {
+    const trouble = stats.troubleNotes?.find((n) => n.errors >= 2)
+    const troubleName = trouble && spokenNote(trouble.note)
+    const options = [
+      tendency === 'early' && (() => line('finishEarly', FINISH.early)),
+      tendency === 'late' && (() => line('finishLate', FINISH.late)),
+      stats.missedNotes > stats.wrongNotes && (() => line('finishMissed', FINISH.missed)),
+      troubleName && (() => variant('finishTrouble', FINISH.trouble, troubleName)),
+    ].filter(Boolean)
+    if (options.length) advice = pick(options)()
+  }
 
-  // Encouragement : il change avec le résultat, mais il y en a toujours un.
-  const cheer = record
-    ? 'Tu progresses, continue comme ça !'
-    : [
-        'Ne lâche rien, chaque essai te rapproche du but. On recommence ensemble ?',
-        'Tu es sur la bonne voie, encore un essai et ça va le faire !',
-        'Je suis fier de toi, continue comme ça !',
-        'Tu es un vrai musicien, je me régale à danser avec toi !',
-      ][stars] ?? 'Continue comme ça !'
+  const cheer = record ? line('finishCheerRecord', FINISH.cheerRecord) : line(`finishCheer${stars}`, FINISH.cheer[stars] ?? FINISH.cheer[0])
 
-  const speech = [opening, figures, record, advice, cheer].filter(Boolean).join(' ')
+  const speech = [opening, figures, record ?? near, advice, cheer].filter(Boolean).join(' ')
   return {
     mood: stars >= 3 || record ? 'dance' : stars === 2 ? 'proud' : stars === 1 ? 'happy' : 'calm',
     bubble: speech,
