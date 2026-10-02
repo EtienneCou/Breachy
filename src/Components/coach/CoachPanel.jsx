@@ -1,22 +1,10 @@
 import { useState } from 'react'
 import { useCoach } from './CoachProvider.jsx'
 import { TALK_AMOUNTS } from './talkAmounts.js'
+import { useCoachUi } from './coachUi.js'
 import ReachyAvatar from './ReachyAvatar.jsx'
 import { DEFAULT_REACHY_URL } from '../../services/reachy/reachyClient.js'
 import './CoachPanel.css'
-
-// Où sort la voix du coach (voir CoachProvider).
-const VOICE_LABELS = {
-  robot: '🔊 Il parle par le haut-parleur du robot.',
-  preview: '🔊 Voix du robot, jouée par l\'ordinateur (la simulation n\'a pas de haut-parleur).',
-  browser: '🔊 Il parle par l\'ordinateur.',
-}
-
-const STATUS_LABELS = {
-  off: 'Robot désactivé',
-  searching: 'Robot non connecté',
-  connected: 'Robot connecté',
-}
 
 /**
  * Reachy à l'écran : l'avatar, sa bulle, l'état du robot et ses réglages.
@@ -24,18 +12,20 @@ const STATUS_LABELS = {
  * dessiné s'efface et seule la bulle reste, pour lire ce que dit Reachy.
  * - layout     'compact' (colonne de l'entraînement) ou 'wide' (carte de l'accueil)
  * - children   actions dans la bulle, sous le texte (ex. bouton « S'entraîner »)
- * - title      petit titre au-dessus de la bulle quand elle est vide
+ * - title      petit titre au-dessus de la bulle (par défaut « Reachy, ton coach », dans la langue du site)
  * - talkToggle affiche l'interrupteur des encouragements parlés (entraînement)
  */
-export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton coach', idleText, talkToggle = false, children, className = '' }) {
+export default function CoachPanel({ layout = 'compact', title: titleProp, idleText, talkToggle = false, children, className = '' }) {
   const coach = useCoach()
+  const ui = useCoachUi()
+  const title = titleProp ?? ui.title
   const [open, setOpen] = useState(false)
   const { settings, updateSettings, robotStatus, bubble, mood, speaking, groove, simulation, voiceOutput, evil, transforming, pokeAvatar, listening } = coach
   const text = bubble?.text ?? idleText
   const robotOn = robotStatus === 'connected'
 
   return (
-    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''}${evil ? ' coach--evil' : ''} ${className}`} aria-label="Reachy, ton coach">
+    <section className={`coach coach--${layout}${robotOn ? ' coach--robot' : ''}${evil ? ' coach--evil' : ''} ${className}`} aria-label={title}>
       {!robotOn && (
         // Clics répétés sur l'avatar : easter egg (voir CoachProvider). Pas un vrai bouton :
         // il ne se remarque pas au clavier, il faut le chercher.
@@ -47,17 +37,17 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
       <div className="coach__content">
         <div className="coach__top">
           <span className="coach__title">
-            {robotOn ? `🤖 ${title} · ${simulation ? 'simulation' : 'robot'}` : title}
+            {robotOn ? `🤖 ${title} · ${ui.robotKind(simulation)}` : title}
           </span>
           <button
             type="button"
             className={`coach__status coach__status--${robotStatus}`}
             onClick={() => setOpen((o) => !o)}
             aria-expanded={open}
-            title="Réglages du coach et du robot"
+            title={ui.settingsTitle}
           >
             <span className="coach__status-dot" aria-hidden="true" />
-            {STATUS_LABELS[robotStatus]}
+            {ui.status[robotStatus]}
             <span aria-hidden="true">⚙</span>
           </button>
         </div>
@@ -73,16 +63,16 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
               updateSettings({ talk: !settings.talk })
               e.currentTarget.blur() // Entrée reste le raccourci Jouer / Pause
             }}
-            title={settings.talk ? 'Il t\'encourage à voix haute pendant le morceau' : 'Il danse sans parler'}
+            title={settings.talk ? ui.talkOnTitle : ui.talkOffTitle}
           >
             <span className="coach__talk-track" aria-hidden="true"><span /></span>
-            {settings.talk ? '🗣 Il t\'encourage' : '🤫 Il danse seulement'}
+            {settings.talk ? ui.talkOn : ui.talkOff}
           </button>
         )}
-        {talkToggle && settings.talk && <TalkAmount value={settings.talkAmount} onChange={(talkAmount) => updateSettings({ talkAmount })} />}
+        {talkToggle && settings.talk && <TalkAmount ui={ui} value={settings.talkAmount} onChange={(talkAmount) => updateSettings({ talkAmount })} />}
 
         {/* Jauge de danse : le joueur voit que c'est son jeu qui fait danser Reachy */}
-        {groove && <DanceMeter level={groove.level} change={groove.change} />}
+        {groove && <DanceMeter ui={ui} level={groove.level} change={groove.change} />}
 
         {/* Bulle de BD, reliée à Reachy par sa pointe */}
         {(text || children) && (
@@ -93,14 +83,14 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
         )}
 
         {open && (
-          <div className="coach__settings" role="group" aria-label="Réglages du coach">
+          <div className="coach__settings" role="group" aria-label={ui.settingsLabel}>
             <label className="coach__check">
               <input type="checkbox" checked={settings.robot} onChange={(e) => updateSettings({ robot: e.target.checked })} />
-              Utiliser le robot Reachy Mini (simulation ou USB)
+              {ui.useRobot}
             </label>
             {settings.robot && (
               <label className="coach__field">
-                <span>Adresse du robot</span>
+                <span>{ui.robotUrl}</span>
                 <input
                   id="coach-robot-url"
                   type="text"
@@ -112,31 +102,31 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
             )}
             {settings.robot && robotStatus === 'searching' && (
               <p className="coach__help">
-                Lance le serveur du robot : <code>reachy-mini-daemon --sim</code> pour la simulation, ou{' '}
-                <code>reachy-mini-daemon</code> avec le Reachy Mini Lite branché en USB.
+                {ui.robotHelp[0]}<code>reachy-mini-daemon --sim</code>{ui.robotHelp[1]}
+                <code>reachy-mini-daemon</code>{ui.robotHelp[2]}
               </p>
             )}
             <label className="coach__check">
               <input type="checkbox" checked={settings.voice} onChange={(e) => updateSettings({ voice: e.target.checked })} />
-              Voix (accueil, décompte et bilan)
+              {ui.voice}
             </label>
-            <p className="coach__help">{VOICE_LABELS[voiceOutput]}</p>
+            <p className="coach__help">{ui.voiceOutput[voiceOutput]}</p>
             <label className="coach__check">
               <input type="checkbox" checked={settings.talk} onChange={(e) => updateSettings({ talk: e.target.checked })} />
-              Encouragements parlés pendant le jeu
+              {ui.talk}
             </label>
-            {settings.talk && <TalkAmount value={settings.talkAmount} onChange={(talkAmount) => updateSettings({ talkAmount })} />}
+            {settings.talk && <TalkAmount ui={ui} value={settings.talkAmount} onChange={(talkAmount) => updateSettings({ talkAmount })} />}
             <label className="coach__check">
               <input type="checkbox" checked={settings.sounds} onChange={(e) => updateSettings({ sounds: e.target.checked })} />
-              Petits sons pendant le jeu
+              {ui.sounds}
             </label>
             {LISTEN_SUPPORTED && (
               <label className="coach__check">
                 <input type="checkbox" checked={settings.listen} onChange={(e) => updateSettings({ listen: e.target.checked })} />
-                🎙 Écoute (démo) : Reachy entend ce qu'on lui dit
+                {ui.listen}
               </label>
             )}
-            {settings.listen && LISTEN_SUPPORTED && <p className="coach__help">{listenText(listening ?? { state: 'starting' })}</p>}
+            {settings.listen && LISTEN_SUPPORTED && <p className="coach__help">{listenText(ui, listening ?? { state: 'starting' })}</p>}
           </div>
         )}
       </div>
@@ -148,24 +138,16 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
 const LISTEN_SUPPORTED = typeof window !== 'undefined' && Boolean(window.SpeechRecognition ?? window.webkitSpeechRecognition)
 
 // Ce que fait l'écoute (démo), en clair
-const LISTEN_ERRORS = {
-  'not-allowed': 'Micro refusé : autorise-le dans la barre d\'adresse du navigateur (icône 🎙 ou 🔒).',
-  'service-not-allowed': 'Le navigateur refuse la reconnaissance vocale (essaie Chrome).',
-  'audio-capture': 'Aucun micro trouvé : vérifie le micro par défaut de Windows.',
-  network: 'Pas de connexion au service de reconnaissance (il faut Internet).',
-  'language-not-supported': 'Le français n\'est pas reconnu par ce navigateur.',
-}
-function listenText({ state, heard, error }) {
-  if (state === 'error') return `⚠️ ${LISTEN_ERRORS[error] ?? `Écoute impossible (${error}).`}`
-  if (state === 'starting') return 'Démarrage de l\'écoute… (accepte le micro si le navigateur le demande)'
-  return heard ? `J'écoute. Dernière chose entendue : « ${heard} »` : 'J\'écoute… Dis « Passe du côté obscur, Reachy ».'
+function listenText(ui, { state, heard, error }) {
+  if (state === 'error') return `⚠️ ${ui.listenErrors[error] ?? ui.listenFailed(error)}`
+  if (state === 'starting') return ui.listenStarting
+  return heard ? ui.listenHeard(heard) : ui.listenWaiting
 }
 
-// Niveaux de danse (voir DANCE_LEVELS dans danceEngine.js)
-const DANCE_NAMES = ['Calme', 'Il se laisse porter', 'Ça groove', 'Rock star !']
-
-// Jauge à 4 crans : elle s'allume quand la danse monte, s'éteint d'un cran quand elle descend.
-function DanceMeter({ level, change }) {
+// Jauge à 4 crans (niveaux de DANCE_LEVELS, danceEngine.js) : elle s'allume quand la danse
+// monte, s'éteint d'un cran quand elle descend.
+function DanceMeter({ ui, level, change }) {
+  const DANCE_NAMES = ui.danceNames
   return (
     <div
       key={level}
@@ -175,7 +157,7 @@ function DanceMeter({ level, change }) {
       aria-valuemax={DANCE_NAMES.length - 1}
       aria-valuenow={level}
       aria-valuetext={DANCE_NAMES[level]}
-      aria-label="Danse de Reachy"
+      aria-label={ui.meter}
     >
       <span className="coach__meter-steps" aria-hidden="true">
         {DANCE_NAMES.map((name, i) => (
@@ -188,9 +170,9 @@ function DanceMeter({ level, change }) {
 }
 
 // Combien Reachy parle pendant le jeu : Peu (toutes les 21 s au plus), Moyen (14 s), Beaucoup (7 s).
-function TalkAmount({ value, onChange }) {
+function TalkAmount({ ui, value, onChange }) {
   return (
-    <div className="coach__amount" role="radiogroup" aria-label="Combien Reachy parle pendant le jeu">
+    <div className="coach__amount" role="radiogroup" aria-label={ui.talkAmount}>
       {TALK_AMOUNTS.map((a) => (
         <button
           key={a.id}
@@ -198,13 +180,13 @@ function TalkAmount({ value, onChange }) {
           role="radio"
           aria-checked={value === a.id}
           className={`coach__amount-btn${value === a.id ? ' is-active' : ''}`}
-          title={`Une parole toutes les ${a.seconds} secondes au plus`}
+          title={ui.talkAmountTitle(a.seconds)}
           onClick={(e) => {
             onChange(a.id)
             e.currentTarget.blur() // Entrée reste le raccourci Jouer / Pause
           }}
         >
-          {a.label}
+          {ui.talkAmounts[a.id] ?? a.label}
         </button>
       ))}
     </div>

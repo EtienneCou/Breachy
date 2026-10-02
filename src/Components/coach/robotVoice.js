@@ -1,9 +1,12 @@
 // Voix du robot : chaque phrase devient un fichier WAV (Piper, dans le navigateur, avec un
-// style « petit robot »), que le robot joue sur son haut-parleur. La voix française est téléchargée une fois (~63 Mo),
+// style « petit robot »), que le robot joue sur son haut-parleur. La voix de chaque langue
+// (française, anglaise) est téléchargée une fois (~63 Mo),
 // puis gardée par le navigateur. Tant qu'elle n'est pas prête, le coach parle avec la voix
 // du navigateur.
 
-const VOICE_ID = 'fr_FR-siwis-medium'
+// Une voix par langue du site (téléchargée la première fois qu'on en a besoin)
+const VOICES = { fr: 'fr_FR-siwis-medium', en: 'en_US-amy-medium' }
+const voiceOf = (lang) => VOICES[lang] ?? VOICES.fr
 
 // Styles de voix (un par personnalité du coach) :
 // - nice : « petit robot mignon », choisi à l'écoute : voix plus aiguë et plus rapide,
@@ -34,16 +37,16 @@ const CACHE_SIZE = 150 // phrases déjà fabriquées, gardées pour les redire s
 let worker = null
 let nextId = 0
 const waiting = new Map()
-let ready = null // promesse : la voix est prête
-let isReady = false
+const ready = new Map() // langue → promesse : sa voix est prête
+const isReady = new Set() // langues dont la voix est prête
 const cache = new Map()
 
-function send(text) {
+function send(text, lang) {
   worker ??= createWorker()
   const id = ++nextId
   return new Promise((resolve, reject) => {
     waiting.set(id, { resolve, reject })
-    worker.postMessage({ id, voiceId: VOICE_ID, wasmPaths: WASM_PATHS, text })
+    worker.postMessage({ id, voiceId: voiceOf(lang), wasmPaths: WASM_PATHS, text })
   })
 }
 
@@ -59,30 +62,35 @@ function createWorker() {
   return w
 }
 
-/** Prépare la voix (téléchargement la première fois), sans attendre. */
-export function prepareRobotVoice() {
-  ready ??= send(null).then(
-    () => {
-      isReady = true
-    },
-    (error) => {
-      ready = null // on réessaiera à la prochaine connexion du robot
-      console.warn('Voix du robot indisponible :', error.message)
-    },
-  )
-  return ready
+/** Prépare la voix d'une langue (téléchargement la première fois), sans attendre. */
+export function prepareRobotVoice(lang = 'fr') {
+  if (!ready.has(lang)) {
+    ready.set(
+      lang,
+      send(null, lang).then(
+        () => {
+          isReady.add(lang)
+        },
+        (error) => {
+          ready.delete(lang) // on réessaiera plus tard
+          console.warn('Voix du robot indisponible :', error.message)
+        },
+      ),
+    )
+  }
+  return ready.get(lang)
 }
 
-export const robotVoiceReady = () => isReady
+export const robotVoiceReady = (lang = 'fr') => isReady.has(lang)
 
 /**
  * Fabrique à l'avance des phrases (ex. les encouragements du jeu), une par une, en
  * arrière-plan : elles partiront sans délai.
  */
-export async function prepareLines(lines, style = 'nice') {
+export async function prepareLines(lines, style = 'nice', lang = 'fr') {
   for (const line of lines) {
     try {
-      await synthesize(line, style)
+      await synthesize(line, style, lang)
     } catch {
       return // voix indisponible : on n'insiste pas
     }
@@ -93,12 +101,13 @@ export async function prepareLines(lines, style = 'nice') {
  * Fabrique la phrase dans le style voulu ('nice' ou 'evil') : { blob (WAV), duration (s),
  * name (nom de fichier stable pour cette phrase) }. Les phrases déjà dites sont gardées.
  */
-export async function synthesize(text, style = 'nice') {
-  const key = `${style}|${text}`
+export async function synthesize(text, style = 'nice', lang = 'fr') {
+  const key = `${lang}|${style}|${text}`
   const known = cache.get(key)
   if (known) return known
-  const blob = await robotStyle(await send(text), STYLES[style] ?? STYLES.nice)
-  const sound = { blob, duration: await wavDuration(blob), name: `breachy-coach-${style === 'nice' ? '' : `${style}-`}${hash(text)}.wav` }
+  const blob = await robotStyle(await send(text, lang), STYLES[style] ?? STYLES.nice)
+  const prefix = `${lang === 'fr' ? '' : `${lang}-`}${style === 'nice' ? '' : `${style}-`}`
+  const sound = { blob, duration: await wavDuration(blob), name: `breachy-coach-${prefix}${hash(text)}.wav` }
   cache.set(key, sound)
   if (cache.size > CACHE_SIZE) cache.delete(cache.keys().next().value)
   return sound

@@ -64,7 +64,7 @@ const MOST_PLAYED = "Les plus joués"; // filtre : morceaux déjà joués, du pl
 const FAVORITES_COUNT = 5; // taille de la section « Favoris »
 
 export default function SongsPage() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [search, setSearch] = useState("");
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -135,7 +135,7 @@ export default function SongsPage() {
 
   // Reachy, le coach : il dit bonjour et propose un morceau adapté au niveau du joueur
   // (le choix change chaque jour).
-  const { react } = useCoach();
+  const { react, evil } = useCoach();
   const [day] = useState(() => Math.floor(Date.now() / 86400000));
   const suggestion = useMemo(
     () =>
@@ -147,10 +147,12 @@ export default function SongsPage() {
   );
   const [firstVisitToday] = useState(isFirstVisitToday);
   useEffect(() => rememberVisitToday(), []);
-  // Message de la bulle : bonjour + morceau conseillé ; il reste affiché.
+  // Message de la bulle : bonjour + morceau conseillé ; il reste affiché. Il suit la
+  // langue du site et la personnalité de Reachy (gentil ou diabolique).
   const welcome = useMemo(
     () => welcomeReaction({ suggestion, firstVisitToday, day }),
-    [suggestion, firstVisitToday, day]
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- language et evil : le texte en dépend (lus par welcomeReaction)
+    [suggestion, firstVisitToday, day, language, evil]
   );
   const welcomed = useRef(false);
   useEffect(() => {
@@ -1758,7 +1760,7 @@ export default function SongsPage() {
               className="home-coach__play"
               onClick={() => handleStartPractice({ key: suggestion.key })}
             >
-              🎹 S'entraîner sur « {suggestion.title} »
+              🎹 {language === "en" ? <>Practice "{suggestion.title}"</> : <>S'entraîner sur « {suggestion.title} »</>}
             </button>
           )}
         </CoachPanel>

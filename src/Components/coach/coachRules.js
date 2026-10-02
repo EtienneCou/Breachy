@@ -13,8 +13,10 @@
 //   cooldown: secondes avant de pouvoir rejouer ce type de réaction
 // }
 
-import { SOLFEGE, noteToMidi } from '../piano/notes.js'
+import { LETTERS, SOLFEGE, noteToMidi } from '../piano/notes.js'
 import { EVIL_FINISH, EVIL_LINES, EVIL_MOODS, EVIL_TEXT, EVIL_WELCOME } from './coachEvil.js'
+import { EN } from './coachEnglish.js'
+import { getTranslation } from '../../utils/translations.js'
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)]
 
@@ -59,19 +61,62 @@ export const LINES = {
   danceDown: ['Fais-moi danser !', 'Allez, réveille-moi !', 'Je compte sur toi pour le rythme !', 'Donne-moi du rythme !', 'On remonte ensemble ?', 'Il me faut un peu de rythme !', 'Allez, fais-moi bouger !', 'On se reconcentre ?'],
 }
 
-// ---------- Personnalité ----------
-// Reachy a une seconde personnalité, diabolique (coachEvil.js), révélée par un easter egg.
-// Les réactions gardent la même logique ; seuls les textes et quelques humeurs changent.
+// Autres textes du Reachy gentil, en français
+const FR_TEXT = {
+  ready: (title) => (title ? `On joue « ${title} » ? Appuie sur Entrée !` : 'Prêt ? Appuie sur Entrée !'),
+  pause: 'Je t\'attends',
+  hitBubble: ['Oui !', 'Joli !', 'Top !'],
+  missBubble: ['Presque…', 'Hmm ?', 'Pas grave'],
+  bored: ['Tu es là ? On joue ?', 'Je m\'ennuie un peu…', 'Une petite chanson ?'],
+  helloFirst: ['Salut ! Content de te voir.', 'Coucou ! On fait de la musique ?', 'Bonjour ! Prêt à jouer ?'],
+  helloAgain: ['Re-bonjour !', 'On continue ?', 'Te revoilà !'],
+  offer: (title, level) => `Aujourd'hui, je te conseille « ${title} »${level ? ` (niveau ${level})` : ''}.`,
+  noOffer: 'Choisis un morceau, je t\'accompagne pendant que tu joues.',
+  poke: 'Hé ! Ça chatouille !',
+  touch: 'Hé ! Pas touche aux antennes !',
+}
+// … et du Reachy diabolique (ses phrases sont dans coachEvil.js)
+const FR_EVIL_TEXT = {
+  ...EVIL_TEXT,
+  ...EVIL_WELCOME,
+  hitBubble: EVIL_LINES.hitBubble,
+  missBubble: EVIL_LINES.missBubble,
+  bored: EVIL_LINES.bored,
+  poke: 'Continue. Pour voir.',
+  touch: 'Touche encore. Pour voir.',
+}
+
+// ---------- Langue et personnalité ----------
+// Reachy parle la langue du site (français ou anglais : coachEnglish.js), et a une seconde
+// personnalité, diabolique (coachEvil.js), révélée par un easter egg. Les réactions gardent
+// la même logique ; seuls les textes (et quelques humeurs du diabolique) changent.
+let lang = 'fr'
+export const setLanguage = (language) => {
+  lang = language === 'en' ? 'en' : 'fr'
+}
+export const getLanguage = () => lang
+
 let evil = false
 export const setEvil = (on) => {
   evil = Boolean(on)
 }
 export const isEvil = () => evil
 
-/** Phrases du moment pour la personnalité en cours. */
-const lines = (moment) => (evil ? EVIL_LINES : LINES)[moment]
-/** Une phrase du moment, sans redite (mémoire propre à chaque personnalité). */
-const say = (moment) => line(`${evil ? 'evil:' : ''}${moment}`, lines(moment))
+/** Textes de la langue et de la personnalité en cours : { lines, finish, text }. */
+function texts() {
+  if (lang === 'en') return evil ? EN.evil : EN.nice
+  return evil ? { lines: EVIL_LINES, finish: EVIL_FINISH, text: FR_EVIL_TEXT } : { lines: LINES, finish: FINISH, text: FR_TEXT }
+}
+const text = () => texts().text
+/** Toutes les phrases courtes du moment (pour fabriquer la voix du robot à l'avance). */
+export const currentLines = () => Object.values(texts().lines).flat()
+
+/** Phrases du moment pour la langue et la personnalité en cours. */
+const lines = (moment) => texts().lines[moment]
+/** Mémoire des redites propre à chaque langue et personnalité. */
+const memoryKey = (moment) => `${lang}:${evil ? 'evil:' : ''}${moment}`
+/** Une phrase du moment, sans redite. */
+const say = (moment) => line(memoryKey(moment), lines(moment))
 /** Humeur de l'avatar : le diabolique se réjouit de tes erreurs et boude tes réussites. */
 const mood = (moment, nice) => (evil ? EVIL_MOODS[moment] ?? nice : nice)
 
@@ -83,16 +128,20 @@ const spoken = (moment) => {
 
 /** Transformation (easter egg) : il annonce sa nouvelle personnalité. */
 export function transformReaction(toEvil) {
-  const text = line(toEvil ? 'toEvil' : 'toNice', EVIL_LINES[toEvil ? 'toEvil' : 'toNice'])
-  return { mood: toEvil ? 'cheer' : 'surprised', bubble: text, speech: text, sound: toEvil ? 'oops' : 'hello', priority: 4, holdMs: 4000 }
+  const moment = toEvil ? 'toEvil' : 'toNice'
+  const said = line(`${lang}:${moment}`, lang === 'en' ? EN.transform[moment] : EVIL_LINES[moment])
+  return { mood: toEvil ? 'cheer' : 'surprised', bubble: said, speech: said, sound: toEvil ? 'oops' : 'hello', priority: 4, holdMs: 4000 }
 }
+
+/** Petite réaction quand on le chatouille (clics sur l'avatar) ou qu'on touche ses antennes. */
+export const pokeReaction = (kind) => ({ mood: 'surprised', bubble: text()[kind], priority: 1, cooldown: kind === 'touch' ? 8 : 4 })
 
 // ---------- Pendant l'entraînement ----------
 
 export const TRAINING_RULES = {
   ready: ({ title }) => ({
     mood: mood('ready', 'attentive'),
-    bubble: evil ? EVIL_TEXT.ready(title) : title ? `On joue « ${title} » ? Appuie sur Entrée !` : 'Prêt ? Appuie sur Entrée !',
+    bubble: text().ready(title),
     robot: { emotion: 'attentive1' },
     priority: 2,
   }),
@@ -126,14 +175,14 @@ export const TRAINING_RULES = {
   // Une note réussie : petit geste ajouté à sa danse, pour sentir qu'il suit.
   // Pas d'humeur ni de parole : c'est la danse elle-même qui montre si le joueur joue bien.
   hit: ({ precision }) => ({
-    bubble: precision === 'perfect' && Math.random() < 0.2 ? pick(evil ? EVIL_LINES.hitBubble : ['Oui !', 'Joli !', 'Top !']) : null,
+    bubble: precision === 'perfect' && Math.random() < 0.2 ? pick(text().hitBubble) : null,
     robot: { gesture: Math.random() < 0.5 ? 'antennaFlick' : 'nod' },
     priority: 1,
     cooldown: 1.2,
   }),
 
   miss: () => ({
-    bubble: Math.random() < 0.3 ? pick(evil ? EVIL_LINES.missBubble : ['Presque…', 'Hmm ?', 'Pas grave']) : null,
+    bubble: Math.random() < 0.3 ? pick(text().missBubble) : null,
     robot: { gesture: 'tilt' },
     priority: 1,
     cooldown: 2,
@@ -196,7 +245,7 @@ export const TRAINING_RULES = {
 
   pause: () => ({
     mood: 'attentive',
-    bubble: evil ? EVIL_TEXT.pause : 'Je t\'attends',
+    bubble: text().pause,
     robot: { emotion: 'serenity1' }, // commence et finit au neutre : la pause ne fait pas sursauter le robot
     priority: 2,
   }),
@@ -279,10 +328,11 @@ const FINISH = {
   cheerRecord: ['Tu progresses, continue comme ça !', 'Tu t\'améliores à chaque partie !', 'Quelle progression, bravo !', 'Le travail paie !'],
 }
 
-// Note dite à voix haute : 'C#4' → « do dièse »
+// Note dite à voix haute : 'C#4' → « do dièse » en français, « C sharp » en anglais
 function spokenNote(name) {
   try {
-    return SOLFEGE[noteToMidi(name) % 12].toLowerCase().replace('♯', ' dièse')
+    const pitch = noteToMidi(name) % 12
+    return lang === 'en' ? LETTERS[pitch].replace('♯', ' sharp') : SOLFEGE[pitch].toLowerCase().replace('♯', ' dièse')
   } catch {
     return null
   }
@@ -296,9 +346,9 @@ function spokenNote(name) {
  */
 export function finishReaction(stats, { speed = 1, title, previousBest = null } = {}) {
   const { successPercent: percent, stars, bestStreak, tendency } = stats
-  const F = evil ? EVIL_FINISH : FINISH
-  const variant = (moment, templates, ...args) => pickVariant(`${evil ? 'evil:' : ''}${moment}`, templates, ...args)
-  const line = (moment, choices) => pickLine(`${evil ? 'evil:' : ''}${moment}`, choices)
+  const F = texts().finish
+  const variant = (moment, templates, ...args) => pickVariant(memoryKey(moment), templates, ...args)
+  const line = (moment, choices) => pickLine(memoryKey(moment), choices)
   const opening = line(`finishOpening${stars}`, F.opening[stars] ?? F.opening[0])
 
   const figures = `${variant('finishFigures', F.figures, percent)}${bestStreak >= 5 ? variant('finishStreak', F.streak, bestStreak) : ''}.`
@@ -308,7 +358,7 @@ export function finishReaction(stats, { speed = 1, title, previousBest = null } 
 
   // Conseil : d'abord ce qui compte le plus (morceau maîtrisé, vitesse) ; sinon l'un des
   // points à travailler, au hasard, pour ne pas répéter le même conseil à chaque partie.
-  const songName = title ? `« ${title} »` : 'ce morceau'
+  const songName = lang === 'en' ? (title ? `"${title}"` : 'this song') : title ? `« ${title} »` : 'ce morceau'
   let advice = null
   if (stars === 3 && speed >= 1) advice = variant('finishMaster', F.master, songName)
   else if (percent >= 90 && speed < 1) advice = line('finishFaster', F.faster)
@@ -347,22 +397,17 @@ export function finishReaction(stats, { speed = 1, title, previousBest = null } 
  * Retourne la réaction, avec `text` : le message à garder dans la bulle.
  */
 export function welcomeReaction({ suggestion, firstVisitToday, day = 0 }) {
-  const hellos = evil
-    ? firstVisitToday ? EVIL_WELCOME.helloFirst : EVIL_WELCOME.helloAgain
-    : firstVisitToday ? ['Salut ! Content de te voir.', 'Coucou ! On fait de la musique ?', 'Bonjour ! Prêt à jouer ?'] : ['Re-bonjour !', 'On continue ?', 'Te revoilà !']
-  const hello = hellos[day % 3]
-  const level = suggestion?.levelLabel?.toLowerCase()
-  const offer = evil
-    ? suggestion ? EVIL_WELCOME.offer(suggestion.title, level) : EVIL_WELCOME.noOffer
-    : suggestion
-      ? `Aujourd'hui, je te conseille « ${suggestion.title} »${level ? ` (niveau ${level})` : ''}.`
-      : 'Choisis un morceau, je t\'accompagne pendant que tu joues.'
-  const text = `${hello} ${offer}`
+  const t = text()
+  const hello = (firstVisitToday ? t.helloFirst : t.helloAgain)[day % 3]
+  // Niveau du morceau, dans la langue du site (traductions de la difficulté)
+  const level = suggestion?.levelId ? getTranslation(`difficulty.${suggestion.levelId}`, lang).toLowerCase() : suggestion?.levelLabel?.toLowerCase()
+  const offer = suggestion ? t.offer(suggestion.title, level) : t.noOffer
+  const message = `${hello} ${offer}`
   return {
-    text,
+    text: message,
     mood: 'happy',
-    bubble: text,
-    speech: firstVisitToday ? text : null, // la voix seulement à la première visite du jour
+    bubble: message,
+    speech: firstVisitToday ? message : null, // la voix seulement à la première visite du jour
     sound: 'hello',
     robot: { emotion: day % 2 ? 'welcoming2' : 'welcoming1' },
     priority: 3,
@@ -376,7 +421,7 @@ export function welcomeReaction({ suggestion, firstVisitToday, day = 0 }) {
 export const SLEEP_RULES = {
   bored: () => ({
     mood: 'sleepy',
-    bubble: pick(evil ? EVIL_LINES.bored : ['Tu es là ? On joue ?', 'Je m\'ennuie un peu…', 'Une petite chanson ?']),
+    bubble: pick(text().bored),
     sound: 'think',
     robot: { emotion: pick(['boredom1', 'boredom2']) },
     priority: 2,

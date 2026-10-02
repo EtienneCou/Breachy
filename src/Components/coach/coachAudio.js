@@ -42,19 +42,20 @@ export function playCoachSound(name, volume = 0.18) {
 
 // ---------- Voix ----------
 
-let frenchVoice
-function pickVoice() {
-  if (frenchVoice !== undefined) return frenchVoice
+// Voix du navigateur choisie pour chaque langue (fr-FR, en-US), de préférence une voix de qualité.
+const BROWSER_LANGS = { fr: 'fr-FR', en: 'en-US' }
+const browserVoices = new Map()
+function pickVoice(lang = 'fr') {
+  if (browserVoices.has(lang)) return browserVoices.get(lang)
   const voices = window.speechSynthesis?.getVoices() ?? []
   if (!voices.length) return null // pas encore chargées : on réessaiera
-  frenchVoice = voices.find((v) => v.lang === 'fr-FR' && /google|natural|online/i.test(v.name)) ?? voices.find((v) => v.lang?.startsWith('fr')) ?? null
-  return frenchVoice
+  const code = BROWSER_LANGS[lang] ?? BROWSER_LANGS.fr
+  const voice = voices.find((v) => v.lang === code && /google|natural|online/i.test(v.name)) ?? voices.find((v) => v.lang?.startsWith(code.slice(0, 2))) ?? null
+  browserVoices.set(lang, voice)
+  return voice
 }
 if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.addEventListener?.('voiceschanged', () => {
-    frenchVoice = undefined
-    pickVoice()
-  })
+  window.speechSynthesis.addEventListener?.('voiceschanged', () => browserVoices.clear())
 }
 
 export const canSpeak = () => typeof window !== 'undefined' && 'speechSynthesis' in window
@@ -80,23 +81,24 @@ export function forgetRobotSounds() {
  *           { kind: 'preview' } sur l'ordinateur (simulation sans haut-parleur), ou null.
  *           Si cette voix n'est pas prête ou échoue, c'est la voix du navigateur qui parle.
  * - evil    voix du Reachy diabolique (plus grave, plus lente)
+ * - lang    langue de la phrase ('fr' ou 'en')
  */
-export function speak(text, { onEnd, onStart, quick = false, robot = null, evil = false } = {}) {
+export function speak(text, { onEnd, onStart, quick = false, robot = null, evil = false, lang = 'fr' } = {}) {
   const interrupting = canSpeak() && (window.speechSynthesis.speaking || window.speechSynthesis.pending)
   stopSpeaking()
   const myTurn = turn
-  if (robot && robotVoiceReady()) {
-    speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil }).catch((error) => {
+  if (robot && robotVoiceReady(lang)) {
+    speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil, lang }).catch((error) => {
       console.warn('Voix du robot : repli sur la voix du navigateur.', error.message)
-      if (myTurn === turn) speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil })
+      if (myTurn === turn) speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil, lang })
     })
   } else {
-    speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil })
+    speakInBrowser(text, { onStart, onEnd, quick, interrupting, evil, lang })
   }
 }
 
-async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil }) {
-  const { blob, duration, name } = await synthesize(text, evil ? 'evil' : 'nice')
+async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil, lang }) {
+  const { blob, duration, name } = await synthesize(text, evil ? 'evil' : 'nice', lang)
   if (myTurn !== turn) return // une autre phrase est arrivée entre-temps
   if (robot.kind === 'preview') {
     preview = new Audio(URL.createObjectURL(blob))
@@ -133,15 +135,15 @@ async function speakWithRobotVoice(text, robot, myTurn, { onStart, onEnd, evil }
 // secours termine la phrase si le navigateur ne le fait pas.
 let current = null
 
-function speakInBrowser(text, { onEnd, onStart, quick, interrupting, evil }) {
+function speakInBrowser(text, { onEnd, onStart, quick, interrupting, evil, lang }) {
   if (!canSpeak()) {
     onEnd?.()
     return
   }
   const synth = window.speechSynthesis
   const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = 'fr-FR'
-  const voice = pickVoice()
+  utterance.lang = BROWSER_LANGS[lang] ?? BROWSER_LANGS.fr
+  const voice = pickVoice(lang)
   if (voice) utterance.voice = voice
   utterance.rate = (quick ? 1.15 : 1.05) * (evil ? 0.85 : 1)
   utterance.pitch = evil ? 0.3 : 1.25 // aiguë : un petit robot sympathique ; grave : le diabolique

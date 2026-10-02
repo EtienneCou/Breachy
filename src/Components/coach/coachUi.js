@@ -1,0 +1,105 @@
+// Textes de l'interface du coach (panneau, réglages, jauge, avatar), en français et en
+// anglais : ils suivent la langue du site. Ce que dit Reachy est ailleurs (coachRules.js,
+// coachEvil.js, coachEnglish.js).
+import { useLanguage } from '../../context/LanguageContext.jsx'
+
+const UI = {
+  fr: {
+    title: 'Reachy, ton coach',
+    robotKind: (simulation) => (simulation ? 'simulation' : 'robot'),
+    status: { off: 'Robot désactivé', searching: 'Robot non connecté', connected: 'Robot connecté' },
+    settingsTitle: 'Réglages du coach et du robot',
+    settingsLabel: 'Réglages du coach',
+    talkOn: '🗣 Il t\'encourage',
+    talkOff: '🤫 Il danse seulement',
+    talkOnTitle: 'Il t\'encourage à voix haute pendant le morceau',
+    talkOffTitle: 'Il danse sans parler',
+    useRobot: 'Utiliser le robot Reachy Mini (simulation ou USB)',
+    robotUrl: 'Adresse du robot',
+    robotHelp: ['Lance le serveur du robot : ', ' pour la simulation, ou ', ' avec le Reachy Mini Lite branché en USB.'],
+    voice: 'Voix (accueil, décompte et bilan)',
+    voiceOutput: {
+      robot: '🔊 Il parle par le haut-parleur du robot.',
+      preview: '🔊 Voix du robot, jouée par l\'ordinateur (la simulation n\'a pas de haut-parleur).',
+      browser: '🔊 Il parle par l\'ordinateur.',
+    },
+    talk: 'Encouragements parlés pendant le jeu',
+    sounds: 'Petits sons pendant le jeu',
+    listen: '🎙 Écoute (démo) : Reachy entend ce qu\'on lui dit',
+    listenErrors: {
+      'not-allowed': 'Micro refusé : autorise-le dans la barre d\'adresse du navigateur (icône 🎙 ou 🔒).',
+      'service-not-allowed': 'Le navigateur refuse la reconnaissance vocale (essaie Chrome).',
+      'audio-capture': 'Aucun micro trouvé : vérifie le micro par défaut de Windows.',
+      network: 'Pas de connexion au service de reconnaissance (il faut Internet).',
+      'language-not-supported': 'Cette langue n\'est pas reconnue par ce navigateur.',
+    },
+    listenFailed: (error) => `Écoute impossible (${error}).`,
+    listenStarting: 'Démarrage de l\'écoute… (accepte le micro si le navigateur le demande)',
+    listenHeard: (heard) => `J'écoute. Dernière chose entendue : « ${heard} »`,
+    listenWaiting: 'J\'écoute… Dis « Passe du côté obscur, Reachy ».',
+    talkAmount: 'Combien Reachy parle pendant le jeu',
+    talkAmounts: { low: 'Peu', medium: 'Moyen', high: 'Beaucoup' },
+    talkAmountTitle: (seconds) => `Une parole toutes les ${seconds} secondes au plus`,
+    meter: 'Danse de Reachy',
+    danceNames: ['Calme', 'Il se laisse porter', 'Ça groove', 'Rock star !'],
+    avatar: (evil, state) => `Reachy${evil ? ' diabolique' : ''}, ton coach (${state})`,
+    grooves: ['il bouge les antennes', 'il se balance doucement', 'il danse', 'il danse comme une rock star'],
+    moods: {
+      idle: 'calme', happy: 'content', cheer: 'il fête ta série', dance: 'il danse', sad: 'déçu pour toi',
+      think: 'il réfléchit', attentive: 'attentif', calm: 'rassurant', proud: 'fier de toi',
+      surprised: 'surpris', sleepy: 'il s\'ennuie', asleep: 'il dort',
+    },
+  },
+  en: {
+    title: 'Reachy, your coach',
+    robotKind: (simulation) => (simulation ? 'simulation' : 'robot'),
+    status: { off: 'Robot off', searching: 'Robot not connected', connected: 'Robot connected' },
+    settingsTitle: 'Coach and robot settings',
+    settingsLabel: 'Coach settings',
+    talkOn: '🗣 Cheering you on',
+    talkOff: '🤫 Dancing only',
+    talkOnTitle: 'He cheers you on out loud during the song',
+    talkOffTitle: 'He dances without talking',
+    useRobot: 'Use the Reachy Mini robot (simulation or USB)',
+    robotUrl: 'Robot address',
+    robotHelp: ['Start the robot server: ', ' for the simulation, or ', ' with the Reachy Mini Lite plugged in via USB.'],
+    voice: 'Voice (welcome, countdown and review)',
+    voiceOutput: {
+      robot: '🔊 He speaks through the robot\'s speaker.',
+      preview: '🔊 Robot voice, played by the computer (the simulation has no speaker).',
+      browser: '🔊 He speaks through the computer.',
+    },
+    talk: 'Spoken encouragement during the game',
+    sounds: 'Little sounds during the game',
+    listen: '🎙 Listening (demo): Reachy hears what you say',
+    listenErrors: {
+      'not-allowed': 'Microphone blocked: allow it in the browser\'s address bar (🎙 or 🔒 icon).',
+      'service-not-allowed': 'The browser refuses speech recognition (try Chrome).',
+      'audio-capture': 'No microphone found: check the default Windows microphone.',
+      network: 'No connection to the recognition service (Internet needed).',
+      'language-not-supported': 'This language isn\'t supported by this browser.',
+    },
+    listenFailed: (error) => `Listening unavailable (${error}).`,
+    listenStarting: 'Starting to listen… (allow the microphone if the browser asks)',
+    listenHeard: (heard) => `Listening. Last thing heard: "${heard}"`,
+    listenWaiting: 'Listening… Say "Join the dark side, Reachy".',
+    talkAmount: 'How much Reachy talks during the game',
+    talkAmounts: { low: 'Little', medium: 'Some', high: 'A lot' },
+    talkAmountTitle: (seconds) => `At most one remark every ${seconds} seconds`,
+    meter: 'Reachy\'s dance',
+    danceNames: ['Chill', 'Feeling it', 'Grooving', 'Rock star!'],
+    avatar: (evil, state) => `${evil ? 'Evil ' : ''}Reachy, your coach (${state})`,
+    grooves: ['moving his antennas', 'swaying gently', 'dancing', 'dancing like a rock star'],
+    moods: {
+      idle: 'calm', happy: 'happy', cheer: 'celebrating your streak', dance: 'dancing', sad: 'sad for you',
+      think: 'thinking', attentive: 'attentive', calm: 'reassuring', proud: 'proud of you',
+      surprised: 'surprised', sleepy: 'bored', asleep: 'asleep',
+    },
+  },
+}
+
+/** Textes de l'interface du coach dans la langue du site. */
+export function useCoachUi() {
+  const { language } = useLanguage()
+  return UI[language] ?? UI.fr
+}

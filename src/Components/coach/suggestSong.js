@@ -8,7 +8,7 @@ import { getBestScore } from '../../utils/bestScores.js'
  * - parmi les morceaux de ce niveau pas encore maîtrisés, on préfère ceux jamais joués.
  * Le choix change chaque jour (`day`), pour ne pas toujours proposer le même.
  *
- * items : [{ key, title, info }] (info = useSongsInfo) ; retourne { key, title, levelLabel } ou null.
+ * items : [{ key, title, info }] (info = useSongsInfo) ; retourne { key, title, levelId, levelLabel } ou null.
  */
 export function suggestSong(items, day = 0) {
   const rated = items
@@ -31,5 +31,5 @@ export function suggestSong(items, day = 0) {
   const fresh = candidates.filter((i) => !i.best)
   const list = fresh.length ? fresh : candidates
   const chosen = list[day % list.length]
-  return { key: chosen.key, title: chosen.title, levelLabel: DIFFICULTIES[chosen.level].label }
+  return { key: chosen.key, title: chosen.title, levelId: DIFFICULTIES[chosen.level].id, levelLabel: DIFFICULTIES[chosen.level].label }
 }
