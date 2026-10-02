@@ -79,6 +79,9 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
         )}
         {talkToggle && settings.talk && <TalkAmount value={settings.talkAmount} onChange={(talkAmount) => updateSettings({ talkAmount })} />}
 
+        {/* Jauge de danse : le joueur voit que c'est son jeu qui fait danser Reachy */}
+        {groove && <DanceMeter level={groove.level} change={groove.change} />}
+
         {/* Bulle de BD, reliée à Reachy par sa pointe */}
         {(text || children) && (
           <div className={`coach__bubble${bubble ? ' is-live' : ''}`} key={bubble?.id ?? 'idle'}>
@@ -129,6 +132,32 @@ export default function CoachPanel({ layout = 'compact', title = 'Reachy, ton co
         )}
       </div>
     </section>
+  )
+}
+
+// Niveaux de danse (voir DANCE_LEVELS dans danceEngine.js)
+const DANCE_NAMES = ['Calme', 'Il se laisse porter', 'Ça groove', 'Rock star !']
+
+// Jauge à 4 crans : elle s'allume quand la danse monte, s'éteint d'un cran quand elle descend.
+function DanceMeter({ level, change }) {
+  return (
+    <div
+      key={level}
+      className={`coach__meter coach__meter--${level}${change ? ` is-${change}` : ''}`}
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={DANCE_NAMES.length - 1}
+      aria-valuenow={level}
+      aria-valuetext={DANCE_NAMES[level]}
+      aria-label="Danse de Reachy"
+    >
+      <span className="coach__meter-steps" aria-hidden="true">
+        {DANCE_NAMES.map((name, i) => (
+          <span key={name} className={i <= level ? 'is-on' : ''} />
+        ))}
+      </span>
+      <span className="coach__meter-name">{DANCE_NAMES[level]}</span>
+    </div>
   )
 }
 

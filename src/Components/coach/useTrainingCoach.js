@@ -11,16 +11,24 @@ const BIG_STREAK = 8 // une série cassée à partir de là fait réagir Reachy
 const WINDOW = 8 // dernières notes regardées pour repérer un passage difficile
 const STRUGGLE_MISSES = 5 // ratées dans la fenêtre = passage difficile
 const COMEBACK_HITS = 5 // réussies d'affilée après un passage difficile = ça repart
-const DANCE_WINDOW = 10 // dernières notes qui règlent la qualité de la danse (réussite moyenne)
-// Réussite minimale (sur les dernières notes) pour chaque danse, de 1 à 3 ; en dessous : danse 0.
+const DANCE_WINDOW = 16 // dernières notes qui règlent la qualité de la danse (réussite moyenne)
+// Réussite (sur les dernières notes) pour monter aux danses 1, 2 et 3.
 const DANCE_THRESHOLDS = [0.5, 0.75, 0.9]
+// Pour redescendre, il faut passer nettement sous le palier : une fausse note isolée ne
+// fait pas tomber la danse (sinon elle changerait à chaque note).
+const DANCE_MARGIN = 0.15
+const DANCE_HOLD_BEATS = 16 // un niveau atteint tient au moins 4 mesures
 
-// Danse (0 = antennes seules … 3 = rock star) d'après la réussite moyenne des dernières notes.
-// Elle ne change que quand la réussite change de palier : sinon la danse garde son intensité.
-function danceLevel(recent) {
-  if (recent.length < 5) return 0 // début du morceau : il se met doucement en route
+/**
+ * Prochain niveau de danse (0 calme … 3 rock star) : un cran à la fois, d'après la réussite
+ * des dernières notes, avec une marge pour redescendre.
+ */
+function nextDanceLevel(recent, level) {
+  if (recent.length < 5) return level // début du morceau : il se met doucement en route
   const accuracy = recent.filter((r) => r === 'hit').length / recent.length
-  return DANCE_THRESHOLDS.filter((min) => accuracy >= min).length
+  if (level < DANCE_THRESHOLDS.length && accuracy >= DANCE_THRESHOLDS[level]) return level + 1
+  if (level > 0 && accuracy < DANCE_THRESHOLDS[level - 1] - DANCE_MARGIN) return level - 1
+  return level
 }
 
 /**
@@ -45,7 +53,7 @@ export function useTrainingCoach({ title, hasSong, status, time = 0, streak, hit
 
   // ---------- Danse ----------
   const period = useMemo(() => beatPeriodOf(notes, bpm), [notes, bpm])
-  const dance = useRef({ level: 0, recent: [] })
+  const dance = useRef({ level: 0, recent: [], changedAt: 0 })
   const beatSource = useRef({ playing: false, getSongTime })
   useEffect(() => {
     beatSource.current = { playing: hasSong && status === 'playing', getSongTime }
@@ -61,7 +69,7 @@ export function useTrainingCoach({ title, hasSong, status, time = 0, streak, hit
 
   // L'avatar danse aussi, au même niveau, pendant que le morceau joue.
   useEffect(() => {
-    setGroove(hasSong && status === 'playing' ? { level: dance.current.level, period } : null)
+    setGroove(hasSong && status === 'playing' ? { level: dance.current.level, period, change: null } : null)
   }, [hasSong, status, period, setGroove])
   useEffect(() => () => setGroove(null), [setGroove])
 
@@ -102,7 +110,7 @@ export function useTrainingCoach({ title, hasSong, status, time = 0, streak, hit
     // « Recommencer » : les compteurs repartent de zéro, on oublie l'historique.
     if (hitCount < t.hits || missCount < t.misses) {
       track.current = { streak, hits: hitCount, misses: missCount, recent: [], struggling: false }
-      dance.current = { level: 0, recent: [] }
+      dance.current = { level: 0, recent: [], changedAt: 0 }
       return
     }
     const d = dance.current
@@ -116,15 +124,18 @@ export function useTrainingCoach({ title, hasSong, status, time = 0, streak, hit
     }
     t.recent = t.recent.slice(-WINDOW)
     d.recent = d.recent.slice(-DANCE_WINDOW)
-    const level = danceLevel(d.recent)
-    if (level !== d.level) {
-      const previous = d.level
+    const level = nextDanceLevel(d.recent, d.level)
+    const now = performance.now()
+    if (level !== d.level && now - d.changedAt >= DANCE_HOLD_BEATS * period * 1000) {
+      const up = level > d.level
       d.level = level
+      d.changedAt = now
       if (status === 'playing') {
-        setGroove({ level, period })
-        // Il le dit en dansant : quand il passe aux deux plus belles danses, ou quand il retombe au plus bas.
-        if (level >= 2 && level > previous) react('danceUp', TRAINING_RULES.danceUp())
-        else if (level === 0 && previous >= 2) react('danceDown', TRAINING_RULES.danceDown())
+        setGroove({ level, period, change: up ? 'up' : 'down' })
+        // Il le dit de temps en temps (le geste du robot et la jauge suffisent sinon) :
+        // à chaque montée, et quand il retombe au plus calme.
+        if (up) react('danceUp', TRAINING_RULES.danceUp({ level }))
+        else if (level === 0) react('danceDown', TRAINING_RULES.danceDown())
       }
     }
     const newMisses = missCount - t.misses

@@ -129,7 +129,7 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
     /**
      * Flux continu de positions (WebSocket /api/move/ws/set_target), pour la danse :
      * la doc demande une seule boucle qui envoie les positions à 50 Hz environ.
-     * Retourne { send({ head, antennas, body }) en degrés, close(), isOpen() }.
+     * Retourne { send({ head, antennas, body }) en degrés (head.x, y, z en mm), close(), isOpen() }.
      * Pendant une émotion ou un goto, le daemon ignore ces positions.
      */
     openTargetStream() {
@@ -141,7 +141,10 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
           if (socket.readyState !== WebSocket.OPEN) return
           socket.send(
             JSON.stringify({
-              target_head_pose: { x: 0, y: 0, z: 0, roll: deg(head.roll), pitch: deg(head.pitch), yaw: deg(head.yaw) },
+              target_head_pose: {
+                x: (head.x ?? 0) / 1000, y: (head.y ?? 0) / 1000, z: (head.z ?? 0) / 1000,
+                roll: deg(head.roll), pitch: deg(head.pitch), yaw: deg(head.yaw),
+              },
               target_antennas: antennas.map(deg),
               target_body_yaw: deg(body),
             }),
