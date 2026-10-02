@@ -120,6 +120,12 @@ export default function CoachPanel({ layout = 'compact', title: titleProp, idleT
               <input type="checkbox" checked={settings.sounds} onChange={(e) => updateSettings({ sounds: e.target.checked })} />
               {ui.sounds}
             </label>
+            {settings.robot && (
+              <label className="coach__check">
+                <input type="checkbox" checked={settings.gaze} onChange={(e) => updateSettings({ gaze: e.target.checked })} />
+                {ui.gaze}
+              </label>
+            )}
             {LISTEN_SUPPORTED && (
               <label className="coach__check">
                 <input type="checkbox" checked={settings.listen} onChange={(e) => updateSettings({ listen: e.target.checked })} />
