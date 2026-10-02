@@ -31,7 +31,9 @@ export function useRobotDance({ beatRef, danceRef }) {
     let envelope = 0
     let last = performance.now()
     let resumeAt = 0
-    let waiting = false
+    // Au départ, on attend que le robot soit libre (réveil, émotion…) avant de revenir au
+    // neutre : deux mouvements lancés en même temps se disputent la tête.
+    let waiting = true
     let dancing = false // il suit un rythme : le coach met alors son regard en pause
 
     // Retour doux au neutre (goto avec interpolation du robot), puis la danse repart de zéro.
@@ -40,7 +42,6 @@ export function useRobotDance({ beatRef, danceRef }) {
       resumeAt = performance.now() + GLIDE * 1000 + 100
       envelope = 0
     }
-    glideToNeutral()
 
     const unregister = registerDance({
       impulse: (name) => impulses.push({ name, start: clock() }),
@@ -80,7 +81,8 @@ export function useRobotDance({ beatRef, danceRef }) {
       setDancing(false)
       unregister()
       stream.close()
-      client.goto({ ...NEUTRAL, duration: 0.8 }).catch(() => {})
+      // Une émotion ou le sommeil a le robot : on ne le leur reprend pas.
+      if (performance.now() >= robotBusyUntil()) client.goto({ ...NEUTRAL, duration: 0.8 }).catch(() => {})
     }
   }, [robotStatus, settings.robot, client, registerDance, robotBusyUntil, setDancing, beatRef, danceRef])
 }

@@ -165,7 +165,7 @@ export const TRAINING_RULES = {
   pause: () => ({
     mood: 'attentive',
     bubble: 'Je t\'attends',
-    robot: { emotion: 'waiting' },
+    robot: { emotion: 'serenity1' }, // commence et finit au neutre : la pause ne fait pas sursauter le robot
     priority: 2,
   }),
 

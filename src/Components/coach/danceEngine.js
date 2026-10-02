@@ -128,7 +128,7 @@ const clamp = (v, max) => Math.max(-max, Math.min(max, v))
 // pendant les tests sur le Reachy Mini (pas par le joueur) : 1 = amplitudes ci-dessus,
 // en dessous tout est réduit d'autant. Les niveaux de danse gardent leurs écarts entre eux.
 // Prudente pour les premiers essais (0,3 au départ) ; on l'ajuste au vu des mouvements.
-export const ROBOT_INTENSITY = 0.5
+export const ROBOT_INTENSITY = 0.3
 
 /** Position réduite à l'intensité `k` (0-1), autour de la position neutre. */
 export function scalePose({ head, antennas, body }, k) {

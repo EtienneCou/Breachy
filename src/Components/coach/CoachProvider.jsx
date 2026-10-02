@@ -6,6 +6,7 @@ import { LINES, SLEEP_RULES } from './coachRules.js'
 import { PLAYER_ACTIVITY, backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
 import { ROBOT_INTENSITY } from './danceEngine.js'
+import { EMOTION_MOVES, UNKNOWN_EMOTION_LENGTH } from './emotionMoves.js'
 
 // Le coach Reachy, partagé par toute l'application : l'avatar à l'écran (humeur +
 // bulle), la voix, les petits sons, et le vrai robot quand il est connecté
@@ -34,13 +35,25 @@ const SLEEP_POSE = { head: { roll: 0, pitch: 22, yaw: 0 }, antennas: [-140, 140]
 const FALL_ASLEEP_S = 3 // durée de la glissade vers la position de sommeil
 const BREATH_S = 4 // une inspiration ou une expiration
 const BREATH_DEG = 3 // amplitude de la respiration (tête)
+// Réveil : il revient doucement à sa position neutre (le « wake_up » du daemon finit par
+// un coup de tête de 20° en 0,2 s, trop sec).
+const NEUTRAL = { head: { roll: 0, pitch: 0, yaw: 0 }, antennas: [0, 0], body: 0 }
+const WAKE_S = 1.5 // après son sommeil
+const CONNECT_S = 2 // à la connexion (il peut partir de la position de repos du daemon, plus loin)
+const RELEASE_S = 0.8 // retour au neutre quand on arrête une émotion hors danse
 
 // Regard : part du suivi de visage (caméra du robot) mélangée à ses mouvements quand il
 // ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil, le suivi est en pause.
 const TRACKING_WEIGHT = 0.7
+// Le daemon applique le poids d'un coup (la tête sauterait vers le visage, ou en revenant) :
+// on le fait varier par petits pas.
+const TRACKING_FADE_MS = 800
+const TRACKING_FADE_STEPS = 10
 
-// Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus.
-const ROBOT_BUSY = { gesture: 1.3, emotion: 3.5, dance: 4.5 }
+// Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus
+// (les émotions ont leur durée réelle : voir emotionMoves.js).
+const ROBOT_BUSY = { gesture: 1.3, dance: 4.5 }
+const APPROACH_S = 0.6 // trajet doux vers la position de départ d'une émotion
 
 // Petits gestes hors danse : une suite de positions (degrés), chacune atteinte en
 // `t` secondes avec l'interpolation douce du robot. La doc demande au moins 0,5 s
@@ -110,8 +123,8 @@ export function CoachProvider({ children }) {
       setConnected(isConnected)
       setSimulation(Boolean(status?.simulation_enabled))
       if (isConnected && !wasConnected) {
-        client.wakeUp().catch(() => {})
-        robot.current.busyUntil = performance.now() + 3000
+        robot.current.busyUntil = performance.now() + CONNECT_S * 1000 + 200
+        client.goto({ ...NEUTRAL, duration: CONNECT_S }).catch(() => {})
         // Sa voix : sur son haut-parleur s'il en a un, sinon (simulation) jouée par l'ordinateur.
         forgetRobotSounds()
         const speaker = await client.mediaAvailable()
@@ -150,9 +163,31 @@ export function CoachProvider({ children }) {
   }, [])
   const robotBusyUntil = useCallback(() => robot.current.busyUntil, [])
 
+  // On reprend la main sur une émotion en cours (pas plus importante que `priority`, et
+  // jamais sur le sommeil) : elle s'arrête là où elle en est, puis la danse revient
+  // d'elle-même en douceur au neutre, ou, sans danse, un retour doux au neutre.
+  const releaseRobot = useCallback((priority) => {
+    const r = robot.current
+    const now = performance.now()
+    if (now >= r.busyUntil || priority < r.priority || r.priority === Infinity) return
+    for (const t of r.timers) clearTimeout(t)
+    r.timers = []
+    if (r.uuid) client.stop(r.uuid).catch(() => {})
+    r.uuid = null
+    r.priority = 0
+    if (dance.current) {
+      r.busyUntil = now
+    } else {
+      r.busyUntil = now + RELEASE_S * 1000
+      client.goto({ ...NEUTRAL, duration: RELEASE_S }).catch(() => {})
+    }
+  }, [client])
+
   const runRobot = useCallback((action, priority) => {
     if (!action || live.current.robotStatus !== 'connected') return
     if (action.gesture && dance.current) {
+      // Une émotion moins importante s'arrête : le geste s'ajoute à la danse qui reprend.
+      releaseRobot(priority)
       dance.current.impulse(action.gesture)
       return
     }
@@ -167,13 +202,21 @@ export function CoachProvider({ children }) {
     const remember = (move) => {
       if (move?.uuid) r.uuid = move.uuid
     }
-    const kind = action.gesture ? 'gesture' : action.dance ? 'dance' : 'emotion'
-    r.busyUntil = now + ROBOT_BUSY[kind] * 1000
     r.priority = priority
     const fail = () => {} // robot indisponible un instant : l'avatar a déjà réagi
-    if (action.emotion) client.playEmotion(action.emotion).then(remember, fail)
-    else if (action.dance) client.playDance(action.dance).then(remember, fail)
+    if (action.emotion) {
+      // Il rejoint en douceur la position de départ de l'émotion, puis la joue en entier.
+      const move = EMOTION_MOVES[action.emotion]
+      const approach = move ? APPROACH_S : 0
+      r.busyUntil = now + (approach + (move?.length ?? UNKNOWN_EMOTION_LENGTH)) * 1000
+      if (move) client.goto({ head: move.head, antennas: move.antennas, body: 0, duration: approach }).then(remember, fail)
+      r.timers.push(setTimeout(() => client.playEmotion(action.emotion).then(remember, fail), approach * 1000))
+    } else if (action.dance) {
+      r.busyUntil = now + ROBOT_BUSY.dance * 1000
+      client.playDance(action.dance).then(remember, fail)
+    }
     else {
+      r.busyUntil = now + ROBOT_BUSY.gesture * 1000
       // Petits gestes réduits comme la danse ; les émotions et danses enregistrées restent telles quelles.
       const k = ROBOT_INTENSITY
       let delay = 0
@@ -184,7 +227,7 @@ export function CoachProvider({ children }) {
         delay += step.t * 1000
       }
     }
-  }, [client])
+  }, [client, releaseRobot])
 
   // ---------- Avatar, bulle, voix ----------
 
@@ -311,9 +354,9 @@ export function CoachProvider({ children }) {
     clearTimeout(i.timer)
     setAsleep(false)
     if (live.current.robotStatus === 'connected') {
-      robot.current.busyUntil = performance.now() + 3500 // le temps de se réveiller
+      robot.current.busyUntil = performance.now() + WAKE_S * 1000 + 200 // le temps de se réveiller
       robot.current.priority = 0
-      client.stopAll().catch(() => {}).then(() => client.wakeUp()).catch(() => {})
+      client.stopAll().catch(() => {}).then(() => client.goto({ ...NEUTRAL, duration: WAKE_S })).catch(() => {})
     }
     react('wake', SLEEP_RULES.wake())
   }, [client, react])
@@ -328,6 +371,8 @@ export function CoachProvider({ children }) {
     i.last = performance.now()
     const onActivity = () => {
       i.last = performance.now()
+      // Il s'ennuyait (émotion de 15 s) : il arrête et revient au jeu.
+      if (i.bored) releaseRobot(SLEEP_RULES.bored().priority)
       i.bored = false
       if (i.asleep) wakeRef.current()
     }
@@ -348,7 +393,7 @@ export function CoachProvider({ children }) {
       clearInterval(id)
       clearTimeout(i.timer)
     }
-  }, [fallAsleep, react])
+  }, [fallAsleep, react, releaseRobot])
 
   /** Une page garde Reachy éveillé tant que de la musique joue (voir useCoachAwake). */
   const holdAwake = useCallback(() => {
@@ -363,13 +408,25 @@ export function CoachProvider({ children }) {
   // ---------- Regard ----------
   // Avec la caméra du vrai robot : il te suit du regard quand il ne danse pas.
   const robotOn = robotStatus === 'connected' && media
+  const trackingWeight = useRef(0)
   useEffect(() => {
     if (!robotOn) return
-    client.setTracking(asleep || dancing ? 0 : TRACKING_WEIGHT).catch(() => {})
+    const from = trackingWeight.current
+    const target = asleep || dancing ? 0 : TRACKING_WEIGHT
+    let step = 0
+    const id = setInterval(() => {
+      step++
+      const w = step >= TRACKING_FADE_STEPS ? target : from + ((target - from) * step) / TRACKING_FADE_STEPS
+      trackingWeight.current = w
+      client.setTracking(w).catch(() => {})
+      if (step >= TRACKING_FADE_STEPS) clearInterval(id)
+    }, TRACKING_FADE_MS / TRACKING_FADE_STEPS)
+    return () => clearInterval(id)
   }, [robotOn, asleep, dancing, client])
   useEffect(() => {
     if (!robotOn) return
     return () => {
+      trackingWeight.current = 0
       client.setTracking(null).catch(() => {})
     }
   }, [robotOn, client])

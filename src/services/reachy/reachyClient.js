@@ -59,13 +59,15 @@ export function createReachyClient(baseUrl = DEFAULT_REACHY_URL) {
 
     /**
      * Mouvement court et fluide vers une position, en degrés :
-     * head { roll, pitch, yaw } (pitch positif = tête vers le bas), antennas [droite, gauche],
-     * body (rotation du corps). Les parties non précisées ne bougent pas.
+     * head { roll, pitch, yaw } (pitch positif = tête vers le bas), avec en option x, y, z
+     * (décalage de la tête, en mm), antennas [droite, gauche], body (rotation du corps).
+     * Les parties non précisées ne bougent pas.
      */
     goto({ head, antennas, body, duration = 0.4 }) {
+      const mm = (v) => (v ?? 0) / 1000
       return request('/move/goto', {
         body: {
-          head_pose: head ? { x: 0, y: 0, z: 0, roll: deg(head.roll ?? 0), pitch: deg(head.pitch ?? 0), yaw: deg(head.yaw ?? 0) } : undefined,
+          head_pose: head ? { x: mm(head.x), y: mm(head.y), z: mm(head.z), roll: deg(head.roll ?? 0), pitch: deg(head.pitch ?? 0), yaw: deg(head.yaw ?? 0) } : undefined,
           antennas: antennas ? antennas.map(deg) : undefined,
           body_yaw: body != null ? deg(body) : undefined,
           duration,
