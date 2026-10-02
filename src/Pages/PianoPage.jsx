@@ -328,7 +328,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     <main className="piano-page">
       <div className="piano-page__play">
         {hasSong && (
-          <div className="piano-page__progress" role="progressbar" aria-label={t('pianoPage.progressBar')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+          <div className="piano-page__progress" role="progressbar" aria-label={t('pianoPage.songProgress')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
             <span style={{ transform: `scaleX(${progress})` }} />
           </div>
         )}
@@ -370,8 +370,8 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
               <span className="piano-page__points-value">{score.toLocaleString(language === 'en' ? 'en-US' : 'fr-FR')}</span> {t('pianoPage.points')}
             </p>
             <p className="piano-page__score">
-              <span className="piano-page__score-hit">{t('pianoPage.hits', hitCount)}</span>
-              <span className="piano-page__score-miss">{t('pianoPage.missed', missCount)}</span>
+              <span className="piano-page__score-hit">{t('pianoPage.hitCount', hitCount)}</span>
+              <span className="piano-page__score-miss">{t('pianoPage.missCount', missCount)}</span>
             </p>
           </div>
         )}
@@ -472,10 +472,10 @@ function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficul
         </p>
       )}
       {status === 'ready' && melodyLabel && !fromStudio && (
-        <p className="piano-page__status">{t('pianoPage.melodyHelp', melodyLabel)}</p>
+        <p className="piano-page__status">{t('pianoPage.melodyPart', melodyLabel)}</p>
       )}
       {status === 'ready' && guided && !fromStudio && (
-        <p className="piano-page__status">{t('pianoPage.guided')}</p>
+        <p className="piano-page__status">{t('pianoPage.guidedPart')}</p>
       )}
       {status === 'loading' && <p className="piano-page__status">{t('pianoPage.loading')}</p>}
       {status === 'error' && <p className="piano-page__status piano-page__status--error">{t('pianoPage.error')}</p>}
