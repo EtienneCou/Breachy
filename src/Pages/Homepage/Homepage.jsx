@@ -11,6 +11,7 @@ import PracticePlayer from "../../Components/Practice/PracticePlayer";
 
 import useSongPlayer from "../../hooks/useSongPlayer";
 import audioPlayer from "../../services/audioPlayer";
+import LanguageToggle from "../../Components/LanguageToggle/LanguageToggle";
 import "./Homepage-style.css";
 
 
@@ -1685,6 +1686,7 @@ export default function SongsPage() {
           </div>
 
           <div className="home-header__actions">
+            <LanguageToggle />
             <button type="button" className="free-play-btn" onClick={() => navigate("/jeu-libre")}>
               Jeu libre
             </button>
