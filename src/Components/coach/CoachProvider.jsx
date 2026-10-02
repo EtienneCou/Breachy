@@ -35,12 +35,16 @@ const SLEEP_POSE = { head: { roll: 0, pitch: 22, yaw: 0 }, antennas: [-140, 140]
 const FALL_ASLEEP_S = 3 // durée de la glissade vers la position de sommeil
 const BREATH_S = 4 // une inspiration ou une expiration
 const BREATH_DEG = 3 // amplitude de la respiration (tête)
-// Réveil : il revient doucement à sa position neutre (le « wake_up » du daemon finit par
-// un coup de tête de 20° en 0,2 s, trop sec).
+// Réveil : il revient doucement à sa position neutre, avec le « toudoum » officiel (le
+// « wake_up » du daemon finit par un coup de tête de 20° en 0,2 s, trop sec).
 const NEUTRAL = { head: { roll: 0, pitch: 0, yaw: 0 }, antennas: [0, 0], body: 0 }
 const WAKE_S = 1.5 // après son sommeil
 const CONNECT_S = 2 // à la connexion (il peut partir de la position de repos du daemon, plus loin)
 const RELEASE_S = 0.8 // retour au neutre quand on arrête une émotion hors danse
+// Son « toudoum » du réveil officiel, fourni par le daemon. Un son en coupe un autre sur
+// le haut-parleur : au réveil, il dit sa phrase juste après.
+const WAKE_SOUND = 'wake_up.wav'
+const WAKE_SOUND_MS = 500
 
 // Regard : part du suivi de visage (caméra du robot) mélangée à ses mouvements quand il
 // ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil, le suivi est en pause.
@@ -130,7 +134,10 @@ export function CoachProvider({ children }) {
         const speaker = await client.mediaAvailable()
         if (cancelled) return
         setMedia(speaker)
-        if (speaker) client.setWobbling(true).catch(() => {})
+        if (speaker) {
+          client.setWobbling(true).catch(() => {})
+          client.playSound(WAKE_SOUND).catch(() => {})
+        }
         const output = speaker ? 'robot' : status.simulation_enabled ? 'preview' : 'browser'
         setVoiceOutput(output)
         // Voix prête : les encouragements du jeu sont fabriqués à l'avance, pour partir sans délai.
@@ -357,6 +364,11 @@ export function CoachProvider({ children }) {
       robot.current.busyUntil = performance.now() + WAKE_S * 1000 + 200 // le temps de se réveiller
       robot.current.priority = 0
       client.stopAll().catch(() => {}).then(() => client.goto({ ...NEUTRAL, duration: WAKE_S })).catch(() => {})
+      if (live.current.voiceOutput === 'robot') {
+        client.playSound(WAKE_SOUND).catch(() => {})
+        setTimeout(() => react('wake', SLEEP_RULES.wake()), WAKE_SOUND_MS)
+        return
+      }
     }
     react('wake', SLEEP_RULES.wake())
   }, [client, react])
