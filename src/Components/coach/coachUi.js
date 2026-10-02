@@ -25,6 +25,7 @@ const UI = {
     },
     talk: 'Encouragements parlés pendant le jeu',
     sounds: 'Petits sons pendant le jeu',
+    gaze: '👀 Il te suit du regard (caméra du robot)',
     listen: '🎙 Écoute (démo) : Reachy entend ce qu\'on lui dit',
     listenErrors: {
       'not-allowed': 'Micro refusé : autorise-le dans la barre d\'adresse du navigateur (icône 🎙 ou 🔒).',
@@ -71,6 +72,7 @@ const UI = {
     },
     talk: 'Spoken encouragement during the game',
     sounds: 'Little sounds during the game',
+    gaze: '👀 He follows you with his eyes (robot camera)',
     listen: '🎙 Listening (demo): Reachy hears what you say',
     listenErrors: {
       'not-allowed': 'Microphone blocked: allow it in the browser\'s address bar (🎙 or 🔒 icon).',

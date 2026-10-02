@@ -118,7 +118,7 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 ### À l'accueil
 
 - Il dit bonjour et **propose un morceau adapté au niveau du joueur**, d'après ses meilleurs scores. La proposition change chaque jour.
-- Avec le vrai robot, il **suit le joueur du regard** grâce à sa caméra.
+- Avec le vrai robot, il peut **suivre le joueur du regard** grâce à sa caméra : option « 👀 Il te suit du regard » dans les réglages ⚙, coupée par défaut (le suivi se mélange à tous ses mouvements hors danse, d'où une tête penchée et des recentrages brusques quand il perd le visage).
 
 ### Pendant l'entraînement
 
@@ -177,10 +177,10 @@ L'amplitude de la danse et des petits gestes se règle **dans le code**, pas dan
 Dans [src/Components/coach/danceEngine.js](src/Components/coach/danceEngine.js) :
 
 ```js
-export const ROBOT_INTENSITY = 0.3 // 1 = amplitudes des danses de Pollen
+export const ROBOT_INTENSITY = 0.4 // 1 = amplitudes des danses de Pollen
 ```
 
-Elle est réglée à 0,3 pour le vrai robot ; à ajuster à l'œil. La simulation montre environ la moitié des mouvements réels : ne pas régler d'après elle. L'ampleur de chaque niveau de danse se règle dans `DANCE_LEVELS` (même fichier).
+Elle est réglée à 0,4 pour le vrai robot (validé sur le Reachy Mini Lite) ; à ajuster à l'œil. La simulation montre environ la moitié des mouvements réels : ne pas régler d'après elle. L'ampleur de chaque niveau de danse se règle dans `DANCE_LEVELS` (même fichier).
 
 Les émotions enregistrées de Pollen (accueil, pause, bilan…) ne passent pas par ce réglage : elles sont toujours jouées en entier.
 

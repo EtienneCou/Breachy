@@ -20,8 +20,11 @@ const STYLES = {
     ringMix: 0.25, // part de son métallique (0 à 1)
     presence: 3, // dB ajoutés vers 3 kHz : la voix ressort mieux sur un petit haut-parleur
     echo: 0, // part de l'écho (0 = aucun)
+    // diction de Piper ralentie d'autant (1 = débit d'origine) : la voix reste aiguë, mais
+    // ne paraît plus accélérée (débit final proche du naturel)
+    lengthScale: 1.25,
   },
-  evil: { rate: 0.8, ring: 32, ringMix: 0.4, presence: 2, echo: 0.28 },
+  evil: { rate: 0.8, ring: 32, ringMix: 0.4, presence: 2, echo: 0.28, lengthScale: 1 },
 }
 
 // Les fichiers du moteur de calcul doivent être de la même version que le paquet
@@ -41,12 +44,12 @@ const ready = new Map() // langue → promesse : sa voix est prête
 const isReady = new Set() // langues dont la voix est prête
 const cache = new Map()
 
-function send(text, lang) {
+function send(text, lang, lengthScale = STYLES.nice.lengthScale) {
   worker ??= createWorker()
   const id = ++nextId
   return new Promise((resolve, reject) => {
     waiting.set(id, { resolve, reject })
-    worker.postMessage({ id, voiceId: voiceOf(lang), wasmPaths: WASM_PATHS, text })
+    worker.postMessage({ id, voiceId: voiceOf(lang), lengthScale, wasmPaths: WASM_PATHS, text })
   })
 }
 
@@ -105,7 +108,8 @@ export async function synthesize(text, style = 'nice', lang = 'fr') {
   const key = `${lang}|${style}|${text}`
   const known = cache.get(key)
   if (known) return known
-  const blob = await robotStyle(await send(text, lang), STYLES[style] ?? STYLES.nice)
+  const STYLE = STYLES[style] ?? STYLES.nice
+  const blob = await robotStyle(await send(text, lang, STYLE.lengthScale ?? 1), STYLE)
   const prefix = `${lang === 'fr' ? '' : `${lang}-`}${style === 'nice' ? '' : `${style}-`}`
   const sound = { blob, duration: await wavDuration(blob), name: `breachy-coach-${prefix}${hash(text)}.wav` }
   cache.set(key, sound)

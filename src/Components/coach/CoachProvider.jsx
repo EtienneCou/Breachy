@@ -21,7 +21,9 @@ const SETTINGS_KEY = 'breachy.coach'
 // talkAmount : combien il parle ('low', 'medium', 'high')
 // listen : écoute de la phrase secrète (démo), coupée par défaut : le micro n'est jamais
 // ouvert sans que l'équipe l'ait activé dans les réglages
-const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium', listen: false }
+// gaze : il suit le visage du joueur avec sa caméra ; coupé par défaut (le suivi se mélange
+// à tous ses mouvements hors danse : tête penchée, recentrages brusques quand il perd le visage)
+const DEFAULT_SETTINGS = { robot: true, url: DEFAULT_REACHY_URL, voice: true, sounds: true, talk: true, talkAmount: 'medium', listen: false, gaze: false }
 
 const DUCK = 0.55 // l'accompagnement baisse à 55 % pendant que Reachy parle
 const POLL_MS = 4000
@@ -44,14 +46,16 @@ const NEUTRAL = { head: { roll: 0, pitch: 0, yaw: 0 }, antennas: [0, 0], body: 0
 const WAKE_S = 1.5 // après son sommeil
 const CONNECT_S = 2 // à la connexion (il peut partir de la position de repos du daemon, plus loin)
 const RELEASE_S = 0.8 // retour au neutre quand on arrête une émotion hors danse
+const SETTLE_S = 1 // retour au neutre à la fin d'une émotion hors danse (elles finissent tête penchée ou levée)
 // Son « toudoum » du réveil officiel, fourni par le daemon. Un son en coupe un autre sur
 // le haut-parleur : au réveil, il dit sa phrase juste après.
 const WAKE_SOUND = 'wake_up.wav'
 const WAKE_SOUND_MS = 500
 
-// Regard : part du suivi de visage (caméra du robot) mélangée à ses mouvements quand il
-// ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil, le suivi est en pause.
-const TRACKING_WEIGHT = 0.7
+// Regard (option « gaze ») : part du suivi de visage (caméra du robot) mélangée à ses
+// mouvements quand il ne danse pas (accueil, pause, bilan). Pendant la danse et le sommeil,
+// le suivi est en pause. Modérée : au-delà, ses gestes et émotions ne se voient plus.
+const TRACKING_WEIGHT = 0.5
 // Le daemon applique le poids d'un coup (la tête sauterait vers le visage, ou en revenant) :
 // on le fait varier par petits pas.
 const TRACKING_FADE_MS = 800
@@ -241,9 +245,17 @@ export function CoachProvider({ children }) {
       // Il rejoint en douceur la position de départ de l'émotion, puis la joue en entier.
       const move = EMOTION_MOVES[action.emotion]
       const approach = move ? APPROACH_S : 0
-      r.busyUntil = now + (approach + (move?.length ?? UNKNOWN_EMOTION_LENGTH)) * 1000
+      const total = (approach + (move?.length ?? UNKNOWN_EMOTION_LENGTH)) * 1000
+      r.busyUntil = now + total
       if (move) client.goto({ head: move.head, antennas: move.antennas, body: 0, duration: approach }).then(remember, fail)
       r.timers.push(setTimeout(() => client.playEmotion(action.emotion).then(remember, fail), approach * 1000))
+      // L'émotion finie, il revient doucement au neutre, sauf si une danse s'en charge, s'il
+      // dort, ou si un autre mouvement a pris la main entre-temps.
+      r.timers.push(setTimeout(() => {
+        if (dance.current || r.priority === Infinity || performance.now() + 50 < r.busyUntil) return
+        r.busyUntil = performance.now() + SETTLE_S * 1000
+        client.goto({ ...NEUTRAL, duration: SETTLE_S }).catch(() => {})
+      }, total))
     } else if (action.dance) {
       r.busyUntil = now + ROBOT_BUSY.dance * 1000
       client.playDance(action.dance).then(remember, fail)
@@ -604,8 +616,12 @@ export function CoachProvider({ children }) {
   }, [robotStatus, client, react])
 
   // ---------- Regard ----------
-  // Avec la caméra du vrai robot : il te suit du regard quand il ne danse pas.
-  const robotOn = robotStatus === 'connected' && media
+  // Avec la caméra du vrai robot, si l'option est activée : il te suit du regard quand il ne
+  // danse pas. Le daemon garde le suivi d'une session à l'autre : sans l'option, on le coupe.
+  const robotOn = robotStatus === 'connected' && media && settings.gaze
+  useEffect(() => {
+    if (robotStatus === 'connected' && media && !settings.gaze) client.setTracking(null).catch(() => {})
+  }, [robotStatus, media, settings.gaze, client])
   const trackingWeight = useRef(0)
   useEffect(() => {
     if (!robotOn) return

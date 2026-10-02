@@ -141,7 +141,7 @@ export function dancePose(t, { phase = 0, choice, envelope = 1, impulses = [] })
 // Intensité des mouvements du vrai robot (danse et petits gestes), réglée par l'équipe
 // pendant les tests sur le Reachy Mini (pas par le joueur) : 1 = amplitudes de Pollen,
 // en dessous tout est réduit d'autant. Les niveaux de danse gardent leurs écarts entre eux.
-export const ROBOT_INTENSITY = 0.3
+export const ROBOT_INTENSITY = 0.4
 
 // Limites de sécurité, appliquées en douceur (une coupure nette ferait un angle dans le
 // mouvement) : la doc donne ±40° pour la tête.
