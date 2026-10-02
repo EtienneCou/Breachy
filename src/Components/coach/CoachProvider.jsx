@@ -135,7 +135,35 @@ export function CoachProvider({ children }) {
     }
   }, [settings])
 
-  const robotStatus = !settings.robot ? 'off' : connected ? 'connected' : 'searching'
+  // Une seule page pilote le robot : sinon, chaque onglet ouvert (ou oublié) a son propre
+  // Reachy, et ils se disputent la tête (à-coups violents). La page qu'on ouvre ou qu'on
+  // utilise prend la main ; les autres le lâchent et l'indiquent dans leur panneau.
+  const [controls, setControls] = useState(true)
+  useEffect(() => {
+    if (typeof BroadcastChannel === 'undefined') return
+    const me = Math.random().toString(36).slice(2)
+    const channel = new BroadcastChannel('breachy-robot')
+    channel.onmessage = ({ data }) => {
+      if (data?.type === 'claim' && data.id !== me) setControls(false)
+    }
+    const claim = () => {
+      setControls(true)
+      channel.postMessage({ type: 'claim', id: me })
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') claim()
+    }
+    channel.postMessage({ type: 'claim', id: me })
+    window.addEventListener('focus', claim)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => {
+      window.removeEventListener('focus', claim)
+      document.removeEventListener('visibilitychange', onVisible)
+      channel.close()
+    }
+  }, [])
+  const robotEnabled = settings.robot && controls
+  const robotStatus = !settings.robot ? 'off' : !controls ? 'elsewhere' : connected ? 'connected' : 'searching'
   const live = useRef({})
   useEffect(() => {
     live.current = { settings, robotStatus, voiceOutput, dancing }
@@ -148,7 +176,7 @@ export function CoachProvider({ children }) {
 
   // Connexion : on interroge le daemon régulièrement ; à la connexion, le robot se réveille.
   useEffect(() => {
-    if (!settings.robot) return
+    if (!robotEnabled) return
     let cancelled = false
     let wasConnected = false
     const check = async () => {
@@ -187,7 +215,7 @@ export function CoachProvider({ children }) {
       setVoiceOutput('browser')
       setMedia(false)
     }
-  }, [settings.robot, client])
+  }, [robotEnabled, client])
 
   // Boucle de danse active (entraînement) : elle reçoit les petits gestes et les
   // ajoute à la danse, au lieu de lancer des mouvements séparés (une seule source de positions).
@@ -385,6 +413,8 @@ export function CoachProvider({ children }) {
     })
     let inhale = true
     const breathe = () => {
+      // La page n'a plus le robot (déconnecté, ou piloté par un autre onglet) : on arrête.
+      if (!i.asleep || live.current.robotStatus !== 'connected') return
       const pitch = SLEEP_POSE.head.pitch - (inhale ? BREATH_DEG : 0)
       // un peu plus court que l'intervalle : deux respirations ne se chevauchent jamais
       client.goto({ ...SLEEP_POSE, head: { ...SLEEP_POSE.head, pitch }, duration: BREATH_S - 0.3 }).catch(() => {})

@@ -7,7 +7,7 @@ const UI = {
   fr: {
     title: 'Reachy, ton coach',
     robotKind: (simulation) => (simulation ? 'simulation' : 'robot'),
-    status: { off: 'Robot désactivé', searching: 'Robot non connecté', connected: 'Robot connecté' },
+    status: { off: 'Robot désactivé', searching: 'Robot non connecté', connected: 'Robot connecté', elsewhere: 'Robot piloté par un autre onglet' },
     settingsTitle: 'Réglages du coach et du robot',
     settingsLabel: 'Réglages du coach',
     talkOn: '🗣 Il t\'encourage',
@@ -54,7 +54,7 @@ const UI = {
   en: {
     title: 'Reachy, your coach',
     robotKind: (simulation) => (simulation ? 'simulation' : 'robot'),
-    status: { off: 'Robot off', searching: 'Robot not connected', connected: 'Robot connected' },
+    status: { off: 'Robot off', searching: 'Robot not connected', connected: 'Robot connected', elsewhere: 'Robot controlled by another tab' },
     settingsTitle: 'Coach and robot settings',
     settingsLabel: 'Coach settings',
     talkOn: '🗣 Cheering you on',
