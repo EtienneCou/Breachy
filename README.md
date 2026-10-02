@@ -125,14 +125,14 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 - **Décompte avant le morceau** : « Trois ! Deux ! Un ! » avec une antenne, puis l'autre, puis les deux, et « C'est parti ! » avec un hochement de tête.
 - **Il danse en rythme** sur le tempo du morceau les chorégraphies de Pollen Robotics (le fabricant), de plus en plus énergiques selon la réussite du joueur sur ses 10 dernières notes :
 
-  | Réussite | Danses (au hasard, une nouvelle toutes les 4 mesures) |
+  | Réussite | Danses (elles alternent toutes les 4 mesures) |
   |---|---|
-  | moins de 50 % | calme : balancier, balancement de côté |
-  | 50 à 74 % | il se laisse porter : tête penchée, chaloupé, « mmh mmh », menton en avant |
-  | 75 à 89 % | ça groove : hochements, « ouais ! », polyrythmie, trébuche et se rattrape, tête qui tourne, recul du cou |
-  | 90 % et plus | rock star : headbang, spirales, coucou, carré, coup de bec, coup d'œil |
+  | moins de 50 % | calme : balancier, glissé de côté |
+  | 50 à 74 % | il se laisse porter : tête penchée, chaloupé |
+  | 75 à 89 % | ça groove : hochement, « ouais ! » |
+  | 90 % et plus | rock star : headbang, spirales |
 
-  La danse ne s'arrête jamais pendant le morceau. On passe d'une danse à l'autre en fondu. Les formules viennent de [reachy_mini_dances_library](https://github.com/pollen-robotics/reachy_mini_dances_library), portées dans [pollenMoves.js](src/Components/coach/pollenMoves.js) ; les mouvements qui retombaient d'un coup redescendent ici en douceur, et les deux danses à paliers sont écartées.
+  La danse ne s'arrête jamais pendant le morceau. On passe d'une danse à l'autre en fondu. Les formules viennent de [reachy_mini_dances_library](https://github.com/pollen-robotics/reachy_mini_dances_library), portées dans [pollenMoves.js](src/Components/coach/pollenMoves.js) ; les autres danses de Pollen y restent disponibles pour changer les niveaux (`DANCE_LEVELS` dans danceEngine.js).
 - **Bilan à la fin du morceau**, dit à voix haute : pourcentage de réussite, meilleure série, nouveau record s'il y en a un, un conseil (jouer plus lentement, en avance, en retard…) et un encouragement. Il l'accompagne d'une émotion selon le résultat.
 - Le volume de l'accompagnement baisse pendant qu'il parle.
 

@@ -1,7 +1,7 @@
 // Danse de Reachy pendant l'entraînement, calculée à chaque instant (50 fois par seconde).
 // Il danse les chorégraphies de Pollen (pollenMoves.js), calées sur le tempo du morceau,
-// de plus en plus énergiques quand le joueur réussit (4 niveaux). Dans un niveau, il change
-// de danse toutes les 4 mesures ; d'une danse à l'autre, il passe en fondu.
+// de plus en plus énergiques quand le joueur réussit (4 niveaux de 2 danses). Dans un niveau,
+// il alterne ses deux danses toutes les 4 mesures ; d'une danse à l'autre, il passe en fondu.
 //
 // Règles de la doc Reachy Mini pour des mouvements doux : une seule boucle envoie les
 // positions, toujours des courbes continues, des amplitudes loin des limites et des
@@ -9,16 +9,17 @@
 
 import { pollenPose } from './pollenMoves.js'
 
-// Danses de chaque niveau et leur ampleur (1 = celle de Pollen).
+// Danses de chaque niveau (deux, qui alternent toutes les 4 mesures) et leur ampleur
+// (1 = celle de Pollen). Les autres danses de pollenMoves.js restent disponibles.
 export const DANCE_LEVELS = [
-  // 0 · Calme : il se balance doucement
+  // 0 · Calme : balancier, glissé de côté
   { moves: ['pendulum_swing', 'side_to_side_sway'], amount: 0.5 },
-  // 1 · Il se laisse porter : penché, chaloupé
-  { moves: ['head_tilt_roll', 'groovy_sway_and_roll', 'uh_huh_tilt', 'chin_lead'], amount: 0.7 },
-  // 2 · Ça groove : hochements et petits pas
-  { moves: ['simple_nod', 'yeah_nod', 'polyrhythm_combo', 'stumble_and_recover', 'dizzy_spin', 'neck_recoil'], amount: 0.85 },
-  // 3 · Rock star
-  { moves: ['headbanger_combo', 'interwoven_spirals', 'side_peekaboo', 'jackson_square', 'chicken_peck', 'side_glance_flick'], amount: 1 },
+  // 1 · Il se laisse porter : tête penchée, chaloupé
+  { moves: ['head_tilt_roll', 'groovy_sway_and_roll'], amount: 0.7 },
+  // 2 · Ça groove : hochement, « ouais ! »
+  { moves: ['simple_nod', 'yeah_nod'], amount: 0.85 },
+  // 3 · Rock star : headbang, spirales
+  { moves: ['headbanger_combo', 'interwoven_spirals'], amount: 1 },
 ]
 
 // Autres façons de bouger en rythme, hors entraînement :
