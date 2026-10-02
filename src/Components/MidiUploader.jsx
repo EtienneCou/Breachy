@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { addMidiSong } from "../Services/MidiDatabase";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function MidiUploader({ onSongAdded }) {
+  const { t } = useLanguage();
   const [file, setFile] = useState(null);
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -12,7 +14,7 @@ export default function MidiUploader({ onSongAdded }) {
     const name = selectedFile.name.toLowerCase();
 
     if (!name.endsWith(".mid") && !name.endsWith(".midi")) {
-      setError("Le fichier doit être au format .mid ou .midi.");
+      setError(t('uploader.errorFormat'));
       setFile(null);
       return;
     }
@@ -66,9 +68,7 @@ export default function MidiUploader({ onSongAdded }) {
     } catch (err) {
       console.error(err);
 
-      setError(
-        "Une erreur est survenue pendant l'enregistrement du morceau."
-      );
+      setError(t('uploader.errorGeneric'));
     } finally {
       setIsSaving(false);
     }
@@ -85,14 +85,12 @@ export default function MidiUploader({ onSongAdded }) {
           ♫
         </div>
 
-        <h3>Ajouter un morceau MIDI</h3>
+        <h3>{t('uploader.title')}</h3>
 
-        <p>
-          Glissez un fichier ici ou sélectionnez-le depuis votre ordinateur.
-        </p>
+        <p>{t('uploader.hint')}</p>
 
         <label className="choose-file-btn">
-          Choisir un fichier
+          {t('uploader.chooseFile')}
 
           <input
             type="file"
@@ -138,8 +136,8 @@ export default function MidiUploader({ onSongAdded }) {
           disabled={isSaving}
         >
           {isSaving
-            ? "Ajout..."
-            : "Ajouter à ma bibliothèque"}
+            ? t('uploader.adding')
+            : t('uploader.addToLibrary')}
         </button>
       )}
 

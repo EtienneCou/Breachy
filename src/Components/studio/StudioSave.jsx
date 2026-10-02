@@ -4,36 +4,30 @@ import { addMidiSong } from '../../Services/MidiDatabase'
 import { USER_SONG_PREFIX } from '../../hooks/useMusic.js'
 import { practiceTrackNumber, studioToMidi } from '../../utils/studioToMidi.js'
 import { instrumentById } from './instruments.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './StudioSave.css'
 
-function defaultTitle() {
+function getDefaultTitle(isEn) {
   const d = new Date()
-  const day = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
-  const time = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  return `Studio du ${day} à ${time}`
+  const locale = isEn ? 'en-US' : 'fr-FR'
+  const day = d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
+  const time = d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
+  return isEn ? `Studio session of ${day} at ${time}` : `Studio du ${day} à ${time}`
 }
 
-/**
- * Sauvegarde du Studio dans « Mes enregistrements » : un fichier MIDI avec toutes les
- * pistes, le tempo et la mesure. Annonce avant la sauvegarde la piste jouée à
- * l'entraînement (la première piste piano), ou prévient qu'il n'y en a pas.
- *
- * - studio     objet renvoyé par useStudio()
- * - bpm, signature   tempo et mesure du métronome
- * - onClose    ferme le panneau
- */
 export default function StudioSave({ studio, bpm, signature, onClose }) {
   const navigate = useNavigate()
-  const [title, setTitle] = useState(defaultTitle)
-  const [saved, setSaved] = useState(null) // { id, practiceTrack }
+  const { t, isEn } = useLanguage()
+  const [title, setTitle] = useState(() => getDefaultTitle(isEn))
+  const [saved, setSaved] = useState(null)
   const [error, setError] = useState('')
 
   const number = practiceTrackNumber(studio.tracks)
-  const practiceLabel = number ? `Piste ${number} · ${instrumentById('piano').label}` : null
+  const practiceLabel = number ? (isEn ? `Track ${number} · ${instrumentById('piano').label}` : `Piste ${number} · ${instrumentById('piano').label}`) : null
 
   const save = async (e) => {
     e.preventDefault()
-    const name = title.trim() || defaultTitle()
+    const name = title.trim() || getDefaultTitle(isEn)
     const id = crypto.randomUUID()
     try {
       const { file, practiceTrack } = studioToMidi({ tracks: studio.tracks, loopBeats: studio.loopBeats, bpm, signature, title: name })
@@ -44,34 +38,34 @@ export default function StudioSave({ studio, bpm, signature, onClose }) {
         file,
         type: 'audio/midi',
         createdAt: new Date().toISOString(),
-        source: 'recording', // onglet « Mes enregistrements » de l'accueil
+        source: 'recording',
         origin: 'studio',
-        tempo: { bpm, signature }, // métronome de l'entraînement
-        practiceTrack, // partie à jouer à l'entraînement, ou null (pas de piste piano)
+        tempo: { bpm, signature },
+        practiceTrack,
       })
       setSaved({ id, practiceTrack })
       setError('')
     } catch (err) {
       console.error(err)
-      setError('La sauvegarde a échoué. Réessaie.')
+      setError(t('recorder.saveError'))
     }
   }
 
   return (
-    <section className="studio-save" aria-label="Sauvegarder le Studio">
+    <section className="studio-save" aria-label={t('studio.save')}>
       {saved ? (
         <>
-          <p className="studio-save__ok">✓ Sauvegardé dans « Mes enregistrements »</p>
+          <p className="studio-save__ok">{t('studio.saveOk')}</p>
           <p className="studio-save__text">
             {saved.practiceTrack ? (
-              <>🎯 À l'entraînement, tu joueras la <strong>{saved.practiceTrack.label}</strong>.</>
+              t('studio.practiceWillPlay', saved.practiceTrack.label)
             ) : (
-              'Pas de piste piano : tu pourras l\'écouter, mais pas t\'entraîner dessus.'
+              t('studio.noPianoSavedWarning')
             )}
           </p>
           <div className="studio-save__buttons">
             <button type="button" className="studio-save__btn" onClick={() => navigate('/?onglet=enregistrements')}>
-              Voir mes enregistrements
+              {t('recorder.viewRecordings')}
             </button>
             {saved.practiceTrack && (
               <button
@@ -79,17 +73,17 @@ export default function StudioSave({ studio, bpm, signature, onClose }) {
                 className="studio-save__btn studio-save__btn--main"
                 onClick={() => navigate(`/piano?morceau=${encodeURIComponent(USER_SONG_PREFIX + saved.id)}`)}
               >
-                S'entraîner dessus
+                {t('recorder.practiceOn')}
               </button>
             )}
             <button type="button" className="studio-save__btn studio-save__btn--ghost" onClick={onClose}>
-              Continuer à composer
+              {t('studio.keepComposing')}
             </button>
           </div>
         </>
       ) : (
         <form className="studio-save__form" onSubmit={save}>
-          <label className="studio-save__label" htmlFor="studio-title">Nom du morceau</label>
+          <label className="studio-save__label" htmlFor="studio-title">{t('studio.saveModalTitle')}</label>
           <input
             id="studio-title"
             className="studio-save__input"
@@ -102,14 +96,14 @@ export default function StudioSave({ studio, bpm, signature, onClose }) {
           />
           <p className={`studio-save__text${practiceLabel ? '' : ' studio-save__text--warn'}`}>
             {practiceLabel ? (
-              <>🎯 À l'entraînement, tu joueras la <strong>{practiceLabel}</strong> (la première piste piano). Les autres pistes t'accompagneront.</>
+              t('studio.practiceWillPlayStudio', practiceLabel)
             ) : (
-              'Aucune piste piano : tu pourras écouter ce morceau, mais pas t\'entraîner dessus. Ajoute une piste piano pour pouvoir le jouer.'
+              t('studio.noPianoWarning')
             )}
           </p>
           <div className="studio-save__buttons">
-            <button type="submit" className="studio-save__btn studio-save__btn--main">💾 Sauvegarder</button>
-            <button type="button" className="studio-save__btn studio-save__btn--ghost" onClick={onClose}>Annuler</button>
+            <button type="submit" className="studio-save__btn studio-save__btn--main">{t('studio.save')}</button>
+            <button type="button" className="studio-save__btn studio-save__btn--ghost" onClick={onClose}>{t('common.cancel')}</button>
           </div>
           {error && <p className="studio-save__error">{error}</p>}
         </form>
