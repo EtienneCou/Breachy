@@ -2,7 +2,7 @@
 // ou un kit de batterie pour les percussions.
 
 export const STUDIO_INSTRUMENTS = [
-  { id: 'piano', label: 'Piano', icon: '🎹', color: '#1f7bff', octave: 4, variants: [{ id: 'grand', label: 'Piano à queue', program: 0 }] },
+  { id: 'piano', label: 'Piano', icon: '🎹', color: '#fbbf24', octave: 4, variants: [{ id: 'grand', label: 'Piano à queue', program: 0 }] },
   {
     id: 'guitar',
     label: 'Guitare électrique',
@@ -22,7 +22,7 @@ export const STUDIO_INSTRUMENTS = [
     id: 'bass',
     label: 'Basse',
     icon: '🎵',
-    color: '#8b5cf6',
+    color: '#b91c1c',
     octave: 2,
     variants: [
       { id: 'electric', label: 'Électrique', program: 33 },
@@ -34,17 +34,17 @@ export const STUDIO_INSTRUMENTS = [
     id: 'drum-machine',
     label: 'Boîte à rythme',
     icon: '🎛️',
-    color: '#ec4899',
+    color: '#dc2626',
     drums: true,
     variants: [
       { id: '808', label: 'TR-808 / 909', program: 25 },
       { id: 'electronic', label: 'Électronique', program: 24 },
     ],
   },
-  { id: 'organ', label: 'Orgue', icon: '⛪', color: '#14b8a6', octave: 4, variants: [{ id: 'drawbar', label: 'Orgue électrique', program: 16 }, { id: 'rock', label: 'Orgue rock', program: 18 }] },
-  { id: 'strings', label: 'Cordes', icon: '🎻', color: '#22c55e', octave: 4, variants: [{ id: 'ensemble', label: 'Ensemble de cordes', program: 48 }] },
-  { id: 'lead', label: 'Synthé lead', icon: '🔊', color: '#06b6d4', octave: 4, variants: [{ id: 'saw', label: 'Dent de scie', program: 81 }, { id: 'square', label: 'Carré', program: 80 }] },
-  { id: 'brass', label: 'Cuivres', icon: '🎺', color: '#f97316', octave: 4, variants: [{ id: 'section', label: 'Section de cuivres', program: 61 }] },
+  { id: 'organ', label: 'Orgue', icon: '⛪', color: '#c2410c', octave: 4, variants: [{ id: 'drawbar', label: 'Orgue électrique', program: 16 }, { id: 'rock', label: 'Orgue rock', program: 18 }] },
+  { id: 'strings', label: 'Cordes', icon: '🎻', color: '#eab308', octave: 4, variants: [{ id: 'ensemble', label: 'Ensemble de cordes', program: 48 }] },
+  { id: 'lead', label: 'Synthé lead', icon: '🔊', color: '#fb923c', octave: 4, variants: [{ id: 'saw', label: 'Dent de scie', program: 81 }, { id: 'square', label: 'Carré', program: 80 }] },
+  { id: 'brass', label: 'Cuivres', icon: '🎺', color: '#b91c1c', octave: 4, variants: [{ id: 'section', label: 'Section de cuivres', program: 61 }] },
 ]
 
 export const instrumentById = (id) => STUDIO_INSTRUMENTS.find((i) => i.id === id) ?? STUDIO_INSTRUMENTS[0]
