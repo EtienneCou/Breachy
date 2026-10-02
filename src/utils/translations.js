@@ -34,6 +34,12 @@ export const TRANSLATIONS = {
       loading: "Chargement…",
       error: "Erreur",
     },
+    theme: {
+      dark: "Sombre",
+      light: "Clair",
+      switchToLight: "Passer en mode clair",
+      switchToDark: "Passer en mode sombre",
+    },
     home: {
       freePlay: "Jeu libre",
       studio: "Studio",
@@ -393,6 +399,12 @@ export const TRANSLATIONS = {
       back: "Back",
       loading: "Loading…",
       error: "Error",
+    },
+    theme: {
+      dark: "Dark",
+      light: "Light",
+      switchToLight: "Switch to light mode",
+      switchToDark: "Switch to dark mode",
     },
     home: {
       freePlay: "Free play",

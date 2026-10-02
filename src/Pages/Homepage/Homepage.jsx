@@ -13,6 +13,7 @@ import PracticePlayer from "../../Components/Practice/PracticePlayer";
 import useSongPlayer from "../../hooks/useSongPlayer";
 import audioPlayer from "../../services/audioPlayer";
 import LanguageToggle from "../../Components/LanguageToggle/LanguageToggle";
+import ThemeToggle from "../../Components/ThemeToggle/ThemeToggle";
 import { useLanguage } from "../../context/LanguageContext";
 import "./Homepage-style.css";
 
@@ -1701,7 +1702,7 @@ export default function SongsPage() {
       <div className="container">
 
         <header className="home-header">
-          <div className="brand-wrapper" style={{ gridArea: 'brand', display: 'inline-flex', alignItems: 'center', gap: '14px' }}>
+          <div className="brand-wrapper" style={{ gridArea: 'brand', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
             <div className="brand" style={{ marginBottom: 0 }}>
               <div className="brand-mark" aria-hidden="true">
                 <span />
@@ -1712,6 +1713,7 @@ export default function SongsPage() {
               </div>
               <span>Reachy band</span>
             </div>
+            <ThemeToggle />
             <LanguageToggle />
           </div>
 
