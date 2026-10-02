@@ -1,6 +1,7 @@
 import { useEffect, useEffectEvent, useState } from 'react'
 import { backingSynth, pianoSynth } from '../piano'
 import { TRANSPORT_KEYS } from './keys.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './TransportBar.css'
 
 const percent = (value) => `${Math.round(value * 100)} %`
@@ -13,15 +14,9 @@ function formatTime(seconds) {
 /**
  * Barre de commande : jouer / pause, recommencer, vitesse, et si `piano`
  * est fourni, l'octave (en jeu libre) et le volume du piano.
- *
- * - clock          objet renvoyé par useSongClock() (optionnel : sans morceau,
- *                  seuls l'octave et le volume sont affichés)
- * - piano          objet renvoyé par usePiano() (optionnel)
- * - accompaniment  affiche le volume de l'accompagnement (quand la page en joue un)
- * - orientation  'vertical' (colonne à côté du piano) ou 'horizontal'
- * - shortcuts    raccourcis clavier : Entrée, Retour arrière, ↓, ↑
  */
 export default function TransportBar({ clock, piano, accompaniment = false, orientation = 'vertical', shortcuts = true, className = '' }) {
+  const { t } = useLanguage()
   const { status, time, duration, speed } = clock ?? {}
   const playing = status === 'playing'
   const finite = Number.isFinite(duration) && duration > 0
@@ -43,11 +38,17 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
     return () => window.removeEventListener('keydown', onKey)
   }, [shortcuts])
 
-  const playLabel = playing ? 'Pause' : status === 'paused' ? 'Reprendre' : status === 'finished' ? 'Rejouer' : 'Jouer'
+  const playLabel = playing
+    ? t('transport.pause')
+    : status === 'paused'
+    ? t('transport.resume')
+    : status === 'finished'
+    ? t('transport.replay')
+    : t('transport.play')
   const progress = finite ? Math.min(1, Math.max(0, time / duration)) : 0
 
   return (
-    <div className={`transport transport--${orientation} ${className}`} role="toolbar" aria-label="Commandes de lecture">
+    <div className={`transport transport--${orientation} ${className}`} role="toolbar" aria-label={t('transport.toolbarAria')}>
       {clock && (
         <>
           <div className="transport__section transport__main">
@@ -59,18 +60,18 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
             >
               <Icon name={playing ? 'pause' : 'play'} />
               <span className="transport__label">{playLabel}</span>
-              <kbd>Entrée</kbd>
+              <kbd>{t('transport.enterKey')}</kbd>
             </button>
-            <button type="button" className="transport__btn" onClick={clock.restart} title="Recommencer depuis le début">
+            <button type="button" className="transport__btn" onClick={clock.restart} title={t('transport.restartTitle')}>
               <Icon name="restart" />
-              <span className="transport__label">Recommencer</span>
+              <span className="transport__label">{t('transport.restart')}</span>
               <kbd>⌫</kbd>
             </button>
           </div>
 
           <div className="transport__section">
             <span className="transport__clock">
-              {playing && time < 0 ? `Départ dans ${Math.ceil(-time)}` : formatTime(time)}
+              {playing && time < 0 ? t('transport.startingIn', Math.ceil(-time)) : formatTime(time)}
               {finite && <span className="transport__muted"> / {formatTime(duration)}</span>}
             </span>
             {finite && (
@@ -82,7 +83,7 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
 
           <label className="transport__section" htmlFor="transport-speed">
             <span className="transport__heading">
-              Vitesse <span className="transport__muted">{percent(speed)}</span>
+              {t('transport.speedHeading')} <span className="transport__muted">{percent(speed)}</span>
             </span>
             <input
               id="transport-speed"
@@ -94,8 +95,8 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
               value={speed}
               onChange={(event) => clock.setSpeed(Number(event.target.value))}
               onDoubleClick={() => clock.setSpeed(1)}
-              aria-label="Vitesse de lecture"
-              title="Double-cliquer pour revenir à 100 %"
+              aria-label={t('transport.speedAria')}
+              title={t('transport.speedResetTitle')}
             />
           </label>
         </>
@@ -103,24 +104,24 @@ export default function TransportBar({ clock, piano, accompaniment = false, orie
 
       {piano?.canShiftOctave && (
         <Stepper
-          title="Octave"
+          title={t('transport.octaveHeading')}
           keys={[piano.octaveKeys.down, piano.octaveKeys.up]}
           onDown={() => piano.setOctave((o) => o - 1)}
           onUp={() => piano.setOctave((o) => o + 1)}
           canDown={piano.canGoLower}
           canUp={piano.canGoHigher}
-          downLabel="Octave plus grave"
-          upLabel="Octave plus aiguë"
+          downLabel={t('transport.octaveDown')}
+          upLabel={t('transport.octaveUp')}
         >
           <span className="transport__value">
             <span className="transport__value-number">{piano.octave}</span>
-            <span className="transport__value-word">{piano.octave < 4 ? 'Grave' : piano.octave > 4 ? 'Aigu' : 'Milieu'}</span>
+            <span className="transport__value-word">{piano.octave < 4 ? t('common.low') : piano.octave > 4 ? t('common.high') : t('common.mid')}</span>
           </span>
         </Stepper>
       )}
 
-      {piano && <VolumeSlider id="transport-volume-piano" label="Piano" synth={pianoSynth} />}
-      {accompaniment && <VolumeSlider id="transport-volume-backing" label="Accompagnement" synth={backingSynth} />}
+      {piano && <VolumeSlider id="transport-volume-piano" label={t('transport.pianoHeading')} synth={pianoSynth} />}
+      {accompaniment && <VolumeSlider id="transport-volume-backing" label={t('transport.backingHeading')} synth={backingSynth} />}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 import { DifficultyBadge } from '../difficulty'
 import { getBestScore } from '../../utils/bestScores.js'
 import { formatDuration } from '../../utils/songInfo.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './SongCard.css'
 
 /**
@@ -30,6 +31,7 @@ export default function SongCard({
   onDelete,
   onResetListens,
 }) {
+  const { t } = useLanguage();
   // Morceau du Studio sans piste piano : il s'écoute, mais il n'y a rien à jouer.
   const noPianoPart = Boolean(info?.noPianoPart)
   const canPractice = Boolean(musicId) && info !== null && !noPianoPart
@@ -37,11 +39,11 @@ export default function SongCard({
   const best = canPractice ? getBestScore(musicId) : null
   const duration = info?.duration ? formatDuration(info.duration) : fallbackDuration
   const details = noPianoPart
-    ? 'Pas de piste piano à jouer : écoute seulement'
+    ? t('card.noPianoTitle')
     : !canPractice
-    ? 'Pas encore de partition : écoute seulement'
+    ? t('card.noSheetTitle')
     : info
-      ? `Mélodie : ${info.melodyLabel} · ${info.noteCount} notes`
+      ? t('card.melodyNotes', info.melodyLabel, info.noteCount)
       : undefined
 
   return (
@@ -60,12 +62,12 @@ export default function SongCard({
 
           <div className="song-tile__top">
             {!canPractice ? (
-              <span className="song-tile__pill">Écoute seulement</span>
+              <span className="song-tile__pill">{t('common.listenOnly')}</span>
             ) : level ? (
               <DifficultyBadge level={level} />
             ) : null}
             <span className="song-tile__top-right">
-              {isNew && <span className="song-tile__pill song-tile__pill--new">Nouveau</span>}
+              {isNew && <span className="song-tile__pill song-tile__pill--new">{t('common.new')}</span>}
               {duration && <span className="song-tile__pill">{duration}</span>}
             </span>
           </div>
@@ -75,7 +77,7 @@ export default function SongCard({
             <p className="song-tile__subtitle">{subtitle}</p>
             {best && (
               <p className="song-tile__best">
-                <Stars count={best.stars} />
+                <Stars count={best.stars} t={t} />
                 <span className={best.successPercent === 100 ? 'is-perfect' : undefined}>{best.successPercent} %</span>
               </p>
             )}
@@ -86,8 +88,8 @@ export default function SongCard({
               type="button"
               className="song-tile__delete"
               onClick={onResetListens ?? onDelete}
-              aria-label={onResetListens ? `Réinitialiser les écoutes de ${title}` : `Supprimer ${title}`}
-              title={onResetListens ? "Réinitialiser les écoutes" : "Supprimer"}
+              aria-label={onResetListens ? t('card.resetListens', title) : t('card.deleteTitle', title)}
+              title={onResetListens ? t('card.resetListensBtn') : t('common.delete')}
             >
               ×
             </button>
@@ -103,26 +105,27 @@ export default function SongCard({
           disabled={!canPractice || !onPractice}
           title={
             canPractice
-              ? "S'entraîner au piano sur ce morceau"
+              ? t('card.practiceTitle')
               : noPianoPart
-                ? 'Pas de piste piano à jouer : ajoute une piste piano dans le Studio'
-                : 'Pas encore de partition pour ce morceau'
+                ? t('card.noPianoTitle')
+                : t('card.noSheetTitle')
           }
         >
-          S'entraîner
+          {t('common.practice')}
         </button>
         <button type="button" className="song-tile__btn song-tile__btn--listen" onClick={onListen} disabled={!onListen}>
           <PlayIcon />
-          Écouter
+          {t('common.listen')}
         </button>
       </div>
     </article>
   )
 }
 
-function Stars({ count }) {
+function Stars({ count, t }) {
+  const ariaLabel = t ? t('card.bestScoreAria', count) : `Score : ${count}/3`
   return (
-    <span className="song-tile__stars" role="img" aria-label={`Meilleur score : ${count} étoile${count > 1 ? 's' : ''} sur 3`}>
+    <span className="song-tile__stars" role="img" aria-label={ariaLabel}>
       {[0, 1, 2].map((i) => (
         <svg key={i} viewBox="0 0 24 24" width="13" height="13" className={i < count ? 'is-on' : ''} aria-hidden="true">
           <path d="M12 2.8l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 16.8l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />

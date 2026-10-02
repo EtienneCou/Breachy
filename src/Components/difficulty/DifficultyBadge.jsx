@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSongInfo } from '../../utils/songInfo.js'
+import { useLanguage } from '../../context/LanguageContext'
 import './DifficultyBadge.css'
 
 /**
@@ -9,6 +10,7 @@ import './DifficultyBadge.css'
  *            à partir de ses notes. Rien n'est affiché pour un morceau sans partition.
  */
 export default function DifficultyBadge({ level, musicId }) {
+  const { t } = useLanguage()
   const [loaded, setLoaded] = useState({ id: null, level: null })
 
   useEffect(() => {
@@ -24,14 +26,18 @@ export default function DifficultyBadge({ level, musicId }) {
 
   const shown = level ?? (loaded.id === musicId ? loaded.level : null)
   if (!shown) return null
+
+  const label = t('difficulty.' + shown.id) || shown.label
+
   return (
     <span
       className="difficulty-badge"
       style={{ '--difficulty-color': shown.color, '--difficulty-bg': shown.background }}
-      title={`Difficulté : ${shown.label}`}
+      title={`${t('difficulty.label')} : ${label}`}
     >
       <span className="difficulty-badge__dot" aria-hidden="true" />
-      {shown.label}
+      {label}
     </span>
   )
 }
+

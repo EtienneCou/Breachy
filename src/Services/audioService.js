@@ -1,23 +1,40 @@
-const bravoAudio = new Audio("/sound/bravo-kid.mp3")
-const encouragementAudio = new Audio(
-  "/sound/courage-kid.mp3"
-)
+const PRAISES = ['bravo', 'bravooo', 'super', 'excellent', 'parfait', 'genial'];
+const ENCOURAGEMENTS = ['lache_rien', 'courage', 'presque', 'reessaie', 'concentre'];
 
-// Préchargement dès le démarrage
-bravoAudio.preload = "auto"
-encouragementAudio.preload = "auto"
-
-bravoAudio.load()
-encouragementAudio.load()
-
-export function playBravo() {
-  bravoAudio.currentTime = 0
-
-  return bravoAudio.play()
+function getCurrentLanguage() {
+  try {
+    const lang = localStorage.getItem('reachy-lang') || localStorage.getItem('reachy.language');
+    if (lang === 'en' || lang === 'fr') return lang;
+  } catch {
+    // ignore
+  }
+  return 'fr';
 }
 
-export function playEncouragement() {
-  encouragementAudio.currentTime = 0
+export function playBravo(explicitLang) {
+  const lang = explicitLang || getCurrentLanguage();
+  const soundName = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+  const path = lang === 'en'
+    ? `/audio/reachy/en/${soundName}.mp3`
+    : `/audio/reachy/${soundName}.mp3`;
 
-  return encouragementAudio.play()
+  const audio = new Audio(path);
+  audio.volume = 0.9;
+  return audio.play().catch((error) => {
+    console.error('Erreur lecture son bravo :', error);
+  });
+}
+
+export function playEncouragement(explicitLang) {
+  const lang = explicitLang || getCurrentLanguage();
+  const soundName = ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
+  const path = lang === 'en'
+    ? `/audio/reachy/en/${soundName}.mp3`
+    : `/audio/reachy/${soundName}.mp3`;
+
+  const audio = new Audio(path);
+  audio.volume = 0.9;
+  return audio.play().catch((error) => {
+    console.error('Erreur lecture son encouragement :', error);
+  });
 }
