@@ -1,0 +1,7 @@
+export { CoachProvider, useCoach } from './CoachProvider.jsx'
+export { default as CoachPanel } from './CoachPanel.jsx'
+export { default as ReachyAvatar } from './ReachyAvatar.jsx'
+export { TRAINING_RULES, finishReaction, welcomeReaction } from './coachRules.js'
+export { suggestSong } from './suggestSong.js'
+export { useRobotMetronome } from './useRobotMetronome.js'
+export { useCoachAwake } from './useCoachAwake.js'

@@ -4,6 +4,9 @@ import {
 } from './notes.js'
 import { pianoSynth } from './synth.js'
 
+/** Événement envoyé sur `window` à chaque note jouée (le coach Reachy l'écoute). */
+export const PLAYER_ACTIVITY = 'breachy:note'
+
 /**
  * Gère le jeu au clavier d'ordinateur, le son et l'état des touches enfoncées.
  *
@@ -57,6 +60,8 @@ export function usePiano({
     if (options.current.sound) pianoSynth.noteOn(midi)
     setActiveNotes((prev) => new Set(prev).add(midi))
     options.current.onNoteOn?.(midi, { time: performance.now(), source })
+    // Quelqu'un joue (clavier, souris, MIDI…) : le coach Reachy reste éveillé.
+    window.dispatchEvent(new Event(PLAYER_ACTIVITY))
   }, [])
 
   const noteOff = useCallback((midi, source) => {
