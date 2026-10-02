@@ -21,7 +21,6 @@ import { saveResult } from '../utils/bestScores.js'
 import songsCatalog from '../resources/catalog'
 import { useLanguage } from '../context/LanguageContext'
 import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
-import { playBravo, playEncouragement } from '../Services/audioService'
 import './PianoPage.css'
 
 // Morceau chargé quand l'adresse n'en indique pas : il a un accompagnement,
@@ -248,24 +247,6 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     return { streak: run, bestStreak: best, score: points, hitCount: hitTotal, missCount: missTotal, reached: arrived }
   }, [plan, noteStates, hits, clock.time])
   const heat = heatLevel(streak)
-
-  // Reachy réagit vocalement toutes les 10 bonnes notes
-  const lastGoodReaction = useState(0)
-  useEffect(() => {
-    if (hitCount > 0 && hitCount % 10 === 0 && hitCount !== lastGoodReaction[0]) {
-      lastGoodReaction[1](hitCount)
-      playBravo(language)
-    }
-  }, [hitCount, language, lastGoodReaction])
-
-  // Reachy réagit vocalement toutes les 10 mauvaises notes
-  const lastBadReaction = useState(0)
-  useEffect(() => {
-    if (missCount > 0 && missCount % 10 === 0 && missCount !== lastBadReaction[0]) {
-      lastBadReaction[1](missCount)
-      playEncouragement(language)
-    }
-  }, [missCount, language, lastBadReaction])
 
   // Étincelles sur chaque note réussie à l'instant, sur sa touche. Le mot
   // (« Parfait ! », « Bien ! »…) n'accompagne que la dernière réussite : sur les
