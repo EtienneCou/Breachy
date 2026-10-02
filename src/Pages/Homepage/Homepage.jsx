@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { DifficultyFilter } from "../../Components/difficulty";
 import { SongCard } from "../../Components/songCard";
+import { CoachPanel, suggestSong, useCoach, welcomeReaction } from "../../Components/coach";
 import { useSongsInfo } from "../../hooks/useSongsInfo";
 import { getPlayCounts, recordPlay, resetPlayCount } from "../../utils/playCounts";
 
@@ -11,6 +12,8 @@ import PracticePlayer from "../../Components/Practice/PracticePlayer";
 
 import useSongPlayer from "../../hooks/useSongPlayer";
 import audioPlayer from "../../services/audioPlayer";
+import LanguageToggle from "../../Components/LanguageToggle/LanguageToggle";
+import { useLanguage } from "../../context/LanguageContext";
 import "./Homepage-style.css";
 
 
@@ -60,7 +63,7 @@ const MOST_PLAYED = "Les plus joués"; // filtre : morceaux déjà joués, du pl
 const FAVORITES_COUNT = 5; // taille de la section « Favoris »
 
 export default function SongsPage() {
-
+  const { t } = useLanguage();
   const [search, setSearch] = useState("");
 
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -113,7 +116,7 @@ export default function SongsPage() {
     key: `user:${song.id}`,
     song,
     title: song.title,
-    subtitle: song.origin === "studio" ? "Studio" : song.source === "recording" ? "Mon enregistrement" : "Ma musique",
+    subtitle: song.origin === "studio" ? t('home.studioSubtitle') : song.source === "recording" ? t('home.myRecording') : t('home.myMusic'),
     playable: true,
     isNew: song.isNew,
   }));
@@ -128,6 +131,38 @@ export default function SongsPage() {
     countPlay(item.key);
     navigate(`/piano?morceau=${encodeURIComponent(item.key)}`);
   };
+
+  // Reachy, le coach : il dit bonjour et propose un morceau adapté au niveau du joueur
+  // (le choix change chaque jour).
+  const { react } = useCoach();
+  const [day] = useState(() => Math.floor(Date.now() / 86400000));
+  const suggestion = useMemo(
+    () =>
+      suggestSong(
+        songs.filter((song) => song.musicItem).map((song) => ({ key: song.id, title: song.title, info: songInfos[song.id] })),
+        day
+      ),
+    [songInfos, day]
+  );
+  const [firstVisitToday] = useState(isFirstVisitToday);
+  useEffect(() => rememberVisitToday(), []);
+  // Message de la bulle : bonjour + morceau conseillé ; il reste affiché.
+  const welcome = useMemo(
+    () => welcomeReaction({ suggestion, firstVisitToday, day }),
+    [suggestion, firstVisitToday, day]
+  );
+  const welcomed = useRef(false);
+  useEffect(() => {
+    const greet = (offer) => {
+      if (welcomed.current) return;
+      welcomed.current = true;
+      react("welcome", welcomeReaction({ suggestion: offer, firstVisitToday, day }));
+    };
+    if (suggestion) greet(suggestion);
+    // Les difficultés des morceaux se calculent en arrière-plan : on n'attend pas indéfiniment.
+    const timer = setTimeout(() => greet(null), 2500);
+    return () => clearTimeout(timer);
+  }, [suggestion, firstVisitToday, day, react]);
 
   const handlePlay = (item) => {
     countPlay(item.key);
@@ -1666,34 +1701,30 @@ export default function SongsPage() {
       <div className="container">
 
         <header className="home-header">
-          <div className="brand">
-            <div className="brand-mark" aria-hidden="true">
-
-              <span />
-
-              <span />
-
-              <span />
-
-              <span />
-
-              <span />
-
+          <div className="brand-wrapper" style={{ gridArea: 'brand', display: 'inline-flex', alignItems: 'center', gap: '14px' }}>
+            <div className="brand" style={{ marginBottom: 0 }}>
+              <div className="brand-mark" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+                <span />
+                <span />
+              </div>
+              <span>Reachy band</span>
             </div>
-
-            <span>Reachy band</span>
+            <LanguageToggle />
           </div>
 
           <div className="home-header__actions">
             <button type="button" className="free-play-btn" onClick={() => navigate("/jeu-libre")}>
-              Jeu libre
+              {t('home.freePlay')}
             </button>
             {/* Studio : pistes en boucle, plusieurs instruments */}
             <button type="button" className="free-play-btn" onClick={() => navigate("/studio")}>
-              Studio
+              {t('home.studio')}
             </button>
             <button type="button" className="add-music-btn" onClick={() => setIsUploadOpen(true)}>
-              + Ajouter mes musiques
+              {t('home.addMusic')}
             </button>
           </div>
 
@@ -1701,7 +1732,7 @@ export default function SongsPage() {
             <span className="search-icon" aria-hidden="true" />
             <input
               type="search"
-              placeholder="Rechercher un morceau, un artiste ou un style..."
+              placeholder={t('home.searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -1710,24 +1741,25 @@ export default function SongsPage() {
         </header>
 
         <section className="top-row">
-
           <div>
-
-            <h1>Tu joues quoi aujourd’hui&nbsp;?</h1>
-
+            <h1>{t('home.heroTitle')}</h1>
             <p className="subtitle">
-
-              Choisis un morceau, écoute-le ou lance une partie quand tu es prêt.
-
+              {t('home.heroSubtitle')}
             </p>
-
           </div>
-
-
-
         </section>
 
-
+        <CoachPanel layout="wide" className="home-coach" idleText={welcome.text}>
+          {suggestion && (
+            <button
+              type="button"
+              className="home-coach__play"
+              onClick={() => handleStartPractice({ key: suggestion.key })}
+            >
+              🎹 S'entraîner sur « {suggestion.title} »
+            </button>
+          )}
+        </CoachPanel>
 
         {/* Onglets : le catalogue, ou les morceaux ajoutés par l'utilisateur */}
         <div className="library-tabs" role="tablist" aria-label="Bibliothèque">
@@ -1739,8 +1771,8 @@ export default function SongsPage() {
             onClick={() => setLibraryTab("catalog")}
           >
             {/* libellé court sur téléphone (voir .library-tab__short) */}
-            <span className="library-tab__long">Tous les morceaux</span>
-            <span className="library-tab__short">Tous</span>
+            <span className="library-tab__long">{t('home.tabAll')}</span>
+            <span className="library-tab__short">{t('home.tabAllShort')}</span>
           </button>
           <button
             type="button"
@@ -1749,8 +1781,8 @@ export default function SongsPage() {
             className={`library-tab${libraryTab === "mine" ? " is-active" : ""}`}
             onClick={() => setLibraryTab("mine")}
           >
-            <span className="library-tab__long">Mes morceaux</span>
-            <span className="library-tab__short">Morceaux</span>
+            <span className="library-tab__long">{t('home.tabMine')}</span>
+            <span className="library-tab__short">{t('home.tabMineShort')}</span>
             {userSongs.length > 0 && <span className="library-tab__count">{userSongs.length}</span>}
           </button>
           <button
@@ -1760,8 +1792,8 @@ export default function SongsPage() {
             className={`library-tab${libraryTab === "recordings" ? " is-active" : ""}`}
             onClick={() => setLibraryTab("recordings")}
           >
-            <span className="library-tab__long">Mes enregistrements</span>
-            <span className="library-tab__short">Enregistrements</span>
+            <span className="library-tab__long">{t('home.tabRecordings')}</span>
+            <span className="library-tab__short">{t('home.tabRecordingsShort')}</span>
             {recordings.length > 0 && <span className="library-tab__count">{recordings.length}</span>}
           </button>
         </div>
@@ -1777,14 +1809,14 @@ export default function SongsPage() {
                   className={`filter-btn ${activeFilter === filter ? "active" : ""}`}
                   onClick={() => setActiveFilter(filter)}
                 >
-                  {filter}
+                  {t('filters.' + filter)}
                 </button>
               ))}
             </nav>
           ) : libraryTab === "mine" ? (
-            <p className="library-toolbar__hint">Les fichiers MIDI que tu as ajoutés, prêts à écouter ou à t'entraîner.</p>
+            <p className="library-toolbar__hint">{t('home.hintMine')}</p>
           ) : (
-            <p className="library-toolbar__hint">Les sessions que tu as sauvegardées depuis le jeu libre, prêtes à écouter ou à t'entraîner.</p>
+            <p className="library-toolbar__hint">{t('home.hintRecordings')}</p>
           )}
 
           {libraryTab === "catalog" && (
@@ -1802,8 +1834,8 @@ export default function SongsPage() {
                 <button
                   type="button"
                   className="clear-filters-btn"
-                  aria-label="Effacer tous les filtres"
-                  title="Effacer tous les filtres"
+                  aria-label={t('home.clearFiltersTitle')}
+                  title={t('home.clearFiltersTitle')}
                   onClick={() => {
                     setActiveFilter("Tous");
                     setActiveDifficulty(null);
@@ -1823,8 +1855,8 @@ export default function SongsPage() {
                 ) : (
                   <div className="empty">
                     {activeFilter === MOST_PLAYED && !Object.keys(playCounts).length
-                      ? "Tu n'as encore joué aucun morceau : lance-en un avec « Écouter » ou « S'entraîner »."
-                      : "Aucun morceau ne correspond à votre recherche."}
+                      ? t('home.emptyMostPlayed')
+                      : t('home.emptySearch')}
                   </div>
                 )}
               </main>
@@ -1833,8 +1865,8 @@ export default function SongsPage() {
                 {favoriteItems.length > 0 && (
                   <section className="library-section" aria-labelledby="section-favoris">
                     <header className="library-section__head">
-                      <h2 id="section-favoris" className="library-section__title">Favoris</h2>
-                      <p className="library-section__subtitle">Tes {favoriteItems.length} morceaux les plus joués</p>
+                      <h2 id="section-favoris" className="library-section__title">{t('home.favorites')}</h2>
+                      <p className="library-section__subtitle">{t('home.favoritesSubtitle', favoriteItems.length)}</p>
                     </header>
                     <div className="songs-grid">
                       {favoriteItems.map((item) => renderCard(item, true))}
@@ -1909,7 +1941,7 @@ export default function SongsPage() {
 
                 onClick={() => setIsUploadOpen(false)}
 
-                aria-label="Fermer"
+                aria-label={t('common.close')}
 
               >
 
@@ -1920,15 +1952,10 @@ export default function SongsPage() {
 
 
               <div className="modal-header">
-
-                <h2>Ajouter mes musiques</h2>
-
+                <h2>{t('modal.uploadTitle')}</h2>
                 <p>
-
-                  Importez vos fichiers MIDI pour les retrouver dans votre bibliothèque.
-
+                  {t('modal.uploadSubtitle')}
                 </p>
-
               </div>
 
 
@@ -1976,4 +2003,23 @@ export default function SongsPage() {
       )}
     </div>
   );
+}
+
+// Première visite de l'accueil aujourd'hui ? (Reachy ne parle à voix haute qu'à ce moment-là.)
+const LAST_VISIT_KEY = "breachy.coach.lastVisit";
+
+function isFirstVisitToday() {
+  try {
+    return localStorage.getItem(LAST_VISIT_KEY) !== new Date().toDateString();
+  } catch {
+    return false;
+  }
+}
+
+function rememberVisitToday() {
+  try {
+    localStorage.setItem(LAST_VISIT_KEY, new Date().toDateString());
+  } catch {
+    // stockage indisponible : Reachy reparlera à la prochaine visite
+  }
 }

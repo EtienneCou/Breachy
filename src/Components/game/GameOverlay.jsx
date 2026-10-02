@@ -1,28 +1,16 @@
 import FireLine from './FireLine.jsx'
+import { useLanguage } from '../../context/LanguageContext'
 import './GameOverlay.css'
 
 const SPARKS = 10 // étincelles par note réussie
 
-/**
- * Effets de jeu posés sur la piste des notes (à placer dans <PianoStage>).
- * Composant sans état : il affiche ce que la page lui donne.
- *
- * - time       temps du morceau (négatif pendant le décompte)
- * - playing    le morceau est en cours de lecture
- * - streak     nombre de notes réussies d'affilée
- * - milestone  palier de série à fêter (10, 25, 50…) ou null
- * - bursts     [{ id, x, tone, sparks, text }] notes réussies à l'instant :
- *              x = position de la touche (0 à 1), tone = 'perfect' | 'good' | 'late',
- *              sparks = afficher les étincelles, text = mot à afficher (ou null)
- * - pulseKey   change à chaque note qui arrive sur le clavier (fait pulser la ligne)
- * - heat       niveau de feu du clavier, de 0 à 4 (voir streakTiers.js)
- * - multiplier multiplicateur de points en cours (1, 2, 3 ou 4)
- */
 export default function GameOverlay({ time, playing, streak, milestone, bursts, pulseKey, heat = 0, multiplier = 1 }) {
+  const { t } = useLanguage()
+
   return (
     <div className="game-overlay" aria-hidden="true">
       <FireLine level={heat} />
-      <Countdown time={time} playing={playing} />
+      <Countdown time={time} playing={playing} t={t} />
 
       {streak >= 2 && (
         <div className="game-overlay__combo">
@@ -31,14 +19,14 @@ export default function GameOverlay({ time, playing, streak, milestone, bursts, 
           </div>
           {multiplier > 1 && (
             <div key={`mult-${multiplier}`} className={`game-overlay__multiplier is-x${multiplier}`}>
-              Points ×{multiplier}
+              {t('pianoPage.multiplier', multiplier)}
             </div>
           )}
         </div>
       )}
       {milestone && (
         <div key={`milestone-${milestone}`} className="game-overlay__milestone">
-          Série de {milestone} !
+          {t('pianoPage.streakCount', milestone)}
         </div>
       )}
 
@@ -49,7 +37,6 @@ export default function GameOverlay({ time, playing, streak, milestone, bursts, 
               <span key={i} className="game-overlay__spark" style={{ '--angle': `${(360 / SPARKS) * i}deg` }} />
             ))}
           {b.text && (
-            // décalé vers l'intérieur sur les touches du bord pour rester entièrement visible
             <span className="game-overlay__word" style={{ '--shift': `${wordShift(b.x)}%` }}>
               {b.text}
             </span>
@@ -62,16 +49,15 @@ export default function GameOverlay({ time, playing, streak, milestone, bursts, 
   )
 }
 
-// Centré sur la touche, sauf près des bords où le mot est poussé vers l'intérieur.
 function wordShift(x) {
   if (x < 0.08) return 0
   if (x > 0.92) return -100
   return -50
 }
 
-function Countdown({ time, playing }) {
+function Countdown({ time, playing, t }) {
   if (!playing || time >= 0.8) return null
-  const text = time < 0 ? Math.ceil(-time) : "C'est parti !"
+  const text = time < 0 ? Math.ceil(-time) : (t ? t('pianoPage.letsGo') : "C'est parti !")
   return (
     <div key={text} className={`game-overlay__countdown${time >= 0 ? ' is-go' : ''}`}>
       {text}

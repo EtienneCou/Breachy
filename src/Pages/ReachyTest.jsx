@@ -63,20 +63,20 @@ export default function ReachyTest() {
   }
 
 
-const testGoodReaction = () => {
-  playPositive().catch(console.error)
+  const testGoodReaction = () => {
+    playPositive().catch(console.error)
 
-  setTimeout(() => {
-    correct()
-  }, 100)
-}
-const testWrongReaction = () => {
-  playEncouragement().catch(console.error)
+    setTimeout(() => {
+      correct()
+    }, 100)
+  }
+  const testWrongReaction = () => {
+    playEncouragement().catch(console.error)
 
-  setTimeout(() => {
-    wrong()
-  }, 100)
-}
+    setTimeout(() => {
+      wrong()
+    }, 100)
+  }
 
 
   return (

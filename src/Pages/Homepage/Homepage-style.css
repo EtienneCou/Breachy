@@ -1395,6 +1395,22 @@
           }
 
         }
+/* Reachy, le coach, sous le titre de l'accueil */
+.home-coach { margin-bottom: 18px; }
+.home-coach__play {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(90deg, #ef4444, #f97316); /* boutons du thème anthracite / braise */
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.home-coach__play:hover { filter: brightness(1.08); }
+.home-coach__play:focus-visible { outline: 3px solid #fbbf24; outline-offset: 2px; }
+
 
 /* ---------- Prototype thème anthracite / braise : Homepage uniquement ---------- */
 body:has(.songs-page) {

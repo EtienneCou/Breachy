@@ -18,16 +18,38 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DAEMON = "http://localhost:8000"
 
 SOUNDS = {
+    # French sounds (default)
     "bravo": os.path.join(
         BASE_DIR,
         "sound",
         "bravo-kid.mp3",
     ),
-
     "encouragement": os.path.join(
         BASE_DIR,
         "sound",
         "courage-kid.mp3",
+    ),
+    "bravo_fr": os.path.join(
+        BASE_DIR,
+        "sound",
+        "bravo-kid.mp3",
+    ),
+    "encouragement_fr": os.path.join(
+        BASE_DIR,
+        "sound",
+        "courage-kid.mp3",
+    ),
+
+    # English sounds
+    "bravo_en": os.path.join(
+        BASE_DIR,
+        "sound",
+        "bravo-kid-en.mp3",
+    ),
+    "encouragement_en": os.path.join(
+        BASE_DIR,
+        "sound",
+        "courage-kid-en.mp3",
     ),
 }
 
@@ -106,16 +128,17 @@ def root():
 
 
 @app.post("/sound/{sound_name}")
-def play_sound(sound_name: str):
+def play_sound(sound_name: str, lang: str = "fr"):
+    target_key = f"{sound_name}_{lang}" if f"{sound_name}_{lang}" in SOUNDS else sound_name
 
-    if sound_name not in SOUNDS:
+    if target_key not in SOUNDS:
         return {
-            "error": "Son inconnu"
+            "error": f"Son inconnu: {sound_name}"
         }
 
     try:
         remote_path = upload_sound_once(
-            sound_name
+            target_key
         )
 
         print(

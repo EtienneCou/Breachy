@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { SongCard } from "./songCard";
 import { useSongsInfo } from "../hooks/useSongsInfo";
+import { useLanguage } from "../context/LanguageContext";
 
 const NEW_FOR_DAYS = 7; // étiquette « Nouveau » pendant une semaine après l'ajout
-
 
 import {
   getAllMidiSongs,
@@ -18,11 +18,10 @@ export default function UserSongs({
   showHeader = true, // titre « Mes musiques » (inutile dans l'onglet « Mes morceaux »)
   source = "user", // "user" : fichiers MIDI importés ; "recording" : enregistrements du jeu libre
 }) {
+  const { t } = useLanguage();
   const isRecordings = source === "recording";
   const [songs, setSongs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userSongsRefresh, setUserSongsRefresh] =
-  useState(0);
 
   useEffect(() => {
     onSongsChange?.(songs);
@@ -35,19 +34,14 @@ export default function UserSongs({
     try {
       setLoading(true);
 
-      const storedSongs =
-        await getAllMidiSongs();
+      const storedSongs = await getAllMidiSongs();
 
       // Les plus récents en premier (les morceaux sans `source` sont des imports)
       const sortedSongs = storedSongs
         .filter((song) => (song.source === "recording") === recordings)
-        .sort(
-        (a, b) =>
-          new Date(b.createdAt) -
-          new Date(a.createdAt)
-      );
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      // « Nouveau » : ajouté il y a moins de NEW_FOR_DAYS jours (calculé au chargement)
+      // « Nouveau » : ajouté il y a moins de NEW_FOR_DAYS jours
       const now = Date.now();
       setSongs(
         sortedSongs.map((song) => ({
@@ -56,10 +50,7 @@ export default function UserSongs({
         }))
       );
     } catch (error) {
-      console.error(
-        "Erreur chargement MIDI :",
-        error
-      );
+      console.error("Erreur chargement MIDI :", error);
     } finally {
       setLoading(false);
     }
@@ -70,28 +61,19 @@ export default function UserSongs({
   }, [refreshKey, isRecordings]);
 
   const handleDelete = async (id) => {
-    const confirmDelete =
-      window.confirm(
-        isRecordings ? "Supprimer cet enregistrement ?" : "Supprimer ce morceau ?"
-      );
+    const confirmDelete = window.confirm(
+      isRecordings ? t('userSongs.confirmDeleteRecording') : t('userSongs.confirmDeleteSong')
+    );
 
     if (!confirmDelete) return;
 
     await deleteMidiSong(id);
 
-    setSongs((current) =>
-      current.filter(
-        (song) => song.id !== id
-      )
-    );
+    setSongs((current) => current.filter((song) => song.id !== id));
   };
 
   if (loading) {
-    return (
-      <p className="user-songs-loading">
-        Chargement de vos morceaux...
-      </p>
-    );
+    return <p className="user-songs-loading">{t('userSongs.loading')}</p>;
   }
 
   if (songs.length === 0) {
@@ -99,7 +81,7 @@ export default function UserSongs({
       <section className="user-songs-section">
         {showHeader && (
           <div className="user-songs-header">
-            <h2>Mes musiques</h2>
+            <h2>{t('userSongs.title')}</h2>
           </div>
         )}
 
@@ -108,13 +90,13 @@ export default function UserSongs({
 
           <div>
             <strong>
-              {isRecordings ? "Aucun enregistrement" : "Aucune musique ajoutée"}
+              {isRecordings ? t('userSongs.emptyRecordingsTitle') : t('userSongs.emptySongsTitle')}
             </strong>
 
             <p>
               {isRecordings
-                ? "Ouvre le « Jeu libre », enregistre ta session puis sauvegarde-la pour la retrouver ici."
-                : "Utilisez le bouton « Ajouter mes musiques » pour importer un fichier MIDI."}
+                ? t('userSongs.emptyRecordingsHint')
+                : t('userSongs.emptySongsHint')}
             </p>
           </div>
         </div>
@@ -126,30 +108,21 @@ export default function UserSongs({
 
   return (
     <section className="user-songs-section">
-
       {showHeader && (
         <div className="user-songs-header">
           <div>
-            <h2>Mes musiques</h2>
-
-            <p>
-              {songs.length} morceau
-              {songs.length > 1 ? "x" : ""}
-              {" "}ajouté
-              {songs.length > 1 ? "s" : ""}
-            </p>
+            <h2>{t('userSongs.title')}</h2>
+            <p>{t('userSongs.countSongs', songs.length)}</p>
           </div>
         </div>
       )}
 
-
       <div className="user-songs-grid">
-
         {songs.map((song) => (
           <SongCard
             key={song.id}
             title={song.title}
-            subtitle={subtitleOf(song)}
+            subtitle={subtitleOf(song, t)}
             musicId={`user:${song.id}`}
             info={songInfos[`user:${song.id}`]}
             isNew={song.isNew}
@@ -158,26 +131,24 @@ export default function UserSongs({
             onDelete={() => handleDelete(song.id)}
           />
         ))}
-
       </div>
 
       <Styles />
-
     </section>
   );
 }
 
-
-
 // Sous-titre d'une carte. Morceau du Studio : la piste jouée à l'entraînement.
-function subtitleOf(song) {
+function subtitleOf(song, t) {
   if (song.origin === "studio") {
     return song.practiceTrack
-      ? "Studio"
-      : "Studio · pas de piste piano (écoute seulement)";
+      ? t('userSongs.studioPlaying', song.practiceTrack.label)
+      : t('userSongs.studioNoPiano');
   }
-  if (song.source === "recording") return `Mon enregistrement${song.tempo ? ` · ${song.tempo.bpm} BPM` : ""}`;
-  return "Ma musique";
+  if (song.source === "recording") {
+    return song.tempo ? t('userSongs.recordingTempo', song.tempo.bpm) : t('home.myRecording');
+  }
+  return t('home.myMusic');
 }
 
 function Styles() {

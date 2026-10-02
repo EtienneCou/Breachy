@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent, useRef } from "react";
 import useSongPlayer from "../../hooks/useSongPlayer";
+import { useLanguage } from "../../context/LanguageContext";
 import "./PracticePlayer.css";
 
 function formatTime(seconds) {
@@ -10,6 +11,7 @@ function formatTime(seconds) {
 }
 
 export default function PracticePlayer({ onClose }) {
+  const { t } = useLanguage();
   const {
     currentSong,
     isPlaying,
@@ -34,8 +36,6 @@ export default function PracticePlayer({ onClose }) {
     if (onClose) onClose();
   };
 
-  // Clic à côté du lecteur : on arrête l'écoute et on le ferme.
-  // (Un clic sur « Écouter » d'un autre morceau relance ensuite ce morceau.)
   const barRef = useRef(null);
   const closeFromOutside = useEffectEvent((e) => {
     if (barRef.current && !barRef.current.contains(e.target)) handleClose();
@@ -62,7 +62,7 @@ export default function PracticePlayer({ onClose }) {
   };
 
   return (
-    <aside ref={barRef} className="practice-player-bar" aria-label="Lecteur d'entraînement audio en arrière-plan">
+    <aside ref={barRef} className="practice-player-bar" aria-label={t('practicePlayer.ariaLabel')}>
       {error && (
         <div className="practice-error-banner" role="alert">
           <span>⚠️ {error}</span>
@@ -75,17 +75,17 @@ export default function PracticePlayer({ onClose }) {
           {currentSong.image && (
             <img
               src={currentSong.image}
-              alt={currentSong.title || "Morceau"}
+              alt={currentSong.title || t('practicePlayer.defaultSong')}
               className="practice-song-cover"
             />
           )}
           <div className="practice-song-details">
             <span className="practice-badge">
               <span className={`practice-badge-dot ${!isPlaying ? "paused" : ""}`} />
-              Mode Entraînement {isPlaying ? "(En cours)" : "(Pause)"}
+              {t('practicePlayer.mode', isPlaying)}
             </span>
-            <h3 className="practice-song-title">{currentSong.title || "Morceau sélectionné"}</h3>
-            <p className="practice-song-artist">{currentSong.artist || "Accompagnement"}</p>
+            <h3 className="practice-song-title">{currentSong.title || t('practicePlayer.defaultSong')}</h3>
+            <p className="practice-song-artist">{currentSong.artist || t('practicePlayer.defaultArtist')}</p>
           </div>
         </div>
 
@@ -95,18 +95,18 @@ export default function PracticePlayer({ onClose }) {
             type="button"
             className="practice-btn"
             onClick={restart}
-            title="Recommencer depuis le début"
-            aria-label="Recommencer depuis le début"
+            title={t('practicePlayer.restartTitle')}
+            aria-label={t('practicePlayer.restartTitle')}
           >
-            ⏮️ Début
+            {t('practicePlayer.start')}
           </button>
 
           <button
             type="button"
             className="practice-play-btn"
             onClick={isPlaying ? pause : resume}
-            title={isPlaying ? "Mettre en pause" : "Lancer le fond sonore"}
-            aria-label={isPlaying ? "Mettre en pause" : "Lancer le fond sonore"}
+            title={isPlaying ? t('practicePlayer.pauseTitle') : t('practicePlayer.playTitle')}
+            aria-label={isPlaying ? t('practicePlayer.pauseTitle') : t('practicePlayer.playTitle')}
           >
             {isPlaying ? "⏸" : "▶"}
           </button>
@@ -115,14 +115,14 @@ export default function PracticePlayer({ onClose }) {
             type="button"
             className={`practice-btn ${loop ? "active" : ""}`}
             onClick={() => setLoop(!loop)}
-            title={loop ? "Boucle active" : "Activer la boucle"}
-            aria-label="Boucle automatique"
+            title={loop ? t('practicePlayer.loopActive') : t('practicePlayer.loopEnable')}
+            aria-label={loop ? t('practicePlayer.loopActive') : t('practicePlayer.loopEnable')}
           >
-            🔁 {loop ? "Boucle ON" : "Boucle"}
+            {loop ? t('practicePlayer.loopOn') : t('practicePlayer.loopOff')}
           </button>
 
           {/* Vitesse / Ralenti pour la pratique */}
-          <div className="practice-speed-selector" title="Vitesse de lecture d'entraînement">
+          <div className="practice-speed-selector" title={t('practicePlayer.speedTitle')}>
             {speeds.map((rate) => (
               <button
                 key={rate}
@@ -139,7 +139,7 @@ export default function PracticePlayer({ onClose }) {
         {/* Volume & Fermeture */}
         <div className="practice-right-controls">
           <div className="practice-volume-box">
-            <span title="Volume accompagnement" aria-hidden="true">
+            <span title={t('practicePlayer.volumeTitle')} aria-hidden="true">
               {volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
             </span>
             <input
@@ -150,8 +150,8 @@ export default function PracticePlayer({ onClose }) {
               value={volume}
               onChange={handleVolumeChange}
               className="practice-volume-slider"
-              title={`Volume : ${Math.round(volume * 100)}%`}
-              aria-label="Volume du fond sonore"
+              title={`${t('transport.backingHeading')} : ${Math.round(volume * 100)}%`}
+              aria-label={t('practicePlayer.volumeAria')}
             />
           </div>
 
@@ -159,8 +159,8 @@ export default function PracticePlayer({ onClose }) {
             type="button"
             className="practice-close-btn"
             onClick={handleClose}
-            title="Quitter le mode entraînement"
-            aria-label="Fermer le lecteur d'entraînement"
+            title={t('practicePlayer.closeTitle')}
+            aria-label={t('practicePlayer.closeAria')}
           >
             ✕
           </button>
@@ -178,7 +178,7 @@ export default function PracticePlayer({ onClose }) {
           value={currentTime}
           onChange={handleTimelineChange}
           className="practice-timeline-slider"
-          aria-label="Position dans le morceau"
+          aria-label={t('practicePlayer.positionAria')}
         />
         <span className="practice-time total">{formatTime(duration)}</span>
       </div>
