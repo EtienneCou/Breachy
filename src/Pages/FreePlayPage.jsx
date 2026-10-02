@@ -5,6 +5,7 @@ import { TransportBar } from '../Components/transport'
 import { SessionRecorder } from '../Components/recorder'
 import { Metronome } from '../Components/metronome'
 import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
+import ThemeToggle from '../Components/ThemeToggle/ThemeToggle'
 import { useLanguage } from '../context/LanguageContext'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { useSessionRecorder } from '../hooks/useSessionRecorder.js'
@@ -63,7 +64,10 @@ export default function FreePlayPage() {
             <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
               {t('common.backHome')}
             </button>
-            <LanguageToggle />
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <ThemeToggle compact />
+              <LanguageToggle />
+            </div>
           </div>
           <div className="piano-page__song">
             <span className="piano-page__field-label">{t('freePlay.modeLabel')}</span>

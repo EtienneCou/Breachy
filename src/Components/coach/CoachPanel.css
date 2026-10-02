@@ -266,3 +266,37 @@
 :is(.songs-page, .piano-page) .coach__meter-steps span.is-on:nth-child(4) { background: #ef4444; }
 :is(.songs-page, .piano-page) .coach__meter-name { color: #fff7ed; }
 :is(.songs-page, .piano-page) .coach__meter--3 .coach__meter-name { color: #fbbf24; }
+
+/* ---------- Thème clair pour le coach Reachy ---------- */
+[data-theme="light"] :is(.songs-page, .piano-page) .coach {
+  border-color: #dfe7fb;
+  background: linear-gradient(180deg, #f7faff 0%, #ffffff 100%);
+  color: #0b1026;
+  box-shadow: 0 4px 14px rgba(31, 123, 255, 0.08);
+}
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__title { color: #5d6a94; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__status { border-color: #e3e8f4; background: #ffffff; color: #5d6a94; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__status:hover { background: #f4f7fd; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__bubble {
+  border-color: #c7dcff;
+  background: #ffffff;
+  box-shadow: 0 4px 14px rgba(31, 123, 255, 0.12);
+}
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__bubble::before { border-right-color: #c7dcff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__bubble::after { border-right-color: #ffffff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__text { color: #0b1026; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__talk { color: #5d6a94; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__talk.is-on { color: #1f7bff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__talk-track { background: #e3e8f4; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__talk.is-on .coach__talk-track { background: #1f7bff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__amount { background: #f4f7fd; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__amount-btn { color: #5d6a94; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__amount-btn:hover { color: #1f7bff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__amount-btn.is-active { background: #ffffff; color: #1f7bff; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__settings { border-color: #e3e8f4; background: #ffffff; color: #0b1026; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__field,
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__help { color: #5d6a94; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__field input { border-color: #e3e8f4; background: #ffffff; color: #0b1026; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__help code { background: #f4f7fd; color: #1f7bff; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__meter-steps span { background: #e3e8f4; }
+[data-theme="light"] :is(.songs-page, .piano-page) .coach__meter-name { color: #0b1026; }

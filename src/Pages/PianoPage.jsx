@@ -21,6 +21,7 @@ import { saveResult } from '../utils/bestScores.js'
 import songsCatalog from '../resources/catalog'
 import { useLanguage } from '../context/LanguageContext'
 import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
+import ThemeToggle from '../Components/ThemeToggle/ThemeToggle'
 import { playBravo, playEncouragement } from '../Services/audioService'
 import './PianoPage.css'
 
@@ -465,7 +466,10 @@ function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficul
         <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
           {t('common.backHome')}
         </button>
-        <LanguageToggle />
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <ThemeToggle compact />
+          <LanguageToggle />
+        </div>
       </div>
 
       <div className="piano-page__song">

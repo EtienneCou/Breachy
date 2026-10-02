@@ -7,6 +7,7 @@ import TrackList from '../Components/studio/TrackList.jsx'
 import StudioSave from '../Components/studio/StudioSave.jsx'
 import { DRUM_OCTAVE, drumPads, instrumentById } from '../Components/studio/instruments.js'
 import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
+import ThemeToggle from '../Components/ThemeToggle/ThemeToggle'
 import { useLanguage } from '../context/LanguageContext'
 import { useMetronome } from '../hooks/useMetronome.js'
 import { LOOP_MEASURES, useStudio } from '../hooks/useStudio.js'
@@ -168,7 +169,10 @@ export default function StudioPage() {
             <button type="button" className="studio__back" onClick={() => navigate('/')}>
               {t('common.backHome')}
             </button>
-            <LanguageToggle />
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <ThemeToggle compact />
+              <LanguageToggle />
+            </div>
           </div>
           <p className="studio__muted studio__help">
             {t('studio.help1')}<br />
