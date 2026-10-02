@@ -549,10 +549,108 @@
 .piano-page .transport--vertical .transport__section--octave .transport__btn--small { flex-basis: 30px; width: 30px; }
 .piano-page .transport--vertical .transport__section--octave .transport__value { min-width: 0; overflow: hidden; }
 
-.piano-page__side > .piano-page__points,
-.piano-page__side > .piano-page__card,
-.piano-page__side > .piano-page__metronome,
-.piano-page__side > .piano-page__transport {
+/* Mode sombre pour PianoPage */
+[data-theme="dark"] .piano-page,
+:root:not([data-theme="light"]) .piano-page {
+  background: #111214;
+  color-scheme: dark;
+}
+
+[data-theme="dark"] .piano-page__stage .piano-lanes,
+:root:not([data-theme="light"]) .piano-page__stage .piano-lanes {
+  background: linear-gradient(180deg, #18191d 0%, #131417 70%, #0e0f11 100%);
+}
+
+[data-theme="dark"] .piano-page__stage .piano-lanes::before,
+:root:not([data-theme="light"]) .piano-page__stage .piano-lanes::before {
+  background-image:
+    radial-gradient(circle, rgba(249, 115, 22, 0.16) 0 2px, transparent 3px),
+    radial-gradient(circle, rgba(239, 68, 68, 0.12) 0 1.5px, transparent 2.5px);
+}
+
+[data-theme="dark"] .piano-page__progress,
+:root:not([data-theme="light"]) .piano-page__progress {
+  background: #25272c;
+}
+
+[data-theme="dark"] .piano-page__card,
+[data-theme="dark"] .piano-page__transport,
+[data-theme="dark"] .piano-page__points,
+[data-theme="dark"] .piano-page__metronome,
+:root:not([data-theme="light"]) .piano-page__card,
+:root:not([data-theme="light"]) .piano-page__transport,
+:root:not([data-theme="light"]) .piano-page__points,
+:root:not([data-theme="light"]) .piano-page__metronome {
+  border-color: #34353a;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
   background: #1a1b1f;
   color: #f7f0e7;
+}
+
+[data-theme="dark"] .piano-page__song-title,
+[data-theme="dark"] .piano-page__points-value,
+:root:not([data-theme="light"]) .piano-page__song-title,
+:root:not([data-theme="light"]) .piano-page__points-value {
+  color: #f7f0e7;
+}
+
+[data-theme="dark"] .piano-page__field-label,
+[data-theme="dark"] .piano-page__points,
+:root:not([data-theme="light"]) .piano-page__field-label,
+:root:not([data-theme="light"]) .piano-page__points {
+  color: #aaa39a;
+}
+
+[data-theme="dark"] .piano-page__back,
+:root:not([data-theme="light"]) .piano-page__back {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.15);
+}
+
+[data-theme="dark"] .piano-page__back:hover,
+:root:not([data-theme="light"]) .piano-page__back:hover {
+  background: rgba(251, 191, 36, 0.25);
+}
+
+/* Mode clair pour PianoPage */
+[data-theme="light"] .piano-page {
+  background: #ffffff;
+  color-scheme: light;
+}
+
+[data-theme="light"] .piano-page__stage .piano-lanes {
+  background: linear-gradient(180deg, #ffffff 0%, #f3f7ff 70%, #eaf2ff 100%);
+}
+
+[data-theme="light"] .piano-page__progress {
+  background: #eef1f7;
+}
+
+[data-theme="light"] .piano-page__card,
+[data-theme="light"] .piano-page__transport,
+[data-theme="light"] .piano-page__points,
+[data-theme="light"] .piano-page__metronome {
+  background: #ffffff !important;
+  color: #0b1026 !important;
+  border-color: #edf0f5 !important;
+  box-shadow: 0 6px 24px rgba(28, 38, 78, 0.06);
+}
+
+[data-theme="light"] .piano-page__song-title,
+[data-theme="light"] .piano-page__points-value {
+  color: #0b1026 !important;
+}
+
+[data-theme="light"] .piano-page__field-label,
+[data-theme="light"] .piano-page__points {
+  color: #7180b0 !important;
+}
+
+[data-theme="light"] .piano-page__back {
+  color: #1f7bff !important;
+  background: #eaf3ff !important;
+}
+
+[data-theme="light"] .piano-page__back:hover {
+  background: #d6e7ff !important;
 }

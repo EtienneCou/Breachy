@@ -21,7 +21,7 @@ import { saveResult } from '../utils/bestScores.js'
 import songsCatalog from '../resources/catalog'
 import { useLanguage } from '../context/LanguageContext'
 import LanguageToggle from '../Components/LanguageToggle/LanguageToggle'
-import { playBravo, playEncouragement } from '../Services/audioService'
+import ThemeToggle from '../Components/ThemeToggle/ThemeToggle'
 import './PianoPage.css'
 
 // Morceau chargé quand l'adresse n'en indique pas : il a un accompagnement,
@@ -249,24 +249,6 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
   }, [plan, noteStates, hits, clock.time])
   const heat = heatLevel(streak)
 
-  // Reachy réagit vocalement toutes les 10 bonnes notes
-  const lastGoodReaction = useState(0)
-  useEffect(() => {
-    if (hitCount > 0 && hitCount % 10 === 0 && hitCount !== lastGoodReaction[0]) {
-      lastGoodReaction[1](hitCount)
-      playBravo(language)
-    }
-  }, [hitCount, language, lastGoodReaction])
-
-  // Reachy réagit vocalement toutes les 10 mauvaises notes
-  const lastBadReaction = useState(0)
-  useEffect(() => {
-    if (missCount > 0 && missCount % 10 === 0 && missCount !== lastBadReaction[0]) {
-      lastBadReaction[1](missCount)
-      playEncouragement(language)
-    }
-  }, [missCount, language, lastBadReaction])
-
   // Étincelles sur chaque note réussie à l'instant, sur sa touche. Le mot
   // (« Parfait ! », « Bien ! »…) n'accompagne que la dernière réussite : sur les
   // passages rapides, les mots ne s'empilent pas et ne restent pas sur d'autres touches.
@@ -347,7 +329,7 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
     <main className="piano-page">
       <div className="piano-page__play">
         {hasSong && (
-          <div className="piano-page__progress" role="progressbar" aria-label={t('pianoPage.progressBar')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
+          <div className="piano-page__progress" role="progressbar" aria-label={t('pianoPage.songProgress')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}>
             <span style={{ transform: `scaleX(${progress})` }} />
           </div>
         )}
@@ -389,8 +371,8 @@ function PianoSession({ musicId, title, notes, backing, sidebar, tempo, gridOffs
               <span className="piano-page__points-value">{score.toLocaleString(language === 'en' ? 'en-US' : 'fr-FR')}</span> {t('pianoPage.points')}
             </p>
             <p className="piano-page__score">
-              <span className="piano-page__score-hit">{t('pianoPage.hits', hitCount)}</span>
-              <span className="piano-page__score-miss">{t('pianoPage.missed', missCount)}</span>
+              <span className="piano-page__score-hit">{t('pianoPage.hitCount', hitCount)}</span>
+              <span className="piano-page__score-miss">{t('pianoPage.missCount', missCount)}</span>
             </p>
           </div>
         )}
@@ -465,7 +447,10 @@ function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficul
         <button type="button" className="piano-page__back" onClick={() => navigate('/')}>
           {t('common.backHome')}
         </button>
-        <LanguageToggle />
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+          <ThemeToggle compact />
+          <LanguageToggle />
+        </div>
       </div>
 
       <div className="piano-page__song">
@@ -491,10 +476,10 @@ function SongInfo({ title, image, melodyLabel, fromStudio, noPianoPart, difficul
         </p>
       )}
       {status === 'ready' && melodyLabel && !fromStudio && (
-        <p className="piano-page__status">{t('pianoPage.melodyHelp', melodyLabel)}</p>
+        <p className="piano-page__status">{t('pianoPage.melodyPart', melodyLabel)}</p>
       )}
       {status === 'ready' && guided && !fromStudio && (
-        <p className="piano-page__status">{t('pianoPage.guided')}</p>
+        <p className="piano-page__status">{t('pianoPage.guidedPart')}</p>
       )}
       {status === 'loading' && <p className="piano-page__status">{t('pianoPage.loading')}</p>}
       {status === 'error' && <p className="piano-page__status piano-page__status--error">{t('pianoPage.error')}</p>}
