@@ -123,16 +123,16 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 ### Pendant l'entraînement
 
 - **Décompte avant le morceau** : « Trois ! Deux ! Un ! » avec une antenne, puis l'autre, puis les deux, et « C'est parti ! » avec un hochement de tête.
-- **Il danse en rythme** sur le tempo du morceau, de plus en plus fort selon la réussite du joueur sur ses 10 dernières notes :
+- **Il danse en rythme** sur le tempo du morceau les chorégraphies de Pollen Robotics (le fabricant), de plus en plus énergiques selon la réussite du joueur sur ses 10 dernières notes :
 
-  | Réussite | Danse |
+  | Réussite | Danses (au hasard, une nouvelle toutes les 4 mesures) |
   |---|---|
-  | moins de 50 % | les antennes seules |
-  | 50 à 74 % | les antennes + la tête qui se penche lentement sur les côtés |
-  | 75 à 89 % | sur les côtés et hochement de tête vers l'avant, plus vite |
-  | 90 % et plus | « rock star » : gros hochements de tête marqués sur la mesure, antennes levées, corps qui tourne |
+  | moins de 50 % | calme : balancier, balancement de côté |
+  | 50 à 74 % | il se laisse porter : tête penchée, chaloupé, « mmh mmh », menton en avant |
+  | 75 à 89 % | ça groove : hochements, « ouais ! », polyrythmie, trébuche et se rattrape, tête qui tourne, recul du cou |
+  | 90 % et plus | rock star : headbang, spirales, coucou, carré, coup de bec, coup d'œil |
 
-  La danse ne s'arrête jamais pendant le morceau. Les changements de danse se font en douceur.
+  La danse ne s'arrête jamais pendant le morceau. On passe d'une danse à l'autre en fondu. Les formules viennent de [reachy_mini_dances_library](https://github.com/pollen-robotics/reachy_mini_dances_library), portées dans [pollenMoves.js](src/Components/coach/pollenMoves.js) ; les mouvements qui retombaient d'un coup redescendent ici en douceur, et les deux danses à paliers sont écartées.
 - **Bilan à la fin du morceau**, dit à voix haute : pourcentage de réussite, meilleure série, nouveau record s'il y en a un, un conseil (jouer plus lentement, en avance, en retard…) et un encouragement. Il l'accompagne d'une émotion selon le résultat.
 - Le volume de l'accompagnement baisse pendant qu'il parle.
 
@@ -160,10 +160,10 @@ L'amplitude de la danse et des petits gestes se règle **dans le code**, pas dan
 Dans [src/Components/coach/danceEngine.js](src/Components/coach/danceEngine.js) :
 
 ```js
-export const ROBOT_INTENSITY = 0.5 // 1 = amplitudes maximales prévues
+export const ROBOT_INTENSITY = 0.3 // 1 = amplitudes des danses de Pollen
 ```
 
-Elle est réglée à 0,5 d'après la simulation, qui montre environ la moitié des mouvements réels. **Pour le premier essai sur le vrai robot, passer à 0,3**, puis ajuster à l'œil.
+Elle est réglée à 0,3 pour le vrai robot ; à ajuster à l'œil. La simulation montre environ la moitié des mouvements réels : ne pas régler d'après elle. L'ampleur de chaque niveau de danse se règle dans `DANCE_LEVELS` (même fichier).
 
 Les émotions enregistrées de Pollen (accueil, pause, bilan…) ne passent pas par ce réglage : elles sont toujours jouées en entier.
 
