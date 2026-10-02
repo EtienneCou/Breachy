@@ -152,12 +152,16 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 
 Tout ce qui précède est aussi joué par l'**avatar dessiné** à l'écran : humeurs, danses, sommeil, bulles de texte.
 
+### En français ou en anglais
+
+Reachy parle la langue du site (bouton FR / EN), et change de langue en direct : tout ce qu'il dit (accueil, décompte, encouragements, danse, bilan, et son côté diabolique), le panneau du coach et sa voix. En anglais, il prend la voix Piper `en_US-amy-medium`, avec le même style « petit robot » ; elle se télécharge la première fois qu'on passe en anglais avec le robot (ou la simulation). Ses textes anglais sont dans [coachEnglish.js](src/Components/coach/coachEnglish.js), ceux de l'interface du coach dans [coachUi.js](src/Components/coach/coachUi.js).
+
 ### Secret : le Reachy diabolique (easter egg, à ne pas dévoiler aux joueurs)
 
 Reachy a une seconde personnalité, sarcastique et pince-sans-rire. Rien ne la signale : il faut la trouver.
 
 - **Pour la réveiller** : cliquer très vite sur l'avatar (7 clics en moins de 3 s ; il réagit dès le 4e), ou, sur le vrai robot au repos, pousser ses antennes ou tourner son corps à la main 3 fois en moins de 6 s (ses moteurs sentent l'écart).
-- **Pour une démo, à la voix** : activer « 🎙 Écoute (démo) » dans les réglages ⚙ du coach (Chrome ou Edge ; le navigateur demande le micro), puis dire « **Passe du côté obscur, Reachy** ». « **Redeviens gentil** » le ramène. L'écoute est coupée par défaut : le micro n'est jamais ouvert sans qu'on l'active. La reconnaissance passe par les serveurs de Google (Chrome) ou de Microsoft (Edge) : il faut Internet.
+- **Pour une démo, à la voix** : activer « 🎙 Écoute (démo) » dans les réglages ⚙ du coach (Chrome ou Edge ; le navigateur demande le micro), puis dire « **Passe du côté obscur, Reachy** » (ou « **Join the dark side, Reachy** »). « **Redeviens gentil** » (« **Be nice again** ») le ramène. Les deux langues marchent toujours ; l'écoute suit la langue du site. L'écoute est coupée par défaut : le micro n'est jamais ouvert sans qu'on l'active. La reconnaissance passe par les serveurs de Google (Chrome) ou de Microsoft (Edge) : il faut Internet.
 - **Transformation** : le robot baisse la tête d'un coup, antennes plaquées en arrière, et ricane ; l'avatar tremble et prend des cornes, des sourcils froncés et des yeux rouges.
 - **Ensuite** : voix plus grave et plus lente avec un léger écho, phrases et bilan sarcastiques (il se moque du jeu, jamais de la personne), panneau du coach sombre.
 - **Pour revenir au gentil** : le même geste (ou la phrase). Recharger la page le fait aussi redevenir gentil.

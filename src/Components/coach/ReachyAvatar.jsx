@@ -1,4 +1,5 @@
 import './ReachyAvatar.css'
+import { useCoachUi } from './coachUi.js'
 
 /**
  * Reachy Mini dessiné : tête et grands yeux, deux antennes, socle.
@@ -10,6 +11,7 @@ import './ReachyAvatar.css'
  * `transforming` : il tremble pendant la transformation.
  */
 export default function ReachyAvatar({ mood = 'idle', speaking = false, groove = null, evil = false, transforming = false, size = 96, className = '' }) {
+  const ui = useCoachUi()
   const dancing = groove && mood === 'idle'
   const state = dancing ? `groove reachy--groove-${groove.level}` : mood
   return (
@@ -20,7 +22,7 @@ export default function ReachyAvatar({ mood = 'idle', speaking = false, groove =
       width={size}
       height={(size * 140) / 120}
       role="img"
-      aria-label={`Reachy${evil ? ' diabolique' : ''}, ton coach (${dancing ? GROOVE_LABELS[groove.level] : MOOD_LABELS[mood] ?? 'calme'})`}
+      aria-label={ui.avatar(evil, dancing ? ui.grooves[groove.level] : ui.moods[mood] ?? ui.moods.idle)}
     >
       {/* Socle */}
       <g className="reachy__body">
@@ -65,21 +67,4 @@ export default function ReachyAvatar({ mood = 'idle', speaking = false, groove =
       </g>
     </svg>
   )
-}
-
-const GROOVE_LABELS = ['il bouge les antennes', 'il se balance doucement', 'il danse', 'il danse comme une rock star']
-
-const MOOD_LABELS = {
-  idle: 'calme',
-  happy: 'content',
-  cheer: 'il fête ta série',
-  dance: 'il danse',
-  sad: 'déçu pour toi',
-  think: 'il réfléchit',
-  attentive: 'attentif',
-  calm: 'rassurant',
-  proud: 'fier de toi',
-  surprised: 'surpris',
-  sleepy: 'il s\'ennuie',
-  asleep: 'il dort',
 }

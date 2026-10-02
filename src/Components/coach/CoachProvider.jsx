@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { DEFAULT_REACHY_URL, createReachyClient } from '../../services/reachy/reachyClient.js'
 import { forgetRobotSounds, playCoachSound, speak, stopSpeaking } from './coachAudio.js'
 import { prepareLines, prepareRobotVoice } from './robotVoice.js'
-import { LINES, SLEEP_RULES, isEvil, setEvil, transformReaction } from './coachRules.js'
-import { EVIL_LINES } from './coachEvil.js'
+import { SLEEP_RULES, currentLines, getLanguage, isEvil, pokeReaction, setEvil, setLanguage, transformReaction } from './coachRules.js'
+import { useLanguage } from '../../context/LanguageContext.jsx'
 import { PLAYER_ACTIVITY, backingSynth } from '../piano'
 import { talkGapMs } from './talkAmounts.js'
 import { ROBOT_INTENSITY } from './danceEngine.js'
@@ -70,10 +70,12 @@ const TOUCH_SETTLE_MS = 1000 // il doit être immobile depuis 1 s pour prendre s
 const TRANSFORM_MS = 2600 // durée de la transformation sur le robot
 // Pose menaçante : tête baissée qui regarde par en dessous, antennes plaquées en arrière.
 const MENACE_POSE = { head: { roll: 0, pitch: 14, yaw: 0, z: -10 }, antennas: [-75, 75], body: 0 }
-// Phrase secrète (démo, avec l'écoute activée) : « Passe du côté obscur, Reachy » le
-// transforme ; « Redeviens gentil » le ramène. Comparées sans accents ni majuscules.
-const TO_EVIL_WORDS = /cote obscur/
-const TO_NICE_WORDS = /redeviens gentil|cote lumineux/
+// Phrase secrète (démo, avec l'écoute activée) : « Passe du côté obscur, Reachy » (ou
+// « Join the dark side, Reachy ») le transforme ; « Redeviens gentil » (« Be nice again »)
+// le ramène. Les deux langues marchent toujours ; comparées sans accents ni majuscules.
+const TO_EVIL_WORDS = /cote obscur|dark side/
+const TO_NICE_WORDS = /redeviens gentil|cote lumineux|nice again/
+const LISTEN_LANGS = { fr: 'fr-FR', en: 'en-US' }
 const plain = (text) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 
 // Durée estimée des mouvements du robot, pour ne pas en lancer un autre par-dessus
@@ -105,6 +107,9 @@ function loadSettings() {
 
 export function CoachProvider({ children }) {
   const [settings, setSettings] = useState(loadSettings)
+  // Il parle la langue du site (bouton FR / EN) : ses textes la suivent dès le rendu.
+  const { language } = useLanguage()
+  setLanguage(language)
   const [connected, setConnected] = useState(false) // le daemon du robot répond
   const [simulation, setSimulation] = useState(false) // le robot connecté est la simulation
   const [mood, setMood] = useState('idle')
@@ -163,7 +168,6 @@ export function CoachProvider({ children }) {
         const output = speaker ? 'robot' : status.simulation_enabled ? 'preview' : 'browser'
         setVoiceOutput(output)
         // Voix prête : les encouragements du jeu sont fabriqués à l'avance, pour partir sans délai.
-        if (output !== 'browser') prepareRobotVoice().then(() => prepareLines(Object.values(LINES).flat()))
       } else if (!isConnected && wasConnected) {
         setVoiceOutput('browser')
         setMedia(false)
@@ -275,6 +279,7 @@ export function CoachProvider({ children }) {
     speak(text, {
       quick,
       evil: isEvil(),
+      lang: getLanguage(),
       robot: output === 'robot' ? { kind: 'robot', client } : output === 'preview' ? { kind: 'preview' } : null,
       onStart: () => backingSynth.duck(DUCK),
       onEnd: () => {
@@ -463,8 +468,6 @@ export function CoachProvider({ children }) {
       client.stopAll().catch(() => {}).then(() => client.goto({ ...(toEvil ? MENACE_POSE : NEUTRAL), duration: toEvil ? 0.5 : 0.9 })).catch(() => {})
       if (!dance.current) r.timers.push(setTimeout(() => client.goto({ ...NEUTRAL, duration: 1 }).catch(() => {}), TRANSFORM_MS - 1000))
     }
-    // Sa voix diabolique : les phrases du jeu sont fabriquées à l'avance.
-    if (toEvil && live.current.voiceOutput !== 'browser') prepareLines(Object.values(EVIL_LINES).flat(), 'evil')
     react('transform', transformReaction(toEvil))
   }, [client, react])
 
@@ -483,7 +486,7 @@ export function CoachProvider({ children }) {
     const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
     if (!settings.listen || !Recognition) return
     const recognition = new Recognition()
-    recognition.lang = 'fr-FR'
+    recognition.lang = LISTEN_LANGS[language] ?? LISTEN_LANGS.fr
     recognition.continuous = true
     recognition.interimResults = true // on voit les mots arriver ; la phrase est vérifiée à chaque fois
     let active = true
@@ -520,7 +523,21 @@ export function CoachProvider({ children }) {
       recognition.abort()
       setListening(null)
     }
-  }, [settings.listen])
+  }, [settings.listen, language])
+
+  // Sa voix (robot, ou ordinateur en simulation) dans la langue du site et le style de sa
+  // personnalité : la voix de la langue se télécharge la première fois, puis les phrases
+  // du jeu sont fabriquées à l'avance, pour partir sans délai.
+  useEffect(() => {
+    if (voiceOutput === 'browser') return
+    let cancelled = false
+    prepareRobotVoice(language).then(() => {
+      if (!cancelled) prepareLines(currentLines(), evil ? 'evil' : 'nice', language)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [voiceOutput, language, evil])
 
   /** Clic sur l'avatar : beaucoup de clics rapides le transforment. */
   const pokeAvatar = useCallback(() => {
@@ -531,7 +548,7 @@ export function CoachProvider({ children }) {
       pokes.current.clicks = []
       transform()
     } else if (clicks.length === CLICK_HINT) {
-      react('poke', { mood: 'surprised', bubble: isEvil() ? 'Continue. Pour voir.' : 'Hé ! Ça chatouille !', priority: 1, cooldown: 4 })
+      react('poke', pokeReaction('poke'))
     }
   }, [transform, react])
 
@@ -577,7 +594,7 @@ export function CoachProvider({ children }) {
           rest = null
           transformRef.current()
         } else if (touches.length === 1) {
-          react('touch', { mood: 'surprised', bubble: isEvil() ? 'Touche encore. Pour voir.' : 'Hé ! Pas touche aux antennes !', priority: 1, cooldown: 8 })
+          react('touch', pokeReaction('touch'))
         }
       } else if (touching && away < TOUCH_DEG / 3) {
         touching = false
