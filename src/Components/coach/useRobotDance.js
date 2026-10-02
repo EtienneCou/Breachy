@@ -26,6 +26,7 @@ export function useRobotDance({ beatRef, danceRef }) {
     const t0 = performance.now()
     const clock = () => (performance.now() - t0) / 1000
     let choice = null // danse du moment (chooseMove), avec les fondus
+    let level = null // niveau appliqué : il change sur le premier temps d'une mesure
     let rhythm = null // cadence de la danse { phase, songTime }, toujours continue
     let impulses = []
     let envelope = 0
@@ -69,9 +70,18 @@ export function useRobotDance({ beatRef, danceRef }) {
         setDancing(dancing)
       }
       envelope = Math.min(1, envelope + dt / RAMP)
+      const before = rhythm?.phase
       rhythm = advancePhase(rhythm, beat, dt)
       const phase = rhythm?.phase ?? 0
-      choice = chooseMove(choice, levelParams(beat ? danceRef.current.level : null), phase, dt)
+      // Nouveau niveau demandé : au départ ou au repos tout de suite, sinon sur le premier
+      // temps de la mesure suivante, en musique, avec un geste qui le marque.
+      const wanted = beat ? danceRef.current.level : null
+      const newBar = before != null && Math.floor(phase / 4) !== Math.floor(before / 4)
+      if (wanted !== level && (level == null || wanted == null || newBar)) {
+        if (typeof level === 'number' && typeof wanted === 'number') impulses.push({ name: wanted > level ? 'levelUp' : 'levelDown', start: t })
+        level = wanted
+      }
+      choice = chooseMove(choice, levelParams(level), phase, dt)
       impulses = liveImpulses(impulses, t)
       stream.send(scalePose(dancePose(t, { phase, choice, envelope, impulses }), ROBOT_INTENSITY))
     }

@@ -123,7 +123,7 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
 ### Pendant l'entraînement
 
 - **Décompte avant le morceau** : « Trois ! Deux ! Un ! » avec une antenne, puis l'autre, puis les deux, et « C'est parti ! » avec un hochement de tête.
-- **Il danse en rythme** sur le tempo du morceau les chorégraphies de Pollen Robotics (le fabricant), de plus en plus énergiques selon la réussite du joueur sur ses 10 dernières notes :
+- **Il danse en rythme** sur le tempo du morceau les chorégraphies de Pollen Robotics (le fabricant), de plus en plus énergiques selon la réussite du joueur sur ses 16 dernières notes :
 
   | Réussite | Danses (elles alternent toutes les 4 mesures) |
   |---|---|
@@ -132,7 +132,8 @@ Puis faire **`Ctrl + C`** dans le terminal du daemon.
   | 75 à 89 % | ça groove : spirales, chaloupé |
   | 90 % et plus | rock star : headbang |
 
-  La danse ne s'arrête jamais pendant le morceau. On passe d'une danse à l'autre en fondu. Les formules viennent de [reachy_mini_dances_library](https://github.com/pollen-robotics/reachy_mini_dances_library), portées dans [pollenMoves.js](src/Components/coach/pollenMoves.js) ; les autres danses de Pollen y restent disponibles pour changer les niveaux (`DANCE_LEVELS` dans danceEngine.js).
+  La danse monte ou descend d'**un cran à la fois**, et garde un niveau au moins 4 mesures. Pour redescendre, il faut passer nettement sous le palier (15 points) : une fausse note isolée ne la fait pas tomber. Chaque changement tombe sur le premier temps d'une mesure, marqué par les antennes (dressées en montant, tombantes en descendant). Une **jauge à 4 crans** dans le panneau du coach montre le niveau. Reachy annonce les montées (et le retour au plus calme) avec des phrases propres à chaque niveau, au plus une fois toutes les 20 secondes ; une phrase ne revient qu'après plus de la moitié des autres.
+  La danse ne s'arrête jamais pendant le morceau.
 - **Bilan à la fin du morceau**, dit à voix haute : pourcentage de réussite, meilleure série, nouveau record s'il y en a un, un conseil (jouer plus lentement, en avance, en retard…) et un encouragement. Il l'accompagne d'une émotion selon le résultat.
 - Le volume de l'accompagnement baisse pendant qu'il parle.
 

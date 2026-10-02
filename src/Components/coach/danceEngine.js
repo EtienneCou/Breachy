@@ -47,6 +47,10 @@ const IMPULSES = {
   count2: { length: 0.8, leftAntenna: -32 },
   count1: { length: 0.8, antennas: -32, pitch: -5 },
   go: { length: 0.7, antennas: -26, pitch: 9 },
+  // Changement de niveau de danse : antennes dressées, tête relevée (« yes ! ») quand on
+  // monte ; antennes qui tombent, tête un peu basse (« oh… ») quand on descend.
+  levelUp: { length: 0.8, antennas: -55, pitch: -6 },
+  levelDown: { length: 1.1, antennas: 35, pitch: 5 },
 }
 export const impulseNames = Object.keys(IMPULSES)
 

@@ -25,7 +25,9 @@ function line(moment, choices) {
   const recent = recentByMoment.get(moment) ?? []
   const fresh = choices.filter((c) => !recent.includes(c) && c !== lastLine)
   const chosen = pick(fresh.length ? fresh : choices.filter((c) => c !== lastLine).length ? choices.filter((c) => c !== lastLine) : choices)
-  recentByMoment.set(moment, [...recent, chosen].slice(-Math.min(3, choices.length - 1)))
+  // Une phrase ne revient qu'après plus de la moitié des autres du même moment.
+  const memory = Math.max(1, Math.min(choices.length - 1, Math.ceil(choices.length * 0.6)))
+  recentByMoment.set(moment, [...recent, chosen].slice(-memory))
   lastLine = chosen
   return chosen
 }
@@ -45,8 +47,12 @@ export const LINES = {
   streakLost: ['Oups, on repart !', 'Pas grave, on continue !', 'Allez, on se relance !', 'Ça arrive à tout le monde !', 'Zut ! Nouvelle série !', 'On repart de plus belle !'],
   struggle: ['Respire, ça va venir.', 'Doucement, prends ton temps.', 'Regarde bien les notes qui tombent.', 'Tu peux ralentir si besoin.', 'On ne lâche rien !', 'Concentre-toi sur la prochaine note.'],
   comeback: ['Bien rattrapé !', 'Voilà, c\'est ça !', 'Tu es revenu !', 'Super, ça repart !', 'Je le savais !', 'Bien joué !'],
-  danceUp: ['Là je danse !', 'Ça groove !', 'Tu me fais danser !', 'Quel rythme !', 'J\'adore ce morceau !', 'Continue, je m\'éclate !', 'Ça, c\'est du son !'],
-  danceDown: ['Fais-moi danser !', 'Allez, réveille-moi !', 'Je compte sur toi pour le rythme !', 'Donne-moi du rythme !'],
+  // Sa danse monte d'un cran (1 : il se laisse porter, 2 : ça groove, 3 : rock star)
+  danceUp1: ['Ah, ça vient !', 'Je commence à bouger !', 'Oh, ça me plaît !', 'Je sens le rythme !', 'Hop, je me balance !', 'C\'est mieux, ça !', 'Ça me donne envie de bouger !', 'Doucement, mais sûrement !', 'Voilà, on y est !', 'J\'aime bien, continue !'],
+  danceUp2: ['Ça groove !', 'Là je danse !', 'Quel rythme !', 'Tu me fais danser !', 'Ça, c\'est du son !', 'J\'adore ce morceau !', 'Ça swingue !', 'On est bien, là !', 'Je ne tiens plus en place !', 'Joli, très joli !'],
+  danceUp3: ['Rock star !', 'Je m\'éclate !', 'À fond !', 'On met le feu !', 'Tu es en feu !', 'C\'est un vrai concert !', 'Waouh, quel talent !', 'Je deviens fou !', 'Plus fort, plus fort !', 'Mode rock star activé !'],
+  // Sa danse retombe au plus calme : il réclame du rythme, gentiment.
+  danceDown: ['Fais-moi danser !', 'Allez, réveille-moi !', 'Je compte sur toi pour le rythme !', 'Donne-moi du rythme !', 'On remonte ensemble ?', 'Il me faut un peu de rythme !', 'Allez, fais-moi bouger !', 'On se reconcentre ?'],
 }
 
 // Réaction parlée : le même texte dans la bulle et à voix haute.
@@ -148,11 +154,11 @@ export const TRAINING_RULES = {
     cooldown: 10,
   }),
 
-  // Sa danse vient de passer à un bon niveau (3 ou 4) : il le dit en dansant.
-  danceUp: () => ({
-    ...spoken('danceUp'),
+  // Sa danse vient de monter d'un cran : il le dit en dansant (phrases propres à chaque niveau).
+  danceUp: ({ level }) => ({
+    ...spoken(`danceUp${level}`),
     priority: 1,
-    cooldown: 20,
+    cooldown: 20, // commun aux trois niveaux : il ne parle pas à chaque cran
   }),
 
   // Sa danse retombe au plus bas : il réclame du rythme, gentiment.
